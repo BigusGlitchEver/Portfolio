@@ -1,5 +1,11 @@
+// pages/index.tsx
+import { useState, useEffect } from 'react';
 import Image from "next/image";
 import { Poppins, JetBrains_Mono } from "next/font/google";
+import Portrait from '../components/Portrait';
+import IndexNavigation from '../components/IndexNavigation';
+import SearchLogic from '../components/SearchLogic';
+import { Book, Gamepad2, Globe, Brush, PenTool, Coffee, Camera, Store } from 'lucide-react';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -8,136 +14,209 @@ const poppins = Poppins({
 });
 
 const jetBrainsMono = JetBrains_Mono({
-  variable: "--font-jet-brains-mono",
+  variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
 
-export default function DarkPortfolioLandingPage() {
+export default function LandingPage() {
+  const [isVisible, setIsVisible] = useState(false);
+
+  useEffect(() => {
+    setIsVisible(true);
+  }, []);
+
+  const sections = [
+    {
+      title: "Publications",
+      icon: <Book className="w-8 h-8 text-blue-400" />,
+      description: "Creative works exploring spirituality, social commentary, and cultural narratives",
+      projects: [
+        {
+          title: "Judaic Tarot Deck",
+          description: "Complete deck design based on Jewish mysticism",
+          image: "/judaictarot.png",
+          categories: ["Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
+          link: "/tarot"
+        },
+        {
+          title: "Zine #4 & Snakes and Unions",
+          description: "A reimagined Snakes & Ladders game exploring wealth inequality and collective action",
+          image: "/zine.png",
+          categories: ["Product Design", "Visual Design", "Research", "Game Design", "Publications", "Photo Editing"],
+          link: "/zine"
+        }
+      ]
+    },
+    {
+      title: "Game Development",
+      icon: <Gamepad2 className="w-8 h-8 text-blue-400" />,
+      description: "Interactive experiences designed to engage and entertain",
+      projects: [
+        {
+          title: "Poly Plaza",
+          description: "A sandbox game focused on property management and economic systems",
+          image: "/polyplaza.png",
+          categories: ["Game Design", "Quest Design", "Mechanics Design", "game-design", "Low Code", "AI Utilization"],
+          link: "/polyplaza"
+        },
+        {
+          title: "Broll",
+          description: "3D ragdoll-based platformer with innovative physics mechanics",
+          image: "/broll.png",
+          categories: ["Game Design", "Level Design", "game-design"],
+          link: "/broll"
+        }
+      ]
+    },
+    {
+      title: "Phone Apps & Marketing",
+      icon: <Brush className="w-8 h-8 text-blue-400" />,
+      description: "Digital experiences crafted to solve real-world problems and push creative boundaries",
+      projects: [
+        {
+          title: "Art Pocketbook",
+          description: "A comprehensive platform helping artists understand their sales data and market presence while reducing stress",
+          image: "/hiprototype.png",
+          categories: ["Figma","UX/UI Design", "Research", "web-design"],
+          link: "/art-pocketbook",
+          buttons: [
+            {
+              label: "Hi-Fidelity Prototype",
+              url: "#prototype"
+            },
+            {
+              label: "View the Process",
+              url: "/art-pocketbook"
+            }
+          ]
+        },
+        {
+          title: "Instagram Marketing and Brand Awareness",
+          description: "Educational platform development and branding",
+          image: "/samtheteacher.png",
+          categories: ["Visual Design", "UX/UI Design", "Photo Editing"],
+          link: "/instagram"
+        }
+      ]
+    },
+    {
+      title: "Poland",
+      icon: <Globe className="w-8 h-8 text-blue-400" />,
+      description: "Innovative projects focused on connection and digital solutions",
+      projects: [
+        {
+          title: "Make a Friend",
+          description: "Social platform combining chat functionality with collaborative game creation",
+          image: "/makeafriend.png",
+          categories: ["Game Design", "Figma","UX Research", "UX/UI Design", "Strategy", "Market Research", "game-design", "web-design", "Photo Editing", "Coding", "AI Utilization"],
+          link: "/makeafriend",
+          imageStyle: "contain"
+        },
+        {
+          title: "Next SaaS",
+          description: "Website development and monitoring solutions for businesses",
+          image: "/nextsaaslogo.png",
+          categories: ["Business Strategy", "Figma","UX/UI Design", "Research", "Project Management", "web-design", "Coding", "AI Utilization"],
+          link: "/nextsaas",
+          imageStyle: "contain"
+        }
+      ]
+    },
+    {
+      title: "Sri Lanka",
+      icon: <Camera className="w-8 h-8 text-blue-400" />,
+      description: "Collaborations focused on education and community empowerment in South Asia",
+      projects: [
+        {
+          title: "Save Yalla",
+          description: "Video production and fundraising campaign for educational resources",
+          image: "/saveyalla.png",
+          categories: ["Video Production", "Client Collaboration", "Interview", "Marketing"],
+          link: "/saveyalla"
+        },
+        {
+          title: "Wild Breeze Infomercial",
+          description: "Commercial production for a boutique bungalow resort",
+          image: "/wildbreeze.png",
+          categories: ["Video Production", "Narration", "Client Collaboration"],
+          link: "/wildbreeze"
+        },
+        {
+          title: "Poetry Book Cover",
+          description: "Cover design for local poet's anthology",
+          image: "/yesican.png",
+          categories: ["Product Design", "Visual Design", "Client Collaboration", "product-design", "Photo Editing"],
+          link: "/yesican"
+        }
+      ]
+    },
+    {
+      title: "Malaysia",
+      icon: <Coffee className="w-8 h-8 text-blue-400" />,
+      description: "Brand and visual identity projects in Southeast Asia's dynamic food scene",
+      projects: [
+        {
+          title: "Zul's Highway Cafe",
+          description: "Complete menu redesign and brand refresh",
+          image: "/cafemenu.png",
+          categories: ["Product Design", "Visual Design", "Client Collaboration", "product-design", "Photo Editing"],
+          link: "/cafe"
+        }
+      ]
+    },
+    {
+      title: "Thailand",
+      icon: <Store className="w-8 h-8 text-blue-400" />,
+      description: "Product design work for artisanal food producers",
+      projects: [
+        {
+          title: "Sathanee Jam Labels",
+          description: "Product label design for artisan restaurant",
+          image: "/jamjar.png",
+          categories: ["Product Design", "Visual Design", "Client Collaboration", "product-design", "Photo Editing"],
+          link: "/jam-jars"
+        }
+      ]
+    }
+  ];
+
   return (
-    <div
-      className={`${poppins.variable} ${jetBrainsMono.variable} grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen bg-gray-900 text-white p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-poppins)]`}
-    >
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="rounded-full border-4 border-gray-600 dark:border-gray-400"
-          src="/profile-pic.jpg"
-          alt="Your Name"
-          width={180}
-          height={180}
-          priority
-        />
-        <h1 className="text-4xl font-bold">John Doe</h1>
-        <h2 className="text-xl text-gray-400">UX Designer</h2>
-        <p className="text-gray-300 max-w-md text-center sm:text-left">
-          As a UX Designer, I craft intuitive and visually stunning digital experiences that delight users. With a keen eye for detail and a passion for problem-solving, I collaborate closely with clients to translate their vision into reality.
-        </p>
+    <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen bg-gray-900 text-white`}>
+      <IndexNavigation />
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-blue-600 text-white gap-2 hover:bg-blue-700 text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="resume.pdf"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className=""
-              src="/download.svg"
-              alt="Download icon"
-              width={20}
-              height={20}
-            />
-            Download Resume
-          </a>
-          <a
-            className="rounded-full border border-solid border-gray-600 dark:border-gray-400 transition-colors flex items-center justify-center hover:bg-gray-800 dark:hover:bg-gray-700 hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="mailto:john.doe@example.com"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Contact Me
-          </a>
-        </div>
-      </main>
-
-      <section className="row-start-2 w-full max-w-5xl flex flex-col gap-8">
-        <h2 className="text-2xl font-bold">My Projects</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-6">
-          <div className="bg-gray-800 p-4 rounded-lg flex flex-col items-center justify-center">
-            <Image
-              src="/project-placeholder.svg"
-              alt="Project 1"
-              width={48}
-              height={48}
-              className="mb-2"
-            />
-            <p className="text-gray-400 font-medium">Project 1</p>
+      {/* Hero Section */}
+      <div className={`max-w-6xl mx-auto px-6 pt-32 pb-20 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="flex items-start gap-8">
+          <div className="space-y-6 flex-1">
+            <h1 className="text-4xl sm:text-5xl font-light">Hey, I'm Shmoo.</h1>
+            <div className="space-y-4">
+              <p className="text-2xl sm:text-3xl font-light">
+                I believe in creating software that bridges cultural gaps and brings people together.
+              </p>
+              <p className="text-2xl sm:text-3xl font-light">
+                Software that makes you feel connected - feel part of a world that is global in every sense of the word.
+              </p>
+              <p className="text-2xl sm:text-3xl font-light">
+                Software that tells stories of different cultures and the people who shape them.
+              </p>
+              <p className="text-2xl sm:text-3xl font-light">
+                I utilize figma and coding in conjunction with AI tools, all as
+                 a means to create intuitive and user-friendly digital experiences
+                 that speak to us as a people.
+              </p>
+            </div>
           </div>
-          <div className="bg-gray-800 p-4 rounded-lg flex flex-col items-center justify-center">
-            <Image
-              src="/project-placeholder.svg"
-              alt="Project 2"
-              width={48}
-              height={48}
-              className="mb-2"
-            />
-            <p className="text-gray-400 font-medium">Project 2</p>
-          </div>
-          <div className="bg-gray-800 p-4 rounded-lg flex flex-col items-center justify-center">
-            <Image
-              src="/project-placeholder.svg"
-              alt="Project 3"
-              width={48}
-              height={48}
-              className="mb-2"
-            />
-            <p className="text-gray-400 font-medium">Project 3</p>
-          </div>
-          <div className="bg-gray-800 p-4 rounded-lg flex flex-col items-center justify-center">
-            <Image
-              src="/project-placeholder.svg"
-              alt="Project 4"
-              width={48}
-              height={48}
-              className="mb-2"
-            />
-            <p className="text-gray-400 font-medium">Project 4</p>
+          <div className="mt-16">
+            <Portrait />
           </div>
         </div>
-      </section>
 
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-400"
-          href="https://www.linkedin.com/in/john-doe"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/linkedin.svg"
-            alt="LinkedIn icon"
-            width={16}
-            height={16}
-          />
-          LinkedIn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4 text-gray-400"
-          href="https://github.com/john-doe"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/github.svg"
-            alt="GitHub icon"
-            width={16}
-            height={16}
-          />
-          GitHub
-        </a>
-      </footer>
+        {/* Search Logic Component */}
+        <div className="mt-16">
+          <SearchLogic sections={sections} />
+        </div>
+      </div>
     </div>
   );
 }
