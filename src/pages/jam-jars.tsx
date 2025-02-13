@@ -44,10 +44,7 @@ export default function JamJarsProject() {
             
             <div className="relative max-w-6xl mx-auto px-6">
               <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-                <Link 
-                  href="/" 
-                  className="text-xl font-medium hover:text-blue-400 transition-colors flex items-center gap-4"
-                >
+                <Link href="/" className="text-xl font-medium hover:text-blue-400 transition-colors flex items-center gap-4">
                   <div className="w-8 h-8 bg-gray-800 rounded-full">
                     <Image
                       src="/logo.png"
@@ -71,21 +68,15 @@ export default function JamJarsProject() {
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="hover:text-blue-400 transition-colors"
-                  >
-                    LinkedIn
-                  </a>
+                  >LinkedIn</a>
                   <a 
                     href="mailto:samuelshmoobigus@yahoo.com" 
                     className="hover:text-blue-400 transition-colors"
-                  >
-                    Email
-                  </a>
+                  >Email</a>
                   <Link 
                     href="/cv" 
                     className="hover:text-blue-400 transition-colors"
-                  >
-                    CV
-                  </Link>
+                  >CV</Link>
                 </div>
               </div>
             </div>
@@ -93,8 +84,9 @@ export default function JamJarsProject() {
         </nav>
 
         <main className="max-w-4xl mx-auto px-6 pt-32 pb-20">
+          {/* Header Section */}
           <header className="mb-16">
-            <h1 className="text-4xl md:text-5xl font-light mb-4 text-center text-white">
+            <h1 className="text-4xl md:text-5xl font-light mb-4 text-center">
               Artisan food. Tasteful Design.
             </h1>
             <p className="text-xl text-gray-100 mb-8 text-center">
@@ -116,52 +108,70 @@ export default function JamJarsProject() {
               ))}
             </div>
 
-            <div className="bg-gray-800/50 p-6 rounded-3xl backdrop-blur-sm ring-1 ring-blue-400/20 mx-auto" style={{ width: 'fit-content' }}>
-              <div className="relative rounded-3xl overflow-hidden mx-auto" style={{ width: '600px' }}>
+            {/* Vertical Stack of Jam Labels */}
+            <div className="space-y-4 mb-16">
+              <div className="bg-yellow-200 p-4 rounded-lg">
                 <Image 
-                  src="/jamlabel.png"
-                  alt="Jam Label Display"
-                  width={1500}
-                  height={1800}
-                  className="w-full h-auto rounded-3xl"
-                  priority
+                  src="/jamjar1.png"
+                  alt="Mango Jam Label"
+                  width={800}
+                  height={200}
+                  className="w-full object-contain"
+                />
+              </div>
+              <div className="bg-orange-200 p-4 rounded-lg">
+                <Image 
+                  src="/jamjar2.png"
+                  alt="Orange Marmelade Label"
+                  width={800}
+                  height={200}
+                  className="w-full object-contain"
+                />
+              </div>
+              <div className="bg-purple-200 p-4 rounded-lg">
+                <Image 
+                  src="/jamjar3.png"
+                  alt="Mango-steen Label"
+                  width={800}
+                  height={200}
+                  className="w-full object-contain"
                 />
               </div>
             </div>
           </header>
 
+          {/* Project Overview - Vertical Stack */}
           <section className="mb-16 space-y-8">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="bg-red-900/50 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20">
-                <h2 className="text-2xl font-light mb-4">The Challenge</h2>
-                <p className="text-xl text-gray-300">
-                  Sathanee restaurant, known for their roast duck and exceptional homemade jams, needed product labels
-                  for their retail line. Recognizing the opportunity to elevate their brand, I took the
-                  initiative to expand the project beyond simple labels. The challenge became creating
-                  a complete visual identity system that would authentically capture their artisanal
-                  approach and the unique character of their island location.
-                </p>
-              </div>
-              
-              <div className="bg-amber-900/50 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20">
-                <h2 className="text-2xl font-light mb-4">The Approach</h2>
-                <p className="text-xl text-gray-300">
-                  Found on a quaint island in Thailand and filled with homemade décor and the aroma 
-                  of fresh cuisine, every aspect of the Sathanee restaurant embodies their unique vision. 
-                  Their food matches their art - original and tasteful, yet with a familiar comfort 
-                  that makes it feel like home. This essence became the foundation for developing 
-                  their visual identity, resulting in a versatile design system featuring a distinctive 
-                  logo inspired by local wildlife and three color-coordinated labels that maintain 
-                  visual consistency while distinguishing between jam varieties.
-                </p>
-              </div>
+            <div className="bg-red-900/50 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20">
+              <h2 className="text-2xl font-light mb-4">The Challenge</h2>
+              <p className="text-xl text-gray-300">
+                Sathanee restaurant, known for their roast duck and exceptional homemade jams, needed product labels
+                for their retail line. Recognizing the opportunity to elevate their brand, I took the
+                initiative to expand the project beyond simple labels. The challenge became creating
+                a complete visual identity system that would authentically capture their artisanal
+                approach and the unique character of their island location.
+              </p>
+            </div>
+            
+            <div className="bg-amber-900/50 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20">
+              <h2 className="text-2xl font-light mb-4">The Approach</h2>
+              <p className="text-xl text-gray-300">
+                Found on a quaint island in Thailand and filled with homemade décor and the aroma 
+                of fresh cuisine, every aspect of the Sathanee restaurant embodies their unique vision. 
+                Their food matches their art - original and tasteful, yet with a familiar comfort 
+                that makes it feel like home. This essence became the foundation for developing 
+                their visual identity, resulting in a versatile design system featuring a distinctive 
+                logo inspired by local wildlife and three color-coordinated labels that maintain 
+                visual consistency while distinguishing between jam varieties.
+              </p>
             </div>
           </section>
 
+          {/* Creative Elements Section */}
           <section className="mb-32">
             <h2 className="text-4xl font-light mb-8">Creative Elements</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-gray-900 p-8 rounded-2xl ring-1 ring-blue-400/20">
+              <div className="bg-purple-900 p-8 rounded-2xl">
                 <h3 className="text-2xl font-light mb-4">Modern Touch</h3>
                 <p className="text-xl text-gray-300 mb-6">
                   Integrated modern functionality through a QR code linking to their Instagram while 
@@ -178,7 +188,7 @@ export default function JamJarsProject() {
                 </div>
               </div>
 
-              <div className="bg-gray-900 p-8 rounded-2xl ring-1 ring-blue-400/20">
+              <div className="bg-purple-900 p-8 rounded-2xl">
                 <h3 className="text-2xl font-light mb-4">The Local Bird</h3>
                 <p className="text-xl text-gray-300 mb-6">
                   Drawing inspiration from their local celebrity, I created a distinctive logo featuring 
@@ -195,7 +205,7 @@ export default function JamJarsProject() {
                 </div>
               </div>
 
-              <div className="bg-gray-900 p-8 rounded-2xl ring-1 ring-blue-400/20">
+              <div className="bg-purple-900 p-8 rounded-2xl">
                 <h3 className="text-2xl font-light mb-4">Simple & Organic</h3>
                 <p className="text-xl text-gray-300 mb-6">
                   The hand-drawn character embodies their authentic approach, exemplified by the coffee 
@@ -214,37 +224,35 @@ export default function JamJarsProject() {
             </div>
           </section>
 
+          {/* Final Product Section with Palm Trees */}
           <section className="mb-32">
-            <h2 className="text-4xl font-light mb-8">Product Gallery</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="h-64 relative">
+            <h2 className="text-4xl font-light mb-8">The Final Product</h2>
+            <div className="bg-purple-900 p-8 rounded-2xl relative overflow-hidden">
+              <div className="relative h-96">
                 <Image 
-                  src="/jamjar1.png"
-                  alt="Jam Jar Design 1"
+                  src="/mockupjam.png"
+                  alt="Final Jam Jar Mockup"
                   fill
                   className="object-contain"
                 />
+                <div className="absolute right-0 top-0 w-64 h-full">
+                  <Image
+                    src="/jamjartree.png"
+                    alt="Decorative Tree"
+                    fill
+                    className="object-contain object-bottom"
+                  />
+                </div>
               </div>
-              <div className="h-64 relative">
-                <Image 
-                  src="/jamjar2.png"
-                  alt="Jam Jar Design 2"
-                  fill
-                  className="object-contain"
-                />
-              </div>
-              <div className="h-64 relative">
-                <Image 
-                  src="/jamjar3.png"
-                  alt="Jam Jar Design 3"
-                  fill
-                  className="object-contain"
-                />
-              </div>
+              <p className="text-xl text-gray-300 relative z-10">
+                Creating a mockup allows us to visualize how the design will appear in the real world, 
+                ensuring that every element works harmoniously on the curved surface of the jar.
+              </p>
             </div>
           </section>
 
-          <section className="text-center mt-16 space-y-8">
+          {/* Call to Action */}
+          <section className="text-center space-y-8">
             <h2 className="text-4xl font-light">Want to see more?</h2>
             <div className="flex justify-center">
               <Link 
