@@ -7,7 +7,7 @@ const CVPage = () => {
       <header className="text-center mb-8">
         <h1 className="text-3xl font-bold mb-2">Samuel Bigus</h1>
         <p className="text-gray-600 mb-2">
-          Kredytowa 6, 00-062 Warsaw, Poland | (+48) 791148644 | samuelshmoobigus@yahoo.com
+          samuelshmoobigus@yahoo.com
         </p>
         <div className="text-sm text-gray-600">
           Portfolio:
