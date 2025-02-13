@@ -15,7 +15,7 @@ const jetBrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600", "700"],
 });
 
-export default function JamJarsProject() {
+const JamJarsProject: React.FC = () => {
   const [isHovering, setIsHovering] = useState(false);
 
   return (
@@ -35,12 +35,15 @@ export default function JamJarsProject() {
       <div className="relative z-10">
         <nav className="fixed w-full top-0 z-50">
           <div className="relative">
+            {/* Background with shade */}
             <div className="absolute inset-0" style={{
-              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/images/backgrounds/jamback2.png')`,
+              backgroundImage: `url('/images/backgrounds/jamback2.png')`,
               backgroundSize: 'cover',
-              backgroundPosition: 'center'
+              backgroundPosition: 'center',
+              filter: 'brightness(0.5)'
             }} />
             
+            {/* Navigation content */}
             <div className="relative max-w-6xl mx-auto px-6">
               <div className="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
                 <Link 
@@ -92,34 +95,11 @@ export default function JamJarsProject() {
         </nav>
 
         <main className="max-w-4xl mx-auto px-6 pt-32 pb-20">
-          <header className="mb-16">
-            <h1 className="text-4xl md:text-5xl font-light mb-4 text-center text-white">
-              Artisan food. Tasteful Design.
-            </h1>
-            <p className="text-xl text-gray-100 mb-8 text-center">
-              A brand identity project for Sathanee restaurant
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              {["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"].map((category, index) => (
-                <span
-                  key={index}
-                  className="px-6 py-3 rounded-full text-xl text-black font-bold border-2 border-black"
-                  style={{
-                    backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('/images/backgrounds/jamback1.png')`,
-                    backgroundSize: 'cover',
-                    backgroundPosition: 'center'
-                  }}
-                >
-                  {category}
-                </span>
-              ))}
-            </div>
-          </header>
-
+          {/* Project Overview */}
           <section className="mb-16 space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div className="bg-gray-800/50 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20" style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9)), url('/images/backgrounds/jamback4.png')`,
+                backgroundImage: `url('/images/backgrounds/jamback4.png')`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundBlendMode: 'overlay'
@@ -127,22 +107,28 @@ export default function JamJarsProject() {
                 <h2 className="text-2xl font-light mb-4">The Challenge</h2>
                 <p className="text-xl text-gray-300">
                   Sathanee restaurant, known for their roast duck and exceptional homemade jams, needed product labels
-                  for their retail line. The challenge became creating a complete visual identity system 
-                  that would authentically capture their artisanal approach and island character.
+                  for their retail line. Recognizing the opportunity to elevate their brand, I took the
+                  initiative to expand the project beyond simple labels. The challenge became creating
+                  a complete visual identity system that would authentically capture their artisanal
+                  approach and the unique character of their island location.
                 </p>
               </div>
               
               <div className="bg-gray-900/40 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20" style={{
-                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.9), rgba(0, 0, 0, 0.9)), url('/images/backgrounds/jamback3.png')`,
+                backgroundImage: `url('/images/backgrounds/jamback3.png')`,
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundBlendMode: 'overlay'
               }}>
                 <h2 className="text-2xl font-light mb-4">The Approach</h2>
                 <p className="text-xl text-gray-300">
-                  Found on a quaint island in Thailand and filled with homemade décor, every aspect of 
-                  Sathanee restaurant embodies their unique vision. This essence became the foundation 
-                  for their visual identity.
+                  Found on a quaint island in Thailand and filled with homemade décor and the aroma 
+                  of fresh cuisine, every aspect of the Sathanee restaurant embodies their unique vision. 
+                  Their food matches their art - original and tasteful, yet with a familiar comfort 
+                  that makes it feel like home. This essence became the foundation for developing 
+                  their visual identity, resulting in a versatile design system featuring a distinctive 
+                  logo inspired by local wildlife and three color-coordinated labels that maintain 
+                  visual consistency while distinguishing between jam varieties.
                 </p>
               </div>
             </div>
@@ -219,6 +205,7 @@ export default function JamJarsProject() {
             </div>
           </section>
 
+          {/* Call to Action with preserved hover effect */}
           <section className="text-center mt-16 space-y-8">
             <h2 className="text-4xl font-light text-white">Want to see more?</h2>
             <div className="flex justify-center">
@@ -226,7 +213,7 @@ export default function JamJarsProject() {
                 href="/"
                 className="px-6 py-3 rounded-full transition-all duration-300 border-2 border-black text-xl text-black font-bold"
                 style={{
-                  backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url('/images/backgrounds/${isHovering ? 'jamback3.png' : 'jamback1.png'}')`,
+                  backgroundImage: `url('/images/backgrounds/${isHovering ? 'jamback3.png' : 'jamback1.png'}')`,
                   backgroundSize: 'cover',
                   backgroundPosition: 'center'
                 }}
@@ -241,4 +228,6 @@ export default function JamJarsProject() {
       </div>
     </div>
   );
-}
+};
+
+export default JamJarsProject;
