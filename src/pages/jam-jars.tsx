@@ -10,7 +10,7 @@ const poppins = Poppins({
 });
 
 const jetBrainsMono = JetBrains_Mono({
-  variable: "--font-poppins",
+  variable: "--font-jet-brains-mono",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
 });
@@ -22,7 +22,7 @@ export default function JamJarsProject() {
     <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen text-gray-100 relative`}>
       <div className="fixed inset-0 z-0" style={{
         backgroundImage: `
-          linear-gradient(rgba(17, 24, 39, 0.4), rgba(17, 24, 39, 0.4)),
+          linear-gradient(rgba(17, 24, 39, 0.3), rgba(17, 24, 39, 0.3)),
           url('/images/backgrounds/jamback1.png'),
           url('/images/backgrounds/jamback2.png'),
           url('/images/backgrounds/jamback3.png')
@@ -36,7 +36,7 @@ export default function JamJarsProject() {
         <nav className="fixed w-full top-0 z-50">
           <div className="relative">
             <div className="absolute inset-0" style={{
-              backgroundImage: `url('/images/backgrounds/jamback2.png')`,
+              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.1)), url('/images/backgrounds/jamback2.png')`,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               filter: 'brightness(0.5)'
@@ -86,13 +86,9 @@ export default function JamJarsProject() {
         <main className="max-w-4xl mx-auto px-6 pt-32 pb-20">
           {/* Header Section */}
           <header className="mb-16">
-            <h1 className="text-4xl md:text-5xl font-light mb-4 text-center">
-              Artisan food. Tasteful Design.
-            </h1>
-            <p className="text-xl text-gray-100 mb-8 text-center">
-              A brand identity project for Sathanee restaurant
-            </p>
-            <div className="flex flex-wrap justify-center gap-4 mb-12">
+            <h1 className="text-5xl font-light mb-6 text-center">Artisan food. Tasteful Design.</h1>
+            <p className="text-2xl text-center font-light mb-12">A brand identity project for Sathanee restaurant</p>
+            <div className="flex flex-wrap gap-4 justify-center mb-12">
               {["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"].map((category, index) => (
                 <span
                   key={index}
@@ -107,56 +103,62 @@ export default function JamJarsProject() {
                 </span>
               ))}
             </div>
-
-            {/* Vertical Stack of Jam Labels */}
-             <div className="bg-gray-800/50 p-6 rounded-3xl backdrop-blur-sm ring-1 ring-blue-400/20 mx-auto" style={{ width: 'fit-content' }}>
-              <div className="relative rounded-3xl overflow-hidden mx-auto" style={{ width: '600px' }}>
+            
+            <div className="bg-gray-800/50 p-6 rounded-3xl backdrop-blur-sm ring-1 ring-blue-400/20 mx-auto" style={{ width: 'fit-content' }}>
+              <div className="relative overflow-hidden mx-auto" style={{ width: '600px' }}>
                 <Image 
                   src="/jamlabel.png"
                   alt="Jam Label Display"
                   width={1500}
                   height={1800}
-                  className="w-full h-auto rounded-3xl"
+                  className="w-full h-auto"
                   priority
                 />
               </div>
             </div>
           </header>
 
-          {/* Project Overview - Vertical Stack */}
-          <section className="mb-16 space-y-8">
-            <div className="bg-red-900/50 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20">
-              <h2 className="text-2xl font-light mb-4">The Challenge</h2>
-              <p className="text-xl text-gray-300">
-                Sathanee restaurant, known for their roast duck and exceptional homemade jams, needed product labels
-                for their retail line. Recognizing the opportunity to elevate their brand, I took the
-                initiative to expand the project beyond simple labels. The challenge became creating
-                a complete visual identity system that would authentically capture their artisanal
-                approach and the unique character of their island location.
-              </p>
-            </div>
-            
-            <div className="bg-amber-900/50 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20">
-              <h2 className="text-2xl font-light mb-4">The Approach</h2>
-              <p className="text-xl text-gray-300">
-                Found on a quaint island in Thailand and filled with homemade décor and the aroma 
-                of fresh cuisine, every aspect of the Sathanee restaurant embodies their unique vision. 
-                Their food matches their art - original and tasteful, yet with a familiar comfort 
-                that makes it feel like home. This essence became the foundation for developing 
-                their visual identity, resulting in a versatile design system featuring a distinctive 
-                logo inspired by local wildlife and three color-coordinated labels that maintain 
-                visual consistency while distinguishing between jam varieties.
-              </p>
+          {/* Problem Statement Section */}
+          <section className="mb-32">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20" style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/images/backgrounds/jamback4.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
+                <h2 className="text-2xl font-light mb-6">The Challenge</h2>
+                <p className="text-xl text-gray-300">
+                  Sathanee restaurant, known for their roast duck and exceptional homemade jams, needed product labels
+                  for their retail line. Recognizing the opportunity to elevate their brand, I took the
+                  initiative to expand the project beyond simple labels.
+                </p>
+              </div>
+              
+              <div className="p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20" style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/images/backgrounds/jamback3.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
+                <h2 className="text-2xl font-light mb-6">The Approach</h2>
+                <p className="text-xl text-gray-300">
+                  Through careful research and collaboration with the restaurant owners, we developed a design
+                  that reflects both their artisanal approach and their unique island location.
+                </p>
+              </div>
             </div>
           </section>
 
-          {/* Creative Elements Section */}
+          {/* Creative Elements */}
           <section className="mb-32">
             <h2 className="text-4xl font-light mb-8">Creative Elements</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-purple-900 p-8 rounded-2xl">
-                <h3 className="text-2xl font-light mb-4">Modern Touch</h3>
-                <p className="text-xl text-gray-300 mb-6">
+              <div className="p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20" style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/images/backgrounds/jamback2.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
+                <h3 className="text-xl font-medium mb-4">Modern Touch</h3>
+                <p className="text-xl text-gray-300">
                   Integrated modern functionality through a QR code linking to their Instagram while 
                   preserving the handcrafted feel.
                 </p>
@@ -171,9 +173,13 @@ export default function JamJarsProject() {
                 </div>
               </div>
 
-              <div className="bg-purple-900 p-8 rounded-2xl">
-                <h3 className="text-2xl font-light mb-4">The Local Bird</h3>
-                <p className="text-xl text-gray-300 mb-6">
+              <div className="p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20" style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/images/backgrounds/jamback2.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
+                <h3 className="text-xl font-medium mb-4">The Local Bird</h3>
+                <p className="text-xl text-gray-300">
                   Drawing inspiration from their local celebrity, I created a distinctive logo featuring 
                   the beloved island bird.
                 </p>
@@ -188,9 +194,13 @@ export default function JamJarsProject() {
                 </div>
               </div>
 
-              <div className="bg-purple-900 p-8 rounded-2xl">
-                <h3 className="text-2xl font-light mb-4">Simple & Organic</h3>
-                <p className="text-xl text-gray-300 mb-6">
+              <div className="p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20" style={{
+                backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/images/backgrounds/jamback2.png')`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center'
+              }}>
+                <h3 className="text-xl font-medium mb-4">Simple & Organic</h3>
+                <p className="text-xl text-gray-300">
                   The hand-drawn character embodies their authentic approach, exemplified by the coffee 
                   stain patterns on each label.
                 </p>
@@ -207,10 +217,14 @@ export default function JamJarsProject() {
             </div>
           </section>
 
-          {/* Final Product Section with Palm Trees */}
+          {/* Final Product Section */}
           <section className="mb-32">
             <h2 className="text-4xl font-light mb-8">The Final Product</h2>
-            <div className="bg-purple-900 p-8 rounded-2xl relative overflow-hidden">
+            <div className="p-8 rounded-2xl relative overflow-hidden" style={{
+              backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('/images/backgrounds/jamback2.png')`,
+              backgroundSize: 'cover',
+              backgroundPosition: 'center'
+            }}>
               <div className="relative h-96">
                 <Image 
                   src="/mockupjam.png"
