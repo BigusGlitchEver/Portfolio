@@ -109,32 +109,15 @@ export default function JamJarsProject() {
             </div>
 
             {/* Vertical Stack of Jam Labels */}
-            <div className="space-y-4 mb-16">
-              <div className="bg-yellow-200 p-4 rounded-lg">
+             <div className="bg-gray-800/50 p-6 rounded-3xl backdrop-blur-sm ring-1 ring-blue-400/20 mx-auto" style={{ width: 'fit-content' }}>
+              <div className="relative rounded-3xl overflow-hidden mx-auto" style={{ width: '600px' }}>
                 <Image 
-                  src="/jamjar1.png"
-                  alt="Mango Jam Label"
-                  width={800}
-                  height={200}
-                  className="w-full object-contain"
-                />
-              </div>
-              <div className="bg-orange-200 p-4 rounded-lg">
-                <Image 
-                  src="/jamjar2.png"
-                  alt="Orange Marmelade Label"
-                  width={800}
-                  height={200}
-                  className="w-full object-contain"
-                />
-              </div>
-              <div className="bg-purple-200 p-4 rounded-lg">
-                <Image 
-                  src="/jamjar3.png"
-                  alt="Mango-steen Label"
-                  width={800}
-                  height={200}
-                  className="w-full object-contain"
+                  src="/jamlabel.png"
+                  alt="Jam Label Display"
+                  width={1500}
+                  height={1800}
+                  className="w-full h-auto rounded-3xl"
+                  priority
                 />
               </div>
             </div>
