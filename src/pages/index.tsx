@@ -2,9 +2,9 @@ import { useState, useEffect } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { Poppins, JetBrains_Mono } from "next/font/google";
-import Portrait from '../components/Portrait';
-import IndexNavigation from '../components/IndexNavigation';
-import SearchLogic from '../components/SearchLogic';
+import Portrait from '@/components/Portrait';
+import IndexNavigation from '@/components/IndexNavigation';
+import SearchLogic from '@/components/SearchLogic';
 import { Book, Gamepad2, Globe, Brush, PenTool, Coffee, Camera, Store } from 'lucide-react';
 
 const poppins = Poppins({
