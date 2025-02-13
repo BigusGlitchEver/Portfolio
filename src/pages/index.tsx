@@ -1,6 +1,6 @@
-// pages/index.tsx
 import { useState, useEffect } from 'react';
 import Image from "next/image";
+import Link from "next/link";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import Portrait from '../components/Portrait';
 import IndexNavigation from '../components/IndexNavigation';
@@ -21,10 +21,19 @@ const jetBrainsMono = JetBrains_Mono({
 
 export default function LandingPage() {
   const [isVisible, setIsVisible] = useState(false);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   useEffect(() => {
     setIsVisible(true);
   }, []);
+
+  const handleCategoryClick = (category: string) => {
+    setActiveCategory(category);
+    const searchElement = document.querySelector('.search-component');
+    if (searchElement) {
+      searchElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
 
   const sections = [
     {
@@ -57,14 +66,14 @@ export default function LandingPage() {
           title: "Poly Plaza",
           description: "A sandbox game focused on property management and economic systems",
           image: "/polyplaza.png",
-          categories: ["Game Design", "Quest Design", "Mechanics Design", "game-design", "Low Code", "AI Utilization"],
+          categories: ["Game Design", "Quest Design", "Mechanics Design", "Low Code", "AI Utilization"],
           link: "/polyplaza"
         },
         {
           title: "Broll",
           description: "3D ragdoll-based platformer with innovative physics mechanics",
           image: "/broll.png",
-          categories: ["Game Design", "Level Design", "game-design"],
+          categories: ["Game Design", "Level Design"],
           link: "/broll"
         }
       ]
@@ -78,7 +87,7 @@ export default function LandingPage() {
           title: "Art Pocketbook",
           description: "A comprehensive platform helping artists understand their sales data and market presence while reducing stress",
           image: "/hiprototype.png",
-          categories: ["Figma","UX/UI Design", "Research", "web-design"],
+          categories: ["Figma", "UX/UI Design", "Research", "Web Design"],
           link: "/art-pocketbook",
           buttons: [
             {
@@ -109,7 +118,7 @@ export default function LandingPage() {
           title: "Make a Friend",
           description: "Social platform combining chat functionality with collaborative game creation",
           image: "/makeafriend.png",
-          categories: ["Game Design", "Figma","UX Research", "UX/UI Design", "Strategy", "Market Research", "game-design", "web-design", "Photo Editing", "Coding", "AI Utilization"],
+          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
           link: "/makeafriend",
           imageStyle: "contain"
         },
@@ -117,7 +126,7 @@ export default function LandingPage() {
           title: "Next SaaS",
           description: "Website development and monitoring solutions for businesses",
           image: "/nextsaaslogo.png",
-          categories: ["Business Strategy", "Figma","UX/UI Design", "Research", "Project Management", "web-design", "Coding", "AI Utilization"],
+          categories: ["Business Strategy", "Figma", "UX/UI Design", "Research", "Project Management", "Web Design", "Coding", "AI Utilization"],
           link: "/nextsaas",
           imageStyle: "contain"
         }
@@ -146,7 +155,7 @@ export default function LandingPage() {
           title: "Poetry Book Cover",
           description: "Cover design for local poet's anthology",
           image: "/yesican.png",
-          categories: ["Product Design", "Visual Design", "Client Collaboration", "product-design", "Photo Editing"],
+          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
           link: "/yesican"
         }
       ]
@@ -160,7 +169,7 @@ export default function LandingPage() {
           title: "Zul's Highway Cafe",
           description: "Complete menu redesign and brand refresh",
           image: "/cafemenu.png",
-          categories: ["Product Design", "Visual Design", "Client Collaboration", "product-design", "Photo Editing"],
+          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
           link: "/cafe"
         }
       ]
@@ -174,7 +183,7 @@ export default function LandingPage() {
           title: "Sathanee Jam Labels",
           description: "Product label design for artisan restaurant",
           image: "/jamjar.png",
-          categories: ["Product Design", "Visual Design", "Client Collaboration", "product-design", "Photo Editing"],
+          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
           link: "/jam-jars"
         }
       ]
@@ -185,7 +194,6 @@ export default function LandingPage() {
     <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen bg-gray-900 text-white`}>
       <IndexNavigation />
 
-      {/* Hero Section */}
       <div className={`max-w-6xl mx-auto px-6 pt-32 pb-20 transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
         <div className="flex items-start gap-8">
           <div className="space-y-6 flex-1">
@@ -212,9 +220,78 @@ export default function LandingPage() {
           </div>
         </div>
 
-        {/* Search Logic Component */}
-        <div className="mt-16">
-          <SearchLogic sections={sections} />
+        <div className="mt-16 search-component">
+          <SearchLogic sections={sections} activeCategory={activeCategory} />
+        </div>
+
+        <div className="mt-32">
+          {sections.map((section, sectionIndex) => (
+            <div key={sectionIndex} className="mb-32">
+              <div className="space-y-4 mb-16">
+                <div className="flex items-center gap-4">
+                  {section.icon}
+                  <h2 className="text-6xl font-light">{section.title}</h2>
+                </div>
+                <p className="text-xl text-gray-400">{section.description}</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16">
+                {section.projects.map((project, index) => (
+                  <div key={index} className="space-y-4 group">
+                    <Link href={project.link}>
+                      <div className="aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                                  ring-2 ring-blue-500/50 transition-all duration-300">
+                        <Image
+                          src={project.image}
+                          alt={project.title}
+                          fill
+                          className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </div>
+                    </Link>
+
+                    <div className="flex flex-wrap gap-2">
+                      {project.categories.map((category, catIndex) => (
+                        <span 
+                          key={catIndex}
+                          onClick={() => handleCategoryClick(category)}
+                          className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
+                        >
+                          {category}
+                          {catIndex < project.categories.length - 1 && (
+                            <span className="ml-2 text-gray-400">•</span>
+                          )}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="space-y-2">
+                      <Link href={project.link}>
+                        <h3 className="text-2xl font-light hover:text-blue-400 transition-colors cursor-pointer">
+                          {project.title}
+                        </h3>
+                      </Link>
+                      <p className="text-gray-400 text-lg">{project.description}</p>
+                      {project.buttons && (
+                        <div className="flex gap-4 mt-4">
+                          {project.buttons.map((button, idx) => (
+                            <Link
+                              key={idx}
+                              href={button.url}
+                              className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
+                            >
+                              {button.label}
+                            </Link>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-// components/SearchFilter.tsx
+// SearchFilter.tsx
 import React, { useState } from 'react';
 import { Search } from 'lucide-react';
 
@@ -18,17 +18,17 @@ const suggestedTags: Tag[] = [
   { 
     id: 'web-design', 
     label: 'Web Design',
-    searchTerms: ['web', 'website', 'web design', 'web development', 'website design']
+    searchTerms: ['web', 'website', 'web design', 'web development', 'website design', 'ui', 'ux']
   },
   { 
     id: 'game-design', 
     label: 'Game Design',
-    searchTerms: ['game', 'games', 'game design', 'gaming']
+    searchTerms: ['game', 'games', 'game design', 'gaming', 'mechanics', 'quest design']
   },
   { 
     id: 'product-design', 
     label: 'Product Design',
-    searchTerms: ['product', 'product design', 'design']
+    searchTerms: ['product', 'product design', 'design', 'visual design']
   },
   { 
     id: 'figma', 
@@ -36,24 +36,44 @@ const suggestedTags: Tag[] = [
     searchTerms: ['figma', 'design', 'ui', 'ux']
   },
   { 
-    id: 'photo editing', 
+    id: 'photo-editing', 
     label: 'Photo Editing',
     searchTerms: ['photo', 'editing', 'photo editing', 'retouch']
   },
   { 
     id: 'coding', 
     label: 'Coding',
-    searchTerms: ['coding', 'programming', 'coding skills', 'coding tools']
+    searchTerms: ['coding', 'programming', 'development', 'low code']
   },
   { 
-    id: 'AI Utilization', 
+    id: 'ai-utilization', 
     label: 'AI Utilization',
-    searchTerms: ['AI', 'utilization', 'AI utilization', 'artificial intelligence']
+    searchTerms: ['ai', 'artificial intelligence', 'ai utilization']
   },
   { 
     id: 'publications', 
     label: 'Publications',
     searchTerms: ['publication', 'publications', 'book', 'books', 'zine']
+  },
+  { 
+    id: 'research', 
+    label: 'Research',
+    searchTerms: ['research', 'analysis', 'study', 'market research']
+  },
+  { 
+    id: 'client-collaboration', 
+    label: 'Client Collaboration',
+    searchTerms: ['client', 'collaboration', 'consulting']
+  },
+  { 
+    id: 'marketing', 
+    label: 'Marketing',
+    searchTerms: ['marketing', 'promotion', 'branding']
+  },
+  { 
+    id: 'video-production', 
+    label: 'Video Production',
+    searchTerms: ['video', 'production', 'filming']
   }
 ];
 
@@ -64,21 +84,19 @@ const SearchFilter: React.FC<SearchFilterProps> = ({ onSearch, onTagSelect, sele
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
+    onSearch(e.target.value, false);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsButtonPressed(true);
     setTimeout(() => setIsButtonPressed(false), 200);
-    
-    const trimmedQuery = searchQuery.trim();
-    onSearch(trimmedQuery, true);
+    onSearch(searchQuery.trim(), true);
   };
 
   const handleTagClick = (tagId: string) => {
     const newTag = selectedTag === tagId ? null : tagId;
     onTagSelect(newTag);
-    setSearchQuery('');
   };
 
   return (
