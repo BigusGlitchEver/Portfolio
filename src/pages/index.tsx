@@ -7,6 +7,28 @@ import IndexNavigation from '../components/indexnavigation';
 import SearchLogic from '../components/SearchLogic';
 import { Book, Gamepad2, Globe, Brush, PenTool, Coffee, Camera, Store } from 'lucide-react';
 
+interface ProjectButton {
+  label: string;
+  url: string;
+}
+
+interface Project {
+  title: string;
+  description: string;
+  image: string;
+  categories: string[];
+  link: string;
+  imageStyle?: string;
+  buttons?: ProjectButton[];
+}
+
+interface Section {
+  title: string;
+  icon: React.ReactNode;
+  description: string;
+  projects: Project[];
+}
+
 const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
@@ -35,7 +57,7 @@ export default function LandingPage() {
     }
   };
 
-  const sections = [
+  const sections: Section[] = [
     {
       title: "Publications",
       icon: <Book className="w-8 h-8 text-blue-400" />,
@@ -240,15 +262,14 @@ export default function LandingPage() {
                   <div key={index} className="space-y-4 group">
                     <Link href={project.link}>
                       <div className="aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                                  ring-2 ring-blue-500/50 transition-all duration-300">
-                        <Image
-                          src={project.image}
-                          alt={project.title}
-                          fill
-                          className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
+                    ring-2 ring-blue-500/50 transition-all duration-300">
+        <Image
+          src={project.image}
+          alt={project.title}
+          fill
+          className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
+        />
+      </div>
                     </Link>
 
                     <div className="flex flex-wrap gap-2">
