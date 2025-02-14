@@ -2,6 +2,7 @@ import React from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { Playfair_Display } from "next/font/google";
+import Footer from '@/components/Footer';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -318,6 +319,7 @@ export default function ZineProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

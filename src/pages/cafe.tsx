@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import Image from "next/image";
-import Link from "next/link";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import ProjectNav from '../components/ProjectNav';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+import Footer from '@/components/Footer';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -251,6 +251,7 @@ export default function ZulsCafeProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

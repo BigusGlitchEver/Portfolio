@@ -2,6 +2,7 @@ import React from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { User, Mail, Globe, ChevronRight } from 'lucide-react';
+import Footer from '@/components/Footer';
 
 export default function MakeAFriendProject() {
   return (
@@ -220,6 +221,7 @@ export default function MakeAFriendProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from "next/image";
+import Footer from '@/components/Footer';
 
 export default function BrollProject() {
   return (
@@ -123,6 +124,7 @@ export default function BrollProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

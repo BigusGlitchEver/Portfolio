@@ -6,6 +6,7 @@ import Image from 'next/image';
 import UserPersonas from '../components/UserPersonas';
 import MarketAnalysis from '../components/MarketAnalysis';
 import ABTesting from '../components/ABTesting';
+import Footer from '@/components/Footer';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -223,6 +224,7 @@ export default function ArtPocketbookProject() {
         </section>
 
       </main>
+      <Footer />
     </div>
   );
 }

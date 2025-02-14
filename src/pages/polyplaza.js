@@ -1,5 +1,6 @@
 import React from 'react';
 import Image from "next/image";
+import Footer from '@/components/Footer';
 
 export default function PolyPlazaProject() {
   return (
@@ -125,6 +126,7 @@ export default function PolyPlazaProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

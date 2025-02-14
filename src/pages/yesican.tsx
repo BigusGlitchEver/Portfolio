@@ -2,6 +2,7 @@ import React from 'react';
 import Image from "next/image";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import ProjectNav from '../components/ProjectNav';
+import Footer from '@/components/Footer';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -158,6 +159,7 @@ export default function BookCoverProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

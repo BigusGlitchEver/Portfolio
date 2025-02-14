@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { Poppins, JetBrains_Mono } from "next/font/google";
+import Footer from '@/components/Footer';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -268,6 +269,7 @@ export default function JamJarsProject() {
             </div>
           </section>
         </main>
+        <Footer />
       </div>
     </div>
   );

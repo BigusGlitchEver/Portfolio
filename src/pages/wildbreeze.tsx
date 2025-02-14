@@ -1,6 +1,7 @@
 import React from 'react';
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import ProjectNav from '../components/ProjectNav';
+import Footer from '@/components/Footer';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -174,6 +175,7 @@ export default function WildBreezeProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

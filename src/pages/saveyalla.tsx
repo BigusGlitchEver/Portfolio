@@ -2,6 +2,7 @@ import React from 'react';
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import ProjectNav from '../components/ProjectNav';
 import Image from 'next/image';
+import Footer from '@/components/Footer';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -169,6 +170,7 @@ export default function SaveYallaProject() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }

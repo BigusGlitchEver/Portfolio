@@ -2,6 +2,7 @@ import React from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import { Target, Brain, Search, Users, Palette, BarChart, Code, Bot } from 'lucide-react';
+import Footer from '@/components/Footer';
 
 export default function NextSaaSProject() {
   return (
@@ -227,6 +228,7 @@ export default function NextSaaSProject() {
             </div>
           </div>
         </main>
+        <Footer />
       </section>
     </div>
   );

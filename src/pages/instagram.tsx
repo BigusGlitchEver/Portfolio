@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from "next/image";
 import Link from "next/link";
+import Footer from '@/components/Footer';
 import { 
   Home, Heart, MessageSquare, ImageIcon, Bookmark, 
   ChevronDown, 
@@ -297,6 +298,7 @@ const InstagramPage = () => {
             </div>
           </section>
         </main>
+        <Footer />
       </div>
     </div>
   );
