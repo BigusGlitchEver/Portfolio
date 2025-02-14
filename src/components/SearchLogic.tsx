@@ -5,47 +5,41 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SearchResults from './SearchResults';
 
-interface Project {
-  title: string;
-  description: string;
-  image: string;
-  categories: string[];
-  link: string;
-  imageStyle?: string;
-  buttons?: Array<{
-    label: string;
-    url: string;
-  }>;
-}
+const SearchLogic = ({ sections, activeCategory }) => {
+  // Define suggested tags at the top of the component
+  const suggestedTags = [
+    "Web Design",
+    "Game Design",
+    "Product Design",
+    "Figma",
+    "Photo Editing",
+    "Coding",
+    "AI Utilization",
+    "Publications",
+    "Research",
+    "Client Collaboration",
+    "Marketing",
+    "Video Production"
+  ];
 
-interface Section {
-  title: string;
-  icon: React.ReactNode;
-  description: string;
-  projects: Project[];
-}
-
-interface SearchLogicProps {
-  sections: Section[];
-  activeCategory: string | null;
-}
-
-const suggestedTags = [
-  "Web Design",
-  "Product Design",
-  "Figma",
-  "Coding",
-  "AI Utilization",
-  "Research",
-];
-
-const SearchLogic: React.FC<SearchLogicProps> = ({ sections, activeCategory }) => {
+  // State definitions
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   const [shouldScrollToResults, setShouldScrollToResults] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   useEffect(() => {
     if (activeCategory) {
@@ -56,39 +50,124 @@ const SearchLogic: React.FC<SearchLogicProps> = ({ sections, activeCategory }) =
     }
   }, [activeCategory]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (e) => {
     setInputValue(e.target.value);
     setSelectedTag(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setIsButtonPressed(true);
     setTimeout(() => setIsButtonPressed(false), 200);
     
     setIsSearching(true);
-    setShouldScrollToResults(false); // Don't scroll for search bar submissions
+    setShouldScrollToResults(false);
     setTimeout(() => {
       setSearchQuery(inputValue.trim());
       setIsSearching(false);
     }, 300);
   };
 
-  // For suggested tags at the top
-  const handleTagClick = (tag: string) => {
+  const handleTagClick = (tag) => {
     const newTag = selectedTag === tag ? null : tag;
     setSelectedTag(newTag);
     setInputValue('');
-    setShouldScrollToResults(false); // Don't scroll for suggested tags
+    setShouldScrollToResults(false);
     setSearchQuery(newTag || '');
   };
 
-  // For project category tags
-  const handleProjectTagClick = (tag: string) => {
-    setSelectedTag(tag);
-    setInputValue('');
-    setShouldScrollToResults(true); // Do scroll for project category clicks
-    setSearchQuery(tag);
+  const renderProject = (project) => {
+    if (isMobile) {
+      return (
+        <div className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
+          <Link href={project.link}>
+            <h3 className="text-xl font-light text-white mb-3 hover:text-blue-400 transition-colors">
+              {project.title}
+            </h3>
+          </Link>
+          <p className="text-sm text-gray-300 mb-3">{project.description}</p>
+          <div className="flex flex-wrap gap-2">
+            {project.categories.map((category, idx) => (
+              <span
+                key={idx}
+                onClick={() => handleTagClick(category)}
+                className="text-xs bg-gray-700/50 px-2 py-1 rounded-full text-blue-300 cursor-pointer hover:text-white hover:bg-gray-700 transition-colors"
+              >
+                {category}
+              </span>
+            ))}
+          </div>
+          {project.buttons && (
+            <div className="flex flex-wrap gap-4 mt-4">
+              {project.buttons.map((button, idx) => (
+                <Link
+                  key={idx}
+                  href={button.url}
+                  className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
+                >
+                  {button.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // Desktop view with images
+    return (
+      <div className="space-y-4 group">
+        <Link href={project.link}>
+          <div className="aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                       ring-2 ring-blue-500/50 transition-all duration-300">
+            <Image
+              src={project.image}
+              alt={project.title}
+              fill
+              className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+        </Link>
+        
+        <div className="flex flex-wrap gap-2">
+          {project.categories.map((category, catIndex) => (
+            <span
+              key={catIndex}
+              onClick={() => handleTagClick(category)}
+              className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
+            >
+              {category}
+              {catIndex < project.categories.length - 1 && (
+                <span className="ml-2 text-gray-400">•</span>
+              )}
+            </span>
+          ))}
+        </div>
+        
+        <div className="space-y-2">
+          <Link href={project.link}>
+            <h3 className="text-2xl font-light hover:text-blue-400 transition-colors cursor-pointer">
+              {project.title}
+            </h3>
+          </Link>
+          <p className="text-gray-400 text-lg">{project.description}</p>
+          {project.buttons && (
+            <div className="flex gap-4 mt-4">
+              {project.buttons.map((button, idx) => (
+                <Link
+                  key={idx}
+                  href={button.url}
+                  className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
+                >
+                  {button.label}
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -144,8 +223,9 @@ const SearchLogic: React.FC<SearchLogicProps> = ({ sections, activeCategory }) =
         searchQuery={searchQuery}
         selectedTag={selectedTag}
         isSearching={isSearching}
-        onTagSelect={handleProjectTagClick}
+        onTagSelect={handleTagClick}
         scrollToResults={shouldScrollToResults}
+        isMobile={isMobile}
       />
 
       {/* Display all sections when no search is active */}
@@ -154,65 +234,19 @@ const SearchLogic: React.FC<SearchLogicProps> = ({ sections, activeCategory }) =
           {sections.map((section, sectionIndex) => (
             <div key={sectionIndex} className="space-y-16">
               <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  {section.icon}
-                  <h2 className="text-6xl font-light">{section.title}</h2>
+                <div className="text-center">
+                  <h2 className="text-6xl font-light hover:text-blue-400 transition-colors mb-6">{section.title}</h2>
+                  <div className="text-blue-400 w-16 h-16 mx-auto">
+                    {section.icon}
+                  </div>
                 </div>
                 <p className="text-xl text-gray-400">{section.description}</p>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16">
                 {section.projects.map((project, index) => (
-                  <div key={index} className="space-y-4 group">
-                    <Link href={project.link}>
-                      <div className="aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                                  ring-2 ring-blue-500/50 transition-all duration-300">
-                        <Image
-                          src={project.image}
-                          alt={project.title}
-                          fill
-                          className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </div>
-                    </Link>
-                    
-                    <div className="flex flex-wrap gap-2">
-                      {project.categories.map((category, catIndex) => (
-                        <button
-                          key={catIndex}
-                          onClick={() => handleProjectTagClick(category)}
-                          className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
-                        >
-                          {category}
-                          {catIndex < project.categories.length - 1 && (
-                            <span className="ml-2 text-gray-400">•</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                    
-                    <div className="space-y-2">
-                      <Link href={project.link}>
-                        <h3 className="text-2xl font-light hover:text-blue-400 transition-colors cursor-pointer">
-                          {project.title}
-                        </h3>
-                      </Link>
-                      <p className="text-gray-400 text-lg">{project.description}</p>
-                      {project.buttons && (
-                        <div className="flex gap-4 mt-4">
-                          {project.buttons.map((button, idx) => (
-                            <Link
-                              key={idx}
-                              href={button.url}
-                              className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
-                            >
-                              {button.label}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                  <div key={index}>
+                    {renderProject(project)}
                   </div>
                 ))}
               </div>

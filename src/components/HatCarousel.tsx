@@ -35,12 +35,6 @@ const hats = [
     }
 ];
 
-const previewStyle = {
-  width: "100%",
-  top: "-30%",
-  left: "0%"
-};
-
 export default function HatCarousel() {
   const [currentHat, setCurrentHat] = useState(0);
 
@@ -52,82 +46,34 @@ export default function HatCarousel() {
     setCurrentHat((prev) => (prev - 1 + hats.length) % hats.length);
   };
 
-  const getPrevHatIndex = () => {
-    return (currentHat - 1 + hats.length) % hats.length;
-  };
-
-  const getNextHatIndex = () => {
-    return (currentHat + 1) % hats.length;
-  };
-
   return (
     <div className="absolute inset-0">
       <div className="relative w-full h-full">
-        {/* Previous Hat Preview */}
-        {hats[getPrevHatIndex()].src && (
-          <div 
-            className="absolute w-full h-full transition-opacity duration-300"
-            style={{
-              transform: 'translateX(-60%) scale(0.5)',
-              ...previewStyle,
-              pointerEvents: 'none'
-            }}
-          >
-            <div className="relative w-full h-full">
-              <Image
-                src={`/${hats[getPrevHatIndex()].src}`}
-                alt={hats[getPrevHatIndex()].alt}
-                width={300}
-                height={300}
-                className="object-contain"
-              />
-            </div>
-          </div>
-        )}
-
         {/* Current Hat */}
         <div 
           className="absolute z-10 transition-opacity duration-300"
           style={hats[currentHat].style}
         >
           <div className="relative w-full h-full">
-            <Image
-              src={`/${hats[currentHat].src}`}
-              alt={hats[currentHat].alt}
-              width={500}
-              height={500}
-              className="object-contain"
-              priority
-            />
+            {hats[currentHat].src && (
+              <Image
+                src={`/${hats[currentHat].src}`}
+                alt={hats[currentHat].alt}
+                width={500}
+                height={500}
+                className="object-contain"
+                priority
+              />
+            )}
           </div>
         </div>
-
-        {/* Next Hat Preview */}
-        {hats[getNextHatIndex()].src && (
-          <div 
-            className="absolute w-full h-full transition-opacity duration-300"
-            style={{
-              transform: 'translateX(60%) scale(0.5)',
-              ...previewStyle,
-              pointerEvents: 'none'
-            }}
-          >
-            <div className="relative w-full h-full">
-              <Image
-                src={`/${hats[getNextHatIndex()].src}`}
-                alt={hats[getNextHatIndex()].alt}
-                width={300}
-                height={300}
-                className="object-contain"
-              />
-            </div>
-          </div>
-        )}
 
         {/* Navigation Buttons */}
         <button 
           onClick={previousHat}
-          className="absolute left-[-3rem] top-1/2 transform -translate-y-1/2 z-20 p-2 bg-gray-800/50 rounded-full hover:bg-gray-800 transition-colors"
+          className="absolute left-0 top-1/2 transform -translate-y-1/2 z-20 p-2 
+                   bg-gray-800/50 rounded-full hover:bg-gray-800 transition-colors 
+                   focus:outline-none focus:ring-2 focus:ring-blue-400"
           aria-label="Previous hat"
         >
           <ChevronLeft className="w-6 h-6 text-white" />
@@ -135,11 +81,25 @@ export default function HatCarousel() {
 
         <button 
           onClick={nextHat}
-          className="absolute right-[-3rem] top-1/2 transform -translate-y-1/2 z-20 p-2 bg-gray-800/50 rounded-full hover:bg-gray-800 transition-colors"
+          className="absolute right-0 top-1/2 transform -translate-y-1/2 z-20 p-2 
+                   bg-gray-800/50 rounded-full hover:bg-gray-800 transition-colors
+                   focus:outline-none focus:ring-2 focus:ring-blue-400"
           aria-label="Next hat"
         >
           <ChevronRight className="w-6 h-6 text-white" />
         </button>
+
+        {/* Hat Indicator Dots */}
+        <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-2 pb-2">
+          {hats.map((_, index) => (
+            <span 
+              key={index}
+              className={`w-2 h-2 rounded-full transition-colors ${
+                currentHat === index ? 'bg-blue-400' : 'bg-gray-400'
+              }`}
+            />
+          ))}
+        </div>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import HatCarousel from './HatCarousel';
 
 export default function Portrait() {
   return (
-    <div className="w-64 flex-shrink-0 relative ml-32 mt-16">
+    <div className="w-64 flex-shrink-0 relative mx-auto md:ml-32 md:mt-16">
       <div className="aspect-square relative rounded-lg">
         <Image
           src="/shmoo.png"
