@@ -12,6 +12,9 @@ const CVPage = () => {
         <div className="text-sm text-gray-600">
           Portfolio:
           <div className="space-y-1">
+            <a href="https://bigusdesign.com" className="text-blue-600 hover:underline block">
+              https://bigusdesign.com
+            </a>
             <a href="https://store.steampowered.com/app/1265300/Broll/" className="text-blue-600 hover:underline block">
               https://store.steampowered.com/app/1265300/Broll/
             </a>
@@ -32,7 +35,10 @@ const CVPage = () => {
       <section className="mb-6">
         <h2 className="text-xl font-semibold border-b border-gray-300 mb-3">Professional Summary</h2>
         <p className="text-sm">
-          Product designer with 3+ years of experience creating user-centered digital experiences across games and web platforms. Proven track record in simplifying complex processes through intuitive interfaces and conducting user research to validate design decisions. Experienced in agile environments with cross-functional teams.
+          Product designer and frontend developer with experience in creating user-centered digital experiences across 
+          games and web platforms. Proficient in Tailwind, JavaScript, CSS, HTML, Lua, and React, leveraging AI tools to 
+          enhance coding efficiency. Proven track record in simplifying complex processes through intuitive interfaces, 
+          conducting user research, and implementing responsive, accessible designs.
         </p>
       </section>
 
@@ -46,6 +52,7 @@ const CVPage = () => {
               <div>
                 <h3 className="font-semibold">Make a Friend</h3>
                 <p className="text-sm font-medium">Creative Developer & Game Designer</p>
+                <p className="text-sm text-gray-600">Warszawa, Poland</p>
               </div>
               <span className="text-sm">October 2024 - January 2025</span>
             </div>
@@ -65,6 +72,7 @@ const CVPage = () => {
               <div>
                 <h3 className="font-semibold">Big Art with Sam</h3>
                 <p className="text-sm font-medium">Artist and Technical Designer</p>
+                <p className="text-sm text-gray-600">Remote</p>
               </div>
               <span className="text-sm">2023 - 2024</span>
             </div>
@@ -83,16 +91,38 @@ const CVPage = () => {
               <div>
                 <h3 className="font-semibold">Freelance</h3>
                 <p className="text-sm font-medium">Product Designer & Developer</p>
+                <p className="text-sm text-gray-600">Remote</p>
               </div>
               <span className="text-sm">2020 - Present</span>
             </div>
           </div>
           <ul className="list-disc list-inside text-sm">
-            <li>Design and develop responsive websites using modern UX principles and CMS platforms</li>
+            <li>Design and develop responsive websites using modern UX principles</li>
             <li>Create high-fidelity prototypes using Figma, incorporating user feedback for iterative improvements</li>
             <li>Lead user research and testing sessions to validate design solutions</li>
             <li>Manage end-to-end design process from discovery to implementation for diverse clients</li>
             <li>Develop and maintain consistent design systems across multiple digital platforms</li>
+          </ul>
+        </div>
+
+        <div className="mb-4">
+          <div className="mb-1">
+            <div className="flex justify-between items-baseline">
+              <div>
+                <h3 className="font-semibold">United Postal Service (UPS)</h3>
+                <p className="text-sm font-medium">Floor Supervisor & Multi-Role Coordinator</p>
+                <p className="text-sm text-gray-600">Gardner, Kansas, United States</p>
+              </div>
+              <span className="text-sm">2018 - 2019</span>
+            </div>
+          </div>
+          <ul className="list-disc list-inside text-sm">
+            <li>Coordinated multiple roles including Safety Supervisor, Training Supervisor, and IT Support</li>
+            <li>Created and maintained comprehensive safety documentation and training programs</li>
+            <li>Managed team of 15+ employees, ensuring efficient package flow while maintaining safety standards</li>
+            <li>Developed and implemented new employee onboarding procedures</li>
+            <li>Tracked and reported key performance metrics for package handling and delivery</li>
+            <li>Administered technical systems including scanner distribution and maintenance</li>
           </ul>
         </div>
       </section>
@@ -113,6 +143,7 @@ const CVPage = () => {
             <li>Designed economic systems and progression mechanics</li>
             <li>Implemented resource management and property systems</li>
             <li>Created intuitive UI/UX for complex management systems</li>
+            <li>Utilized Lua to create dynamic game logic</li>
           </ul>
         </div>
 
@@ -127,29 +158,14 @@ const CVPage = () => {
           <ul className="list-disc list-inside text-sm">
             <li>Designed physics-based gameplay mechanics</li>
             <li>Created intuitive level progression and player guidance systems</li>
-            <li>Developed user-friendly control schemes through iterative testing</li>
           </ul>
         </div>
 
         <div className="mb-4">
           <div className="mb-1">
             <div className="flex justify-between items-baseline">
-              <h3 className="font-semibold">The Zine Bathroom Reader #4</h3>
+              <h3 className="font-semibold">Art Pocketbook</h3>
               <span className="text-sm">2024</span>
-            </div>
-          </div>
-          <ul className="list-disc list-inside text-sm">
-            <li>Designed interactive elements to enhance user engagement</li>
-            <li>Created intuitive navigation systems for complex information architecture</li>
-            <li>Developed user-friendly game mechanics based on user testing</li>
-          </ul>
-        </div>
-
-        <div className="mb-4">
-          <div className="mb-1">
-            <div className="flex justify-between items-baseline">
-              <h3 className="font-semibold">A Million Smiles Website</h3>
-              <span className="text-sm">2022 - Present</span>
             </div>
           </div>
           <ul className="list-disc list-inside text-sm">
@@ -178,12 +194,11 @@ const CVPage = () => {
       <section className="mb-6">
         <h2 className="text-xl font-semibold border-b border-gray-300 mb-3">Technical Skills</h2>
         <div className="text-sm space-y-2">
-          <p><span className="font-semibold">Design Tools:</span> Figma (components, auto-layout), Adobe Creative Suite, Miro</p>
+          <p><span className="font-semibold">Design Tools:</span> Figma (components, auto-layout), Adobe Creative Suite</p>
           <p><span className="font-semibold">Research:</span> User interviews, usability testing, competitive analysis</p>
-          <p><span className="font-semibold">Prototyping:</span> Interactive prototypes, wireframing, user flows</p>
-          <p><span className="font-semibold">Development:</span> Basic HTML/CSS, WordPress, responsive design</p>
-          <p><span className="font-semibold">Methodologies:</span> Agile, user-centered design, design thinking</p>
-          <p><span className="font-semibold">Game Design:</span> Level design, systems design, Unity, playtesting</p>
+          <p><span className="font-semibold">Development:</span> HTML/CSS, responsive design, WordPress</p>
+          <p><span className="font-semibold">Game Design:</span> Level design, systems design, Lua</p>
+          <p><span className="font-semibold">AI Tools:</span> AI utilization for development and workflow optimization</p>
         </div>
       </section>
 
@@ -192,7 +207,7 @@ const CVPage = () => {
         <h2 className="text-xl font-semibold border-b border-gray-300 mb-3">Additional Skills</h2>
         <ul className="list-disc list-inside text-sm">
           <li>Strong communication and presentation abilities</li>
-          <li>Experience with agile development processes</li>
+          <li>Client collaboration and project management</li>
           <li>Data-driven decision making</li>
         </ul>
       </section>
