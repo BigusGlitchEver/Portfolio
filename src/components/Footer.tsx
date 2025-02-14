@@ -60,7 +60,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div className="border-t border-gray-600 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-gray-400">
             © {new Date().getFullYear()} Samuel Shmoo Bigus. All rights reserved.
           </div>
