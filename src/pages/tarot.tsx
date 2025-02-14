@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import ProjectNav from '../components/ProjectNav';
+import Footer from '@/components/Footer';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -298,6 +299,7 @@ export default function JudaicTarotPage() {
           </div>
         </section>
       </main>
+      <Footer />
     </div>
   );
 }
