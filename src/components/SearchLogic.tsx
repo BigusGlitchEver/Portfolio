@@ -37,17 +37,11 @@ const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
   // Define suggested tags at the top of the component
   const suggestedTags = [
     "Web Design",
-    "Game Design",
     "Product Design",
     "Figma",
-    "Photo Editing",
     "Coding",
     "AI Utilization",
-    "Publications",
     "Research",
-    "Client Collaboration",
-    "Marketing",
-    "Video Production"
   ];
 
   const [inputValue, setInputValue] = useState('');
