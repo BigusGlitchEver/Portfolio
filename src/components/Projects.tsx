@@ -4,8 +4,34 @@ import Link from "next/link";
 import Image from "next/image";
 import { Book, Gamepad2, Globe, Brush, Coffee, Camera, Store } from 'lucide-react';
 
-// Keep your existing sections data unchanged
-const sections = [
+interface ProjectButton {
+  label: string;
+  url: string;
+}
+
+interface Project {
+  title: string;
+  description: string;
+  image: string;
+  categories: string[];
+  link: string;
+  imageStyle?: string;
+  buttons?: ProjectButton[];
+}
+
+interface Section {
+  title: string;
+  icon: React.ReactNode;
+  description: string;
+  projects: Project[];
+}
+
+interface ProjectsProps {
+  onCategoryClick: (category: string) => void;
+}
+
+// Your existing sections data
+const sections: Section[] = [
   {
     title: "Publications",
     icon: <Book className="w-8 h-8 text-blue-400" />,
@@ -160,7 +186,7 @@ const sections = [
   }
 ];
 
-function Projects({ onCategoryClick }) {
+function Projects({ onCategoryClick }: ProjectsProps) {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
@@ -173,9 +199,8 @@ function Projects({ onCategoryClick }) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const renderProject = (project, sectionIndex, projectIndex) => {
+  const renderProject = (project: Project, sectionIndex: number, projectIndex: number) => {
     if (isMobile) {
-      // Mobile view - no images, just info
       return (
         <div key={projectIndex} className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
           <Link href={project.link}>
@@ -189,7 +214,7 @@ function Projects({ onCategoryClick }) {
               <span
                 key={idx}
                 onClick={() => onCategoryClick(category)}
-                className="text-xs bg-gray-700/50 px-2 py-1 rounded-full text-blue-300 cursor-pointer hover:bg-gray-700"
+                className="text-xs bg-gray-700/50 px-2 py-1 rounded-full text-blue-300 cursor-pointer hover:text-white hover:bg-gray-700 transition-colors"
               >
                 {category}
               </span>
@@ -212,7 +237,7 @@ function Projects({ onCategoryClick }) {
       );
     }
 
-    // Desktop view - with images (your existing desktop rendering code)
+    // Desktop view with images
     return (
       <div key={projectIndex} className="space-y-4 group">
         <Link href={project.link}>
@@ -227,10 +252,10 @@ function Projects({ onCategoryClick }) {
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
           </div>
         </Link>
-
+        
         <div className="flex flex-wrap gap-2">
           {project.categories.map((category, catIndex) => (
-            <span 
+            <span
               key={catIndex}
               onClick={() => onCategoryClick(category)}
               className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
@@ -242,7 +267,7 @@ function Projects({ onCategoryClick }) {
             </span>
           ))}
         </div>
-
+        
         <div className="space-y-2">
           <Link href={project.link}>
             <h3 className="text-2xl font-light hover:text-blue-400 transition-colors cursor-pointer">
@@ -273,11 +298,13 @@ function Projects({ onCategoryClick }) {
       {sections.map((section, sectionIndex) => (
         <div key={sectionIndex} className="mb-32">
           <div className="space-y-4 mb-16">
-            <div className="flex items-center gap-4">
-              {section.icon}
-              <h2 className="text-4xl sm:text-5xl md:text-6xl font-light">{section.title}</h2>
+            <div className="text-center">
+              <h2 className="text-6xl font-light hover:text-blue-400 transition-colors mb-6">{section.title}</h2>
+              <div className="text-blue-400 w-16 h-16 mx-auto">
+                {section.icon}
+              </div>
             </div>
-            <p className="text-lg sm:text-xl text-gray-400">{section.description}</p>
+            <p className="text-xl text-gray-400">{section.description}</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
