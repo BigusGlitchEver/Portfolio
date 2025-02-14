@@ -1,9 +1,41 @@
 // components/SearchResults.tsx
 import React, { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Image from 'next/image';  // Add this import
+import Image from 'next/image';
 
-const SearchResults = ({ 
+interface ProjectButton {
+  label: string;
+  url: string;
+}
+
+interface Project {
+  title: string;
+  description: string;
+  image: string;
+  categories: string[];
+  link: string;
+  imageStyle?: string;
+  buttons?: ProjectButton[];
+}
+
+interface Section {
+  title: string;
+  icon: React.ReactNode;
+  description: string;
+  projects: Project[];
+}
+
+interface SearchResultsProps {
+  sections: Section[];
+  searchQuery: string;
+  selectedTag: string | null;
+  isSearching: boolean;
+  onTagSelect: (tag: string) => void;
+  scrollToResults: boolean;
+  isMobile: boolean;
+}
+
+const SearchResults: React.FC<SearchResultsProps> = ({ 
   sections, 
   searchQuery, 
   selectedTag, 
@@ -12,7 +44,7 @@ const SearchResults = ({
   scrollToResults,
   isMobile
 }) => {
-  const resultsRef = useRef(null);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (scrollToResults && resultsRef.current) {
@@ -48,7 +80,7 @@ const SearchResults = ({
     return null;
   }
 
-  const renderProject = (project) => {
+  const renderProject = (project: Project) => {
     if (isMobile) {
       return (
         <div className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
