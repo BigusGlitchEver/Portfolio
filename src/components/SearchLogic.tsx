@@ -5,7 +5,35 @@ import Link from 'next/link';
 import Image from 'next/image';
 import SearchResults from './SearchResults';
 
-const SearchLogic = ({ sections, activeCategory }) => {
+// Interfaces
+interface ProjectButton {
+  label: string;
+  url: string;
+}
+
+interface Project {
+  title: string;
+  description: string;
+  image: string;
+  categories: string[];
+  link: string;
+  imageStyle?: string;
+  buttons?: ProjectButton[];
+}
+
+interface Section {
+  title: string;
+  icon: React.ReactNode;
+  description: string;
+  projects: Project[];
+}
+
+interface SearchLogicProps {
+  sections: Section[];
+  activeCategory: string | null;
+}
+
+const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
   // Define suggested tags at the top of the component
   const suggestedTags = [
     "Web Design",
@@ -22,10 +50,9 @@ const SearchLogic = ({ sections, activeCategory }) => {
     "Video Production"
   ];
 
-  // State definitions
   const [inputValue, setInputValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTag, setSelectedTag] = useState(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isButtonPressed, setIsButtonPressed] = useState(false);
   const [shouldScrollToResults, setShouldScrollToResults] = useState(false);
@@ -50,12 +77,12 @@ const SearchLogic = ({ sections, activeCategory }) => {
     }
   }, [activeCategory]);
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
     setSelectedTag(null);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setIsButtonPressed(true);
     setTimeout(() => setIsButtonPressed(false), 200);
@@ -68,7 +95,7 @@ const SearchLogic = ({ sections, activeCategory }) => {
     }, 300);
   };
 
-  const handleTagClick = (tag) => {
+  const handleTagClick = (tag: string) => {
     const newTag = selectedTag === tag ? null : tag;
     setSelectedTag(newTag);
     setInputValue('');
@@ -76,7 +103,7 @@ const SearchLogic = ({ sections, activeCategory }) => {
     setSearchQuery(newTag || '');
   };
 
-  const renderProject = (project) => {
+  const renderProject = (project: Project) => {
     if (isMobile) {
       return (
         <div className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
@@ -114,7 +141,6 @@ const SearchLogic = ({ sections, activeCategory }) => {
       );
     }
 
-    // Desktop view with images
     return (
       <div className="space-y-4 group">
         <Link href={project.link}>
