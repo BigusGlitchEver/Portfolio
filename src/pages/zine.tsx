@@ -27,14 +27,13 @@ export default function ZineProject() {
   return (
     <div className={`${playfair.variable} min-h-screen bg-[#E5E5E5] text-black font-serif`}>
       {/* Custom Navigation */}
-      {/* Custom Navigation */}
-        <nav className="fixed w-full top-0 z-50 bg-[#E5E5E5] overflow-hidden">
-          <div className="max-w-full px-4">
-            <div className="border-8 border-[#FF8C00]">
-              {/* Scrollable container */}
-              <div className="overflow-x-auto whitespace-nowrap py-2 px-4 scrollbar-hide">
-                <div className="inline-flex gap-4 min-w-full justify-between">
-                  {/* Left side - Logo and Back button */}
+      <nav className="fixed w-full top-0 z-50 bg-[#E5E5E5] overflow-hidden">
+        <div className="max-w-full px-4">
+          <div className="border-8 border-[#FF8C00]">
+            {/* Scrollable container */}
+            <div className="overflow-x-auto whitespace-nowrap py-2 px-4 scrollbar-hide">
+              <div className="inline-flex gap-4 min-w-full justify-between">
+                {/* Left side - Logo and Back button */}
                   <div className="flex-shrink-0">
                     <Link 
                       href="/" 
@@ -329,7 +328,7 @@ export default function ZineProject() {
           <div className="flex justify-center">
             <Link 
               href="/"
-              className="px-4 py-2 sm:px-6 sm:py-3 bg-[#FFE144] border-4 sm:border-8 border-[#FF69B4] text-base sm:text-xl hover:bg-[#FF8C00] transition-colors"
+              className="px-4 py-2 sm:px-6 sm:py-3 bg-[#FF8C00] border-4 sm:border-8 border-[#FF69B4] text-base sm:text-xl hover:bg-[#FFE144] transition-colors"
             >
               View More Projects
             </Link>
