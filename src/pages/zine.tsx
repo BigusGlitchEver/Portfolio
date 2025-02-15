@@ -27,45 +27,51 @@ export default function ZineProject() {
   return (
     <div className={`${playfair.variable} min-h-screen bg-[#E5E5E5] text-black font-serif`}>
       {/* Custom Navigation */}
-      <nav className="fixed w-full top-0 z-50 bg-[#E5E5E5]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="flex justify-between items-center mx-auto border-8 border-[#FF8C00]">
-            {/* Left side - Logo and Back button */}
-            <div className="flex items-center gap-2 sm:gap-4 pl-2 sm:pl-4">
-              <Link 
-                href="/" 
-                className="bg-[#FFE144] border-4 sm:border-8 border-[#FF69B4] px-2 sm:px-4 py-1 sm:py-2 text-base sm:text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap"
-              >
-                Back to Portfolio
-              </Link>
-            </div>
+      {/* Custom Navigation */}
+        <nav className="fixed w-full top-0 z-50 bg-[#E5E5E5] overflow-hidden">
+          <div className="max-w-full px-4">
+            <div className="border-8 border-[#FF8C00]">
+              {/* Scrollable container */}
+              <div className="overflow-x-auto whitespace-nowrap py-2 px-4 scrollbar-hide">
+                <div className="inline-flex gap-4 min-w-full justify-between">
+                  {/* Left side - Logo and Back button */}
+                  <div className="flex-shrink-0">
+                    <Link 
+                      href="/" 
+                      className="bg-[#FFE144] border-8 border-[#FF69B4] px-4 py-2 text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap inline-block"
+                    >
+                      Back to Portfolio
+                    </Link>
+                  </div>
 
-            {/* Right side - Links */}
-            <div className="flex gap-2 sm:gap-8 p-2 sm:p-4">
-              <a 
-                href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="bg-[#FFE144] border-4 sm:border-8 border-[#FF69B4] px-2 sm:px-4 py-1 sm:py-2 text-base sm:text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap"
-              >
-                LinkedIn
-              </a>
-              <a 
-                href="mailto:samuelshmoobigus@yahoo.com" 
-                className="bg-[#FFE144] border-4 sm:border-8 border-[#FF69B4] px-2 sm:px-4 py-1 sm:py-2 text-base sm:text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap"
-              >
-                Email
-              </a>
-              <Link 
-                href="/cv" 
-                className="bg-[#FFE144] border-4 sm:border-8 border-[#FF69B4] px-2 sm:px-4 py-1 sm:py-2 text-base sm:text-xl hover:bg-[#FF8C00] transition-colors"
-              >
-                CV
-              </Link>
+                  {/* Right side - Links */}
+                  <div className="flex-shrink-0 flex gap-4">
+                    <a 
+                      href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="bg-[#FFE144] border-8 border-[#FF69B4] px-4 py-2 text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap inline-block"
+                    >
+                      LinkedIn
+                    </a>
+                    <a 
+                      href="mailto:samuelshmoobigus@yahoo.com" 
+                      className="bg-[#FFE144] border-8 border-[#FF69B4] px-4 py-2 text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap inline-block"
+                    >
+                      Email
+                    </a>
+                    <Link 
+                      href="/cv" 
+                      className="bg-[#FFE144] border-8 border-[#FF69B4] px-4 py-2 text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap inline-block"
+                    >
+                      CV
+                    </Link>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-20">
         {/* Hero Section */}
