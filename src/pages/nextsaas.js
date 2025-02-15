@@ -155,7 +155,7 @@ export default function NextSaaSProject() {
               }
             ].map((item, index) => (
               <div key={index} className="group relative rounded-2xl transition-all duration-500 ease-out hover:scale-[1.02]">
-                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 group-hover:opacity-100 transition-opacity blur-[1px]" />
+                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-400 via-gray-200 to-gray-400 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 group-hover:opacity-100 transition-opacity blur-[1px]" />
                 <div className="relative h-full rounded-[calc(1rem-1px)] bg-white dark:bg-gray-900 p-8">
                   <div className="inline-flex rounded-lg bg-gray-100 dark:bg-gray-800 p-4 mb-6 ring-1 ring-gray-900/5 dark:ring-gray-100/5 transform transition-transform duration-500 group-hover:scale-110">
                     <div className="w-6 h-6 text-indigo-600 dark:text-indigo-400">{item.icon}</div>
@@ -172,7 +172,7 @@ export default function NextSaaSProject() {
             <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-12">Design Strategy</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
               <div className="group relative rounded-2xl transition-all duration-500">
-                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 blur-[1px]" />
+                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-400 via-gray-200 to-gray-400 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 blur-[1px]" />
                 <div className="relative rounded-[calc(1rem-1px)] bg-white dark:bg-gray-900 p-8">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">Visual Identity</h3>
                   <ul className="space-y-4 text-gray-600 dark:text-gray-400">
@@ -185,7 +185,7 @@ export default function NextSaaSProject() {
               </div>
 
               <div className="group relative rounded-2xl transition-all duration-500">
-                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 blur-[1px]" />
+                <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-400 via-gray-200 to-gray-400 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 blur-[1px]" />
                 <div className="relative rounded-[calc(1rem-1px)] bg-white dark:bg-gray-900 p-8">
                   <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">User Experience</h3>
                   <ul className="space-y-4 text-gray-600 dark:text-gray-400">
@@ -215,7 +215,7 @@ export default function NextSaaSProject() {
           {/* Results Section */}
           <div className="mt-24">
             <div className="group relative rounded-2xl transition-all duration-500">
-              <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-200 via-gray-100 to-gray-200 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 blur-[1px]" />
+              <div className="absolute -inset-[1px] rounded-2xl bg-gradient-to-b from-gray-400 via-gray-200 to-gray-400 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 opacity-50 blur-[1px]" />
               <div className="relative rounded-[calc(1rem-1px)] bg-white dark:bg-gray-900 p-8">
                 <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Impact</h2>
                 <p className="text-xl text-gray-600 dark:text-gray-400">

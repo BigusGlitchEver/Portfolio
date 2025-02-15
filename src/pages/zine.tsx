@@ -84,7 +84,7 @@ export default function ZineProject() {
               
               {/* Bang Bang Zine Collaboration Box */}
               <div className="relative max-w-full sm:max-w-[600px]">
-                <div className="bg-[#FFE144] border-4 sm:border-8 border-[#FF69B4] p-4 sm:p-6">
+                <div className="border-4 sm:border-8 p-4 sm:p-6">
                   <p className="text-base sm:text-xl mb-4">
                     Published in collaboration with Bang Bang Zine as a winning submission for their Zinemate Publishing Project - 
                     a platform dedicated to supporting creators in self-publishing through risograph printing.

@@ -302,7 +302,7 @@ export default function JudaicTarotPage() {
           <div className="flex justify-center">
             <a 
               href="/"
-              className="px-6 py-3 bg-gray-800/50 rounded-full hover:bg-gray-700/50 transition-colors ring-1 ring-blue-400/20"
+              className="px-6 py-3 bg-gray-800/50 rounded-full hover:bg-gray-700/50 transition-colors ring-1 ring-blue-400/60"
             >
               View More Projects
             </a>
