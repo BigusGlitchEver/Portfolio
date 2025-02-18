@@ -6,36 +6,75 @@ const BackgroundCurve = () => {
       {/* Base dark background */}
       <div className="absolute inset-0 bg-gray-900" />
       
-      {/* Top-left corner bright spot */}
-      <div className="absolute -left-32 -top-32 w-96 h-96 bg-white rounded-full opacity-20 blur-3xl" />
+      {/* Top-left corner bright spot with stronger gradient */}
+      <div className="absolute -left-32 -top-32 w-96 h-96 bg-gradient-to-br from-white via-white/50 to-transparent rounded-full blur-3xl" />
       
-      {/* Additional glow for richness */}
-      <div className="absolute -left-16 -top-16 w-64 h-64 bg-blue-400 rounded-full opacity-10 blur-3xl" />
-      
-      {/* Tech-style curved streaks */}
+      {/* Curves with pulsing neon outline */}
       <div className="absolute w-full h-full">
         <svg
           viewBox="0 0 1200 800"
-          className="w-full h-full opacity-[0.07]"
+          className="w-full h-full"
           preserveAspectRatio="none"
         >
+          <defs>
+            <filter id="neon-glow">
+              <feGaussianBlur stdDeviation="2" result="blur" />
+              <feMerge>
+                <feMergeNode in="blur" />
+                <feMergeNode in="SourceGraphic" />
+              </feMerge>
+            </filter>
+
+            {/* Gradient for the background fill */}
+            <linearGradient id="fade-gradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="white" stopOpacity="0.1" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+          </defs>
+
+          {/* Subtle background fill */}
           <path
-            d="M0,400 C300,300 600,600 1200,400 L1200,0 L0,0 Z"
-            fill="white"
+            d="M0,600 C300,400 600,300 1200,200 L1200,0 L0,0 Z"
+            fill="url(#fade-gradient)"
+            className="opacity-30"
           />
+
+          {/* Pulsing neon outline */}
           <path
-            d="M0,500 C400,450 800,650 1200,500 L1200,100 L0,100 Z"
-            fill="white"
-            className="opacity-50"
+            d="M0,600 C300,400 600,300 1200,200"
+            fill="none"
+            stroke="#3B82F6"
+            strokeWidth="1.5"
+            filter="url(#neon-glow)"
+            className="animate-[pulse_4s_ease-in-out_infinite] origin-center"
+            style={{
+              animation: 'pulse 4s ease-in-out infinite'
+            }}
           />
         </svg>
+
+        <style>{`
+          @keyframes pulse {
+            0% {
+              opacity: 0;
+              stroke: #3B82F6;
+            }
+            50% {
+              opacity: 1;
+              stroke: #60A5FA;
+            }
+            100% {
+              opacity: 0;
+              stroke: #3B82F6;
+            }
+          }
+        `}</style>
       </div>
       
-      {/* Gradient overlays for depth */}
+      {/* Gradient overlay for depth - fading from top-left */}
       <div className="absolute inset-0 bg-gradient-to-br from-white/20 via-transparent to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-gray-900/50 to-gray-900" />
       
-      {/* Subtle grid pattern for tech feel */}
+      {/* Subtle grid pattern */}
       <div 
         className="absolute inset-0 opacity-[0.02]" 
         style={{
