@@ -5,6 +5,7 @@ import IndexNavigation from '@/components/indexnavigation';
 import SearchLogic from '@/components/SearchLogic';
 import Footer from '@/components/Footer';
 import Projects from '@/components/Projects';
+import BackgroundCurve from '@/components/backgroundcurve';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -46,7 +47,8 @@ export default function LandingPage() {
   const sections = Projects.getSections();
 
   return (
-    <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen flex flex-col bg-gray-900 text-white`}>
+    <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen flex flex-col text-white`}>
+    <BackgroundCurve />
       <IndexNavigation />
 
       <main className="flex-1">

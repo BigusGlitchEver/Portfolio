@@ -201,14 +201,14 @@ function Projects({ onCategoryClick }: ProjectsProps) {
 
   const renderProject = (project: Project, sectionIndex: number, projectIndex: number) => {
     if (isMobile) {
-        return (
-          <div key={projectIndex}>
-            <Link href={project.link}>
-              <h3 className="text-2xl font-light text-white mb-4 text-center hover:text-blue-400 transition-colors">
-                {project.title}
-              </h3>
-            </Link>
-            <div className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
+      return (
+        <div key={projectIndex}>
+          <Link href={project.link}>
+            <h3 className="text-2xl font-light text-white mb-4 text-center hover:text-blue-400 transition-colors">
+              {project.title}
+            </h3>
+          </Link>
+          <div className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
             {project.categories.map((category, idx) => (
               <span
                 key={idx}
