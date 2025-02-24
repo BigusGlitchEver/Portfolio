@@ -60,14 +60,6 @@ export default function LandingPage() {
           imageStyle: "cover"
         },
         {
-          title: "Make a Friend",
-          description: "Social platform combining chat functionality with collaborative game creation",
-          image: "/makeafriend.png",
-          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
-          link: "/makeafriend",
-          imageStyle: "contain"
-        },
-        {
           title: "Next SaaS",
           description: "Website development and monitoring solutions for businesses",
           image: "/nextsaaslogo.png",
@@ -75,6 +67,14 @@ export default function LandingPage() {
           link: "/nextsaas",
           imageStyle: "contain"
         },
+        {
+          title: "Make a Friend",
+          description: "Social platform combining chat functionality with collaborative game creation",
+          image: "/makeafriend.png",
+          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
+          link: "/makeafriend",
+          imageStyle: "contain"
+        }
       ]
     },
     {
