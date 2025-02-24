@@ -12,6 +12,9 @@ const CVPage = () => {
         <div className="text-sm text-gray-600">
           Portfolio:
           <div className="space-y-1">
+            <a href="https://biguswebdesign.com" className="text-blue-600 hover:underline block">
+              https://biguswebdesign.com
+            </a>
             <a href="https://bigusdesign.com" className="text-blue-600 hover:underline block">
               https://bigusdesign.com
             </a>

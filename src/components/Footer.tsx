@@ -62,10 +62,10 @@ const Footer = () => {
         {/* Bottom Bar */}
         <div className="border-t border-gray-600 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <div className="text-gray-400">
-            © {new Date().getFullYear()} Samuel Shmoo Bigus. All rights reserved.
+            © {new Date().getFullYear()} Bigus Web Design. All rights reserved.
           </div>
           <div className="text-gray-400">
-            Designed & Coded by Samuel Shmoo Bigus
+            Designed & Coded by Bigus Web Design
           </div>
         </div>
       </div>

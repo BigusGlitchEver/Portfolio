@@ -192,7 +192,7 @@ const SearchResults: React.FC<SearchResultsProps> = ({
           </div>
 
           <div className="my-32">
-            <div className="w-full h-0.5 bg-blue-400 shadow-[0_0_10px_#60A5FA,0_0_20px_#60A5FA] animate-pulse" />
+            <div className="w-full h-0.5 bg-blue-400 shadow-[0_0_10px_#60A5FA,0_0_20px_#60A5FA]" />
             <p className="text-center text-4xl text-light mt-8 font-light">All Projects</p>
           </div>
         </>

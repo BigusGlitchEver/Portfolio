@@ -248,32 +248,30 @@ const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
         isMobile={isMobile}
       />
 
-      {/* Display all sections when no search is active */}
-      {!searchQuery && !selectedTag && (
-        <div className="space-y-32">
-          {sections.map((section, sectionIndex) => (
-            <div key={sectionIndex} className="space-y-16">
-              <div className="space-y-4">
-                <div className="text-center">
-                  <h2 className="text-6xl font-light hover:text-blue-400 transition-colors mb-6">{section.title}</h2>
-                  <div className="text-blue-400 w-16 h-16 mx-auto">
-                    {section.icon}
-                  </div>
+      {/* Always display all sections, regardless of search */}
+      <div className="space-y-32">
+        {sections.map((section, sectionIndex) => (
+          <div key={sectionIndex} className="space-y-16">
+            <div className="space-y-4">
+              <div className="text-center">
+                <h2 className="text-6xl font-light hover:text-blue-400 transition-colors mb-6">{section.title}</h2>
+                <div className="text-blue-400 w-16 h-16 mx-auto">
+                  {section.icon}
                 </div>
-                <p className="text-xl text-gray-400">{section.description}</p>
               </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16">
-                {section.projects.map((project, index) => (
-                  <div key={index}>
-                    {renderProject(project)}
-                  </div>
-                ))}
-              </div>
+              <p className="text-xl text-gray-400">{section.description}</p>
             </div>
-          ))}
-        </div>
-      )}
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16">
+              {section.projects.map((project, index) => (
+                <div key={index}>
+                  {renderProject(project)}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };
