@@ -52,6 +52,14 @@ export default function LandingPage() {
       description: "Innovative projects focused on connection and digital solutions",
       projects: [
         {
+          title: "Bigus Web Design",
+          description: "Crafting digital experiences through component-based design and AI",
+          image: "/BWDCover2.png",
+          categories: ["Web Design", "UX/UI Design", "Coding", "AI Utilization", "Project Management"],
+          link: "/biguswebdesign",
+          imageStyle: "cover"
+        },
+        {
           title: "Make a Friend",
           description: "Social platform combining chat functionality with collaborative game creation",
           image: "/makeafriend.png",
@@ -67,14 +75,6 @@ export default function LandingPage() {
           link: "/nextsaas",
           imageStyle: "contain"
         },
-        {
-          title: "Bigus Web Design",
-          description: "Crafting digital experiences through component-based design and AI",
-          image: "/BWDCover2.png",
-          categories: ["Web Design", "UX/UI Design", "Coding", "AI Utilization", "Project Management"],
-          link: "/biguswebdesign",
-          imageStyle: "cover"
-        }
       ]
     },
     {
