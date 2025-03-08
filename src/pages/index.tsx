@@ -5,6 +5,7 @@ import IndexNavigation from '@/components/indexnavigation';
 import SearchLogic from '@/components/SearchLogic';
 import Footer from '@/components/Footer';
 import BackgroundCurve from '@/components/backgroundcurve';
+import ExperienceSection from '@/components/ExperienceSection';
 import { Book, Gamepad2, Globe, Brush, Coffee, Camera, Store, Code } from 'lucide-react';
 
 const poppins = Poppins({
@@ -254,6 +255,9 @@ export default function LandingPage() {
                 </div>
               </div>
             )}
+
+            {/* Experience and Skills Section */}
+            <ExperienceSection />
 
             {/* Search Component */}
             <div className="mt-16 search-component">
