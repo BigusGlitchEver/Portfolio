@@ -39,9 +39,9 @@ const CVPage = () => {
         <h2 className="text-xl font-semibold border-b border-gray-300 mb-3">Professional Summary</h2>
         <p className="text-sm">
           Product designer and frontend developer with experience in creating user-centered digital experiences across 
-          games and web platforms. Proficient in Tailwind, JavaScript, CSS, HTML, Lua, and React, leveraging AI tools to 
+          games and web platforms. Proficient in Tailwind, JavaScript, CSS, HTML, Lua, and React, leveraging agile methodologies and Scrum frameworks to 
           enhance coding efficiency. Proven track record in simplifying complex processes through intuitive interfaces, 
-          conducting user research, and implementing responsive, accessible designs.
+          conducting user research, implementing sprint planning, backlog refinement, and agile development for responsive, accessible designs.
         </p>
       </section>
 
@@ -61,10 +61,14 @@ const CVPage = () => {
             </div>
           </div>
           <ul className="list-disc list-inside text-sm">
-            <li>Led end-to-end product design for gaming and software applications using user-centered design principles</li>
+            <li>Led end-to-end product design for gaming and software applications using user-centered design principles and agile methodologies with sprint-based delivery</li>
             <li>Conducted competitive analysis and user research to inform design decisions</li>
+            <li>Facilitated sprint planning and retrospectives to continuously improve team workflows</li>
+            <li>Managed product backlog and prioritized user stories based on business value</li>
             <li>Collaborated with cross-functional teams to deliver intuitive user interfaces</li>
             <li>Integrated AI technologies to enhance user experience and workflow efficiency</li>
+            <li>Implemented Scrum ceremonies to ensure transparent communication and iterative development</li>
+            <li>Utilized Kanban boards to visualize workflow and remove impediments</li>
             <li>Created and maintained design documentation for consistent implementation</li>
           </ul>
         </div>
@@ -83,7 +87,11 @@ const CVPage = () => {
           <ul className="list-disc list-inside text-sm">
             <li>Researched user needs and market trends to inform product development</li>
             <li>Created user-centered designs based on customer feedback and market analysis</li>
+            <li>Employed agile mindset to rapidly iterate designs based on user feedback</li>
+            <li>Organized work into sprints to maintain clear milestones and deliverables</li>
             <li>Managed product lifecycle from concept to launch while maintaining focus on user experience</li>
+            <li>Utilized story points for estimating effort and planning capacity</li>
+            <li>Practiced continuous improvement through regular retrospectives</li>
             <li>Conducted customer interviews to validate product decisions</li>
           </ul>
         </div>
@@ -101,9 +109,13 @@ const CVPage = () => {
           </div>
           <ul className="list-disc list-inside text-sm">
             <li>Design and develop responsive websites using modern UX principles</li>
+            <li>Applied Scrum principles to manage client projects with transparency and adaptability</li>
             <li>Create high-fidelity prototypes using Figma, incorporating user feedback for iterative improvements</li>
+            <li>Conducted sprint reviews to showcase incremental progress and gather stakeholder feedback</li>
             <li>Lead user research and testing sessions to validate design solutions</li>
+            <li>Utilized agile user stories to capture requirements from a user-centered perspective</li>
             <li>Manage end-to-end design process from discovery to implementation for diverse clients</li>
+            <li>Maintained a flexible backlog of features prioritized by user value and business impact</li>
             <li>Develop and maintain consistent design systems across multiple digital platforms</li>
           </ul>
         </div>
@@ -121,9 +133,13 @@ const CVPage = () => {
           </div>
           <ul className="list-disc list-inside text-sm">
             <li>Coordinated multiple roles including Safety Supervisor, Training Supervisor, and IT Support</li>
+            <li>Implemented daily stand-ups to improve team communication and identify blockers</li>
             <li>Created and maintained comprehensive safety documentation and training programs</li>
+            <li>Applied agile principles to warehouse operations, improving efficiency and adaptability</li>
             <li>Managed team of 15+ employees, ensuring efficient package flow while maintaining safety standards</li>
+            <li>Utilized visual management boards to track work progress and identify bottlenecks</li>
             <li>Developed and implemented new employee onboarding procedures</li>
+            <li>Facilitated continuous improvement through regular team retrospectives</li>
             <li>Tracked and reported key performance metrics for package handling and delivery</li>
             <li>Administered technical systems including scanner distribution and maintenance</li>
           </ul>
@@ -144,9 +160,12 @@ const CVPage = () => {
           <p className="text-sm italic mb-2">Open-world entrepreneurial sandbox game</p>
           <ul className="list-disc list-inside text-sm">
             <li>Designed economic systems and progression mechanics</li>
+            <li>Utilized Scrum framework to organize development into two-week sprints</li>
             <li>Implemented resource management and property systems</li>
+            <li>Maintained product backlog with user stories and acceptance criteria</li>
             <li>Created intuitive UI/UX for complex management systems</li>
             <li>Utilized Lua to create dynamic game logic</li>
+            <li>Applied iterative development approach to rapidly test and refine gameplay mechanics</li>
           </ul>
         </div>
 
@@ -160,6 +179,7 @@ const CVPage = () => {
           <p className="text-sm italic mb-2">3D ragdoll-based platformer with open-level design</p>
           <ul className="list-disc list-inside text-sm">
             <li>Designed physics-based gameplay mechanics</li>
+            <li>Facilitated sprint planning, daily stand-ups, and retrospectives throughout development</li>
             <li>Created intuitive level progression and player guidance systems</li>
           </ul>
         </div>
@@ -202,6 +222,7 @@ const CVPage = () => {
           <p><span className="font-semibold">Development:</span> HTML/CSS, responsive design, WordPress</p>
           <p><span className="font-semibold">Game Design:</span> Level design, systems design, Lua</p>
           <p><span className="font-semibold">AI Tools:</span> AI utilization for development and workflow optimization</p>
+          <p><span className="font-semibold">Agile & Project Management:</span> Scrum Master principles, Sprint planning and facilitation, Backlog management and refinement, User story creation and estimation, Kanban and flow optimization, Agile metrics and reporting, Facilitation of Scrum ceremonies, Continuous improvement processes</p>
         </div>
       </section>
 
@@ -211,6 +232,10 @@ const CVPage = () => {
         <ul className="list-disc list-inside text-sm">
           <li>Strong communication and presentation abilities</li>
           <li>Client collaboration and project management</li>
+          <li>Agile coaching and team facilitation</li>
+          <li>Sprint planning and execution</li>
+          <li>Stakeholder management within agile frameworks</li>
+          <li>Cross-functional team leadership</li>
           <li>Data-driven decision making</li>
         </ul>
       </section>
