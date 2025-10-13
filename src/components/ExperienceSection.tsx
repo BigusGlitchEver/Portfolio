@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { Briefcase, Award, Code, Layout, Palette, Brain, Zap, Users } from 'lucide-react';
+import { Briefcase, Code, Palette } from 'lucide-react';
 
 interface JobProject {
   title: string;
@@ -14,12 +14,6 @@ interface Job {
   description: string;
   icon: React.ReactNode;
   projects: JobProject[];
-}
-
-interface SkillCategory {
-  name: string;
-  icon: React.ReactNode;
-  skills: string[];
 }
 
 const ExperienceSection = () => {
@@ -59,39 +53,6 @@ const ExperienceSection = () => {
         { title: "Zul's Highway Cafe", link: "/cafe" },
         { title: "Sathanee Jam Labels", link: "/jam-jars" }
       ]
-    }
-  ];
-
-  const skillCategories: SkillCategory[] = [
-    {
-      name: "Design",
-      icon: <Layout className="w-6 h-6 text-blue-400" />,
-      skills: ["Figma", "UX/UI Design", "Visual Design", "Product Design", "Design Systems"]
-    },
-    {
-      name: "Development",
-      icon: <Code className="w-6 h-6 text-blue-400" />,
-      skills: ["HTML/CSS", "JavaScript", "React", "Tailwind CSS", "Responsive Design"]
-    },
-    {
-      name: "Game Design",
-      icon: <Zap className="w-6 h-6 text-blue-400" />,
-      skills: ["Level Design", "Mechanics Design", "Quest Design", "Low Code", "Lua"]
-    },
-    {
-      name: "Research & Strategy",
-      icon: <Brain className="w-6 h-6 text-blue-400" />,
-      skills: ["User Research", "Market Research", "Competitive Analysis", "User Testing"]
-    },
-    {
-      name: "Scrum Mastery",
-      icon: <Users className="w-6 h-6 text-blue-400" />,
-      skills: ["Sprint Planning", "Daily Stand-ups", "Sprint Reviews", "Retrospectives", "Backlog Refinement", "Agile Methodologies"]
-    },
-    {
-      name: "Other Skills",
-      icon: <Award className="w-6 h-6 text-blue-400" />,
-      skills: ["AI Utilization", "Photo Editing", "Video Production", "Client Collaboration", "Project Management"]
     }
   ];
 
@@ -151,38 +112,6 @@ const ExperienceSection = () => {
               </div>
             </div>
           ))}
-        </div>
-      </section>
-
-      {/* Skills Section - Now displayed second */}
-      <section className="mb-32">
-        <h2 className="text-4xl font-light mb-8 text-center">My Skills & Expertise</h2>
-        <div className="bg-gray-800/30 p-8 rounded-2xl backdrop-blur-sm ring-1 ring-blue-400/20">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-            {skillCategories.map((category, index) => (
-              <div 
-                key={index} 
-                className="bg-gray-800/50 p-6 rounded-xl backdrop-blur-sm transition-transform hover:scale-[1.01]"
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-gray-700/50 rounded-lg">
-                    {category.icon}
-                  </div>
-                  <h3 className="text-xl font-light">{category.name}</h3>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  {category.skills.map((skill, skillIndex) => (
-                    <span 
-                      key={skillIndex}
-                      className="px-3 py-1 bg-gray-700/30 rounded-full text-sm text-blue-300"
-                    >
-                      {skill}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
     </div>

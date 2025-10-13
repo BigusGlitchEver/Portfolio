@@ -6,7 +6,7 @@ import SearchLogic from '@/components/SearchLogic';
 import Footer from '@/components/Footer';
 import BackgroundCurve from '@/components/backgroundcurve';
 import ExperienceSection from '@/components/ExperienceSection';
-import { Book, Gamepad2, Globe, Brush, Coffee, Camera, Store, Code } from 'lucide-react';
+import { Book, Gamepad2, Globe, Brush, Coffee, Camera, Store, Code, Users, Zap } from 'lucide-react';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -24,6 +24,8 @@ export default function LandingPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const SHOW_EXPERIENCE = false;
+  const SHOW_SEARCH = false;
 
   useEffect(() => {
     setIsVisible(true);
@@ -48,18 +50,46 @@ export default function LandingPage() {
   // Custom sections with reordered and added content
   const sections = [
     {
-      title: "Poland",
-      icon: <Globe className="w-8 h-8 text-blue-400" />,
-      description: "Innovative projects focused on connection and digital solutions",
+      title: "Game Development",
+      icon: <Gamepad2 className="w-8 h-8 text-blue-400" />,
+      description: "Interactive experiences designed to engage and entertain",
       projects: [
         {
-          title: "Bigus Web Design",
-          description: "Crafting digital experiences through component-based design and AI",
-          image: "/BWDCover2.png",
-          categories: ["Web Design", "UX/UI Design", "Coding", "AI Utilization", "Project Management"],
-          link: "/biguswebdesign",
-          imageStyle: "cover"
+          title: "Make a Friend",
+          description: "Social platform combining chat functionality with collaborative game creation",
+          image: "/makeafriend.png",
+          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
+          link: "/makeafriend",
+          imageStyle: "contain"
         },
+        {
+          title: "Poly Plaza",
+          description: "A sandbox game focused on property management and economic systems",
+          image: "/polyplaza.png",
+          categories: ["Game Design", "Quest Design", "Mechanics Design", "Low Code", "AI Utilization"],
+          link: "/polyplaza"
+        },
+        {
+          title: "Broll",
+          description: "3D ragdoll-based platformer with innovative physics mechanics",
+          image: "/broll.png",
+          categories: ["Game Design", "Level Design"],
+          link: "/broll"
+        },
+        {
+          title: "Zine #4 & Snakes and Unions",
+          description: "A reimagined Snakes & Ladders game exploring wealth inequality and collective action",
+          image: "/zine.png",
+          categories: ["Product Design", "Visual Design", "Research", "Game Design", "Publications", "Photo Editing"],
+          link: "/zine"
+        }
+      ]
+    },
+    {
+      title: "Project Management & Strategy",
+      icon: <Users className="w-8 h-8 text-blue-400" />,
+      description: "Leading teams and managing complex projects across cultures",
+      projects: [
         {
           title: "Next SaaS",
           description: "Website development and monitoring solutions for businesses",
@@ -69,19 +99,19 @@ export default function LandingPage() {
           imageStyle: "contain"
         },
         {
-          title: "Make a Friend",
-          description: "Social platform combining chat functionality with collaborative game creation",
-          image: "/makeafriend.png",
-          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
-          link: "/makeafriend",
-          imageStyle: "contain"
+          title: "Bigus Web Design",
+          description: "Crafting digital experiences through component-based design and AI",
+          image: "/BWDCover2.png",
+          categories: ["Web Design", "UX/UI Design", "Coding", "AI Utilization", "Project Management"],
+          link: "/biguswebdesign",
+          imageStyle: "cover"
         }
       ]
     },
     {
-      title: "Sri Lanka",
-      icon: <Camera className="w-8 h-8 text-blue-400" />,
-      description: "Collaborations focused on education and community empowerment in South Asia",
+      title: "Client Collaboration",
+      icon: <Globe className="w-8 h-8 text-blue-400" />,
+      description: "Working directly with clients to deliver solutions across cultures",
       projects: [
         {
           title: "Save Yalla",
@@ -98,6 +128,13 @@ export default function LandingPage() {
           link: "/wildbreeze"
         },
         {
+          title: "Zul's Highway Cafe",
+          description: "Complete menu redesign and brand refresh",
+          image: "/cafemenu.png",
+          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
+          link: "/cafe"
+        },
+        {
           title: "Poetry Book Cover",
           description: "Cover design for local poet's anthology",
           image: "/yesican.png",
@@ -107,23 +144,9 @@ export default function LandingPage() {
       ]
     },
     {
-      title: "Malaysia",
-      icon: <Coffee className="w-8 h-8 text-blue-400" />,
-      description: "Brand and visual identity projects in Southeast Asia's dynamic food scene",
-      projects: [
-        {
-          title: "Zul's Highway Cafe",
-          description: "Complete menu redesign and brand refresh",
-          image: "/cafemenu.png",
-          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
-          link: "/cafe"
-        }
-      ]
-    },
-    {
-      title: "Thailand",
+      title: "Product Design",
       icon: <Store className="w-8 h-8 text-blue-400" />,
-      description: "Product design work for artisanal food producers",
+      description: "Creating tangible products and visual experiences",
       projects: [
         {
           title: "Sathanee Jam Labels",
@@ -131,32 +154,18 @@ export default function LandingPage() {
           image: "/jamjar.png",
           categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
           link: "/jam-jars"
-        }
-      ]
-    },
-    {
-      title: "Publications",
-      icon: <Book className="w-8 h-8 text-blue-400" />,
-      description: "Creative works exploring spirituality, social commentary, and cultural narratives",
-      projects: [
+        },
         {
           title: "Judaic Tarot Deck",
           description: "Complete deck design based on Jewish mysticism",
           image: "/judaictarot.png",
           categories: ["Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
           link: "/tarot"
-        },
-        {
-          title: "Zine #4 & Snakes and Unions",
-          description: "A reimagined Snakes & Ladders game exploring wealth inequality and collective action",
-          image: "/zine.png",
-          categories: ["Product Design", "Visual Design", "Research", "Game Design", "Publications", "Photo Editing"],
-          link: "/zine"
         }
       ]
     },
     {
-      title: "Phone Apps & Marketing",
+      title: "Digital Marketing & Branding",
       icon: <Brush className="w-8 h-8 text-blue-400" />,
       description: "Digital experiences crafted to solve real-world problems and push creative boundaries",
       projects: [
@@ -185,27 +194,6 @@ export default function LandingPage() {
           link: "/instagram"
         }
       ]
-    },
-    {
-      title: "Game Development",
-      icon: <Gamepad2 className="w-8 h-8 text-blue-400" />,
-      description: "Interactive experiences designed to engage and entertain",
-      projects: [
-        {
-          title: "Poly Plaza",
-          description: "A sandbox game focused on property management and economic systems",
-          image: "/polyplaza.png",
-          categories: ["Game Design", "Quest Design", "Mechanics Design", "Low Code", "AI Utilization"],
-          link: "/polyplaza"
-        },
-        {
-          title: "Broll",
-          description: "3D ragdoll-based platformer with innovative physics mechanics",
-          image: "/broll.png",
-          categories: ["Game Design", "Level Design"],
-          link: "/broll"
-        }
-      ]
     }
   ];
 
@@ -225,19 +213,46 @@ export default function LandingPage() {
                 </h1>
                 <div className="space-y-4">
                   <p className="text-xl sm:text-2xl md:text-3xl font-light">
-                    I believe in creating software that bridges cultural gaps and brings people together.
+                  I am a producer who helps companies bring games and digital experiences to life across cultures.
                   </p>
                   <p className="text-xl sm:text-2xl md:text-3xl font-light">
-                    Software that makes you feel connected - feel part of a world that is global in every sense of the word.
+                  I collaborate with designers, artists, and product owners to deliver intuitive, engaging products that meet business goals while resonating with users worldwide.
                   </p>
-                  <p className="text-xl sm:text-2xl md:text-3xl font-light">
-                    Software that tells stories of different cultures and the people who shape them.
-                  </p>
-                  <p className="text-xl sm:text-2xl md:text-3xl font-light">
-                    I utilize figma and coding in conjunction with AI tools, all as
-                    a means to create intuitive and user-friendly digital experiences
-                    that speak to us as a people.
-                  </p>
+                  {/* Descriptions for the two key skills */}
+                  <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    <div>
+                      <div className="mb-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/30">
+                        <Zap className="w-5 h-5 text-blue-300" />
+                        <span className="text-base">Game Design</span>
+                      </div>
+                      <div className="rounded-xl bg-gray-800/40 ring-1 ring-blue-400/20 p-4">
+                      <h3 className="mb-2 text-lg font-medium text-blue-200">Game Design</h3>
+                      <ul className="list-disc pl-5 space-y-1 text-gray-200/90">
+                        <li>Designing player-focused mechanics that feel intuitive and satisfying.</li>
+                        <li>Crafting engaging quests and narratives that immerse players in the experience.</li>
+                        <li>Optimizing user experience (UX) to ensure smooth, intuitive gameplay flows.</li>
+                        <li>Analyzing player behavior through data to inform design improvements.</li>
+                        <li>Rapid prototyping and iteration to refine gameplay and test ideas efficiently.</li>
+                      </ul>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="mb-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30">
+                        <Users className="w-5 h-5 text-emerald-300" />
+                        <span className="text-base">Scrum Master</span>
+                      </div>
+                      <div className="rounded-xl bg-gray-800/40 ring-1 ring-emerald-400/20 p-4">
+                      <h3 className="mb-2 text-lg font-medium text-emerald-200">Scrum Master</h3>
+                      <ul className="list-disc pl-5 space-y-1 text-gray-200/90">
+                        <li>Facilitating Agile ceremonies such as stand-ups, sprint planning, and retrospectives.</li>
+                        <li>Removing blockers and impediments to keep teams productive and focused.</li>
+                        <li>Enhancing team collaboration and communication across cross-functional teams.</li>
+                        <li>Managing backlogs and workflows to align priorities with business goals.</li>
+                        <li>Coaching teams in Agile practices to drive continuous improvement and efficiency.</li>
+                      </ul>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -256,13 +271,24 @@ export default function LandingPage() {
               </div>
             )}
 
-            {/* Experience and Skills Section */}
-            <ExperienceSection />
+            {/* Experience Section (disabled via flag) */}
+            {SHOW_EXPERIENCE && <ExperienceSection />}
 
-            {/* Search Component */}
-            <div className="mt-16 search-component">
-              <SearchLogic sections={sections} activeCategory={activeCategory} />
-            </div>
+            {/* Search Component (disabled via flag, but keep sections below) */}
+            {SHOW_SEARCH ? (
+              <div className="mt-16 search-component">
+                <SearchLogic sections={sections} activeCategory={activeCategory} />
+              </div>
+            ) : (
+              <div className="mt-16">
+                <SearchLogic
+                  sections={sections}
+                  activeCategory={activeCategory}
+                  hideSearchUI
+                  hideSearchResults
+                />
+              </div>
+            )}
           </div>
         </div>
       </main>

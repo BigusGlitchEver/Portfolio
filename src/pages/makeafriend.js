@@ -6,7 +6,7 @@ import Footer from '@/components/Footer';
 
 export default function MakeAFriendProject() {
   return (
-    <div className="min-h-screen bg-gradient-to-b from-maf-paper to-white">
+    <div className="min-h-screen bg-white">
       {/* Navigation */}
       <nav className="static w-full bg-maf-paper">
         <div className="container mx-auto px-4">
@@ -84,7 +84,7 @@ export default function MakeAFriendProject() {
                 className="object-contain"
               />
             </div>
-            <span className="max-w-full sm:max-w-[calc(80%-300px)] px-4">
+            <span className="max-w-full sm:max-w-[calc(80%-300px)] px-4 text-black">
               Making Social{' '}
               <span className="bg-yellow-400 rounded-full px-4 inline-block text-black">
                 Fun
@@ -136,19 +136,19 @@ export default function MakeAFriendProject() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-8 mb-8 sm:mb-12 lg:mb-24">
           {[
             {
-              icon: <User className="w-6 h-6 sm:w-8 sm:h-8" />,
+              icon: <User className="w-6 h-6 sm:w-8 sm:h-8 text-black" />,
               title: "User Research",
               description: "Conducted extensive research to understand player needs and social gaming patterns",
               link: "#research"
             },
             {
-              icon: <Mail className="w-6 h-6 sm:w-8 sm:h-8" />,
+              icon: <Mail className="w-6 h-6 sm:w-8 sm:h-8 text-black" />,
               title: "Social Innovation",
               description: "Pioneered new ways for players to connect through collaborative gaming experiences",
               link: "#innovation"
             },
             {
-              icon: <Globe className="w-6 h-6 sm:w-8 sm:h-8" />,
+              icon: <Globe className="w-6 h-6 sm:w-8 sm:h-8 text-black" />,
               title: "Platform Design",
               description: "Created an intuitive platform that brings players together naturally",
               link: "#platform"
@@ -173,13 +173,6 @@ export default function MakeAFriendProject() {
                     <p className="text-gray-600 font-poppins mb-6 text-sm sm:text-base">
                       {feature.description}
                     </p>
-                    <Link
-                      href={feature.link}
-                      className="inline-flex items-center justify-center px-6 py-2 sm:px-8 sm:py-3 rounded-full bg-yellow-400 text-black font-semibold text-sm sm:text-base group"
-                    >
-                      Learn More
-                      <ChevronRight className="ml-2 w-4 h-4 transform group-hover:translate-x-1 transition-transform" />
-                    </Link>
                   </div>
                 </div>
               </div>

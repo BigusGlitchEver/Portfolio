@@ -31,9 +31,11 @@ interface Section {
 interface SearchLogicProps {
   sections: Section[];
   activeCategory: string | null;
+  hideSearchUI?: boolean;
+  hideSearchResults?: boolean;
 }
 
-const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
+const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearchResults = false }: SearchLogicProps) => {
   // Define suggested tags at the top of the component
   const suggestedTags = [
     "Web Design",
@@ -138,8 +140,8 @@ const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
     return (
       <div className="space-y-4 group">
         <Link href={project.link}>
-          <div className="aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                       ring-2 ring-blue-500/50 transition-all duration-300">
+          <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                       ring-1 ring-blue-500/30 transition-all duration-300">
             <Image
               src={project.image}
               alt={project.title}
@@ -167,11 +169,11 @@ const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
         
         <div className="space-y-2">
           <Link href={project.link}>
-            <h3 className="text-2xl font-light hover:text-blue-400 transition-colors cursor-pointer">
+            <h3 className="text-lg font-light hover:text-blue-400 transition-colors cursor-pointer">
               {project.title}
             </h3>
           </Link>
-          <p className="text-gray-400 text-lg">{project.description}</p>
+          <p className="text-gray-400 text-sm">{project.description}</p>
           {project.buttons && (
             <div className="flex gap-4 mt-4">
               {project.buttons.map((button, idx) => (
@@ -192,61 +194,65 @@ const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
 
   return (
     <div>
-      <div className="w-full max-w-4xl mx-auto space-y-6 mb-16">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-light mb-4">Search My Portfolio</h2>
-          <Search className="w-16 h-16 mx-auto text-blue-400" />
-        </div>
-        
-        <form onSubmit={handleSubmit} className="relative">
-          <input
-            type="text"
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder="Search projects..."
-            className="w-full px-4 py-3 pl-12 bg-gray-800/50 backdrop-blur-sm rounded-lg 
-                     text-gray-100 placeholder-gray-300 focus:outline-none focus:ring-2 
-                     focus:ring-blue-400 transition-all ring-1 ring-blue-400/20 
-                     hover:bg-gray-700/50"
-          />
-          <button
-            type="submit"
-            className={`absolute left-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full
-                       transition-all duration-200 ease-in-out focus:outline-none
-                       ${isButtonPressed ? 'scale-75 bg-blue-500/20' : 'scale-100'}
-                       ${inputValue ? 'text-blue-400' : 'text-gray-400'}`}
-          >
-            <Search className="w-5 h-5" />
-          </button>
-        </form>
-
-        <div className="flex flex-wrap gap-3">
-          <span className="text-gray-400 py-2">Suggested:</span>
-          {suggestedTags.map((tag) => (
+      {!hideSearchUI && (
+        <div className="w-full max-w-4xl mx-auto space-y-6 mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-light mb-4">Search My Portfolio</h2>
+            <Search className="w-16 h-16 mx-auto text-blue-400" />
+          </div>
+          
+          <form onSubmit={handleSubmit} className="relative">
+            <input
+              type="text"
+              value={inputValue}
+              onChange={handleInputChange}
+              placeholder="Search projects..."
+              className="w-full px-4 py-3 pl-12 bg-gray-800/50 backdrop-blur-sm rounded-lg 
+                       text-gray-100 placeholder-gray-300 focus:outline-none focus:ring-2 
+                       focus:ring-blue-400 transition-all ring-1 ring-blue-400/20 
+                       hover:bg-gray-700/50"
+            />
             <button
-              key={tag}
-              onClick={() => handleTagClick(tag)}
-              className={`px-4 py-2 rounded-full transition-all duration-300 transform
-                ${selectedTag === tag 
-                  ? 'bg-blue-500 text-white scale-105' 
-                  : 'bg-gray-800/30 text-gray-300 hover:bg-gray-700/30'
-                }`}
+              type="submit"
+              className={`absolute left-3 top-1/2 transform -translate-y-1/2 p-1 rounded-full
+                         transition-all duration-200 ease-in-out focus:outline-none
+                         ${isButtonPressed ? 'scale-75 bg-blue-500/20' : 'scale-100'}
+                         ${inputValue ? 'text-blue-400' : 'text-gray-400'}`}
             >
-              {tag}
+              <Search className="w-5 h-5" />
             </button>
-          ))}
-        </div>
-      </div>
+          </form>
 
-      <SearchResults 
-        sections={sections}
-        searchQuery={searchQuery}
-        selectedTag={selectedTag}
-        isSearching={isSearching}
-        onTagSelect={handleTagClick}
-        scrollToResults={shouldScrollToResults}
-        isMobile={isMobile}
-      />
+          <div className="flex flex-wrap gap-3">
+            <span className="text-gray-400 py-2">Suggested:</span>
+            {suggestedTags.map((tag) => (
+              <button
+                key={tag}
+                onClick={() => handleTagClick(tag)}
+                className={`px-4 py-2 rounded-full transition-all duration-300 transform
+                  ${selectedTag === tag 
+                    ? 'bg-blue-500 text-white scale-105' 
+                    : 'bg-gray-800/30 text-gray-300 hover:bg-gray-700/30'
+                  }`}
+              >
+                {tag}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {!hideSearchResults && (
+        <SearchResults 
+          sections={sections}
+          searchQuery={searchQuery}
+          selectedTag={selectedTag}
+          isSearching={isSearching}
+          onTagSelect={handleTagClick}
+          scrollToResults={shouldScrollToResults}
+          isMobile={isMobile}
+        />
+      )}
 
       {/* Always display all sections, regardless of search */}
       <div className="space-y-32">
@@ -262,7 +268,7 @@ const SearchLogic = ({ sections, activeCategory }: SearchLogicProps) => {
               <p className="text-xl text-gray-400">{section.description}</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
               {section.projects.map((project, index) => (
                 <div key={index}>
                   {renderProject(project)}
