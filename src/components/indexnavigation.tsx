@@ -29,7 +29,7 @@ const IndexNavigation = () => {
           {/* Right: Navigation Links */}
           <div className="flex items-center justify-end gap-6">
             <a 
-              href="https://www.linkedin.com/in/samuel-bigus-60b948217"
+              href="https://www.linkedin.com/in/shmoogames"
               target="_blank"
               rel="noopener noreferrer"
               className="text-white/90 hover:text-white transition-colors"
@@ -37,7 +37,7 @@ const IndexNavigation = () => {
               LinkedIn
             </a>
             <a 
-              href="mailto:samuelshmoobigus@yahoo.com"
+              href="mailto:shmoogames@yahoo.com"
               className="text-white/90 hover:text-white transition-colors"
             >
               Email

@@ -11,13 +11,13 @@ const Footer = () => {
             <h3 className="text-white/90 font-medium mb-4">Contact</h3>
             <div className="space-y-2">
               <a 
-                href="mailto:samuelshmoobigus@yahoo.com" 
+                href="mailto:shmoogames@yahoo.com" 
                 className="text-gray-400 hover:text-white block transition-colors"
               >
-                samuelshmoobigus@yahoo.com
+                shmoogames@yahoo.com
               </a>
               <a 
-                href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
+                href="https://www.linkedin.com/in/shmoogames" 
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-gray-400 hover:text-white block transition-colors"

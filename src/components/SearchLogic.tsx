@@ -4,6 +4,7 @@ import { Search } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import SearchResults from './SearchResults';
+import ProjectTooltip from './ProjectTooltip';
 
 // Interfaces
 interface ProjectButton {
@@ -19,6 +20,9 @@ interface Project {
   link: string;
   imageStyle?: string;
   buttons?: ProjectButton[];
+  highlights?: string[];
+  technologies?: string[];
+  achievements?: string[];
 }
 
 interface Section {
@@ -138,57 +142,66 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
     }
 
     return (
-      <div className="space-y-4 group">
-        <Link href={project.link}>
-          <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                       ring-1 ring-blue-500/30 transition-all duration-300">
-            <Image
-              src={project.image}
-              alt={project.title}
-              fill
-              className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-        </Link>
-        
-        <div className="flex flex-wrap gap-2">
-          {project.categories.map((category, catIndex) => (
-            <span
-              key={catIndex}
-              onClick={() => handleTagClick(category)}
-              className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
-            >
-              {category}
-              {catIndex < project.categories.length - 1 && (
-                <span className="ml-2 text-gray-400">•</span>
-              )}
-            </span>
-          ))}
-        </div>
-        
-        <div className="space-y-2">
+      <ProjectTooltip
+        title={project.title}
+        description={project.description}
+        categories={project.categories}
+        highlights={project.highlights || []}
+        technologies={project.technologies || []}
+        achievements={project.achievements || []}
+      >
+        <div className="space-y-4 group">
           <Link href={project.link}>
-            <h3 className="text-lg font-light hover:text-blue-400 transition-colors cursor-pointer">
-              {project.title}
-            </h3>
-          </Link>
-          <p className="text-gray-400 text-sm">{project.description}</p>
-          {project.buttons && (
-            <div className="flex gap-4 mt-4">
-              {project.buttons.map((button, idx) => (
-                <Link
-                  key={idx}
-                  href={button.url}
-                  className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
-                >
-                  {button.label}
-                </Link>
-              ))}
+            <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                         ring-1 ring-blue-500/30 transition-all duration-300">
+              <Image
+                src={project.image}
+                alt={project.title}
+                fill
+                className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
-          )}
+          </Link>
+          
+          <div className="flex flex-wrap gap-2">
+            {project.categories.map((category, catIndex) => (
+              <span
+                key={catIndex}
+                onClick={() => handleTagClick(category)}
+                className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
+              >
+                {category}
+                {catIndex < project.categories.length - 1 && (
+                  <span className="ml-2 text-gray-400">•</span>
+                )}
+              </span>
+            ))}
+          </div>
+          
+          <div className="space-y-2">
+            <Link href={project.link}>
+              <h3 className="text-lg font-light hover:text-blue-400 transition-colors cursor-pointer">
+                {project.title}
+              </h3>
+            </Link>
+            <p className="text-gray-400 text-sm">{project.description}</p>
+            {project.buttons && (
+              <div className="flex gap-4 mt-4">
+                {project.buttons.map((button, idx) => (
+                  <Link
+                    key={idx}
+                    href={button.url}
+                    className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
+                  >
+                    {button.label}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      </ProjectTooltip>
     );
   };
 

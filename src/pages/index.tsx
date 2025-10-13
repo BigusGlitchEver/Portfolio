@@ -70,18 +70,18 @@ export default function LandingPage() {
           link: "/polyplaza"
         },
         {
-          title: "Broll",
-          description: "3D ragdoll-based platformer with innovative physics mechanics",
-          image: "/broll.png",
-          categories: ["Game Design", "Level Design"],
-          link: "/broll"
-        },
-        {
           title: "Zine #4 & Snakes and Unions",
           description: "A reimagined Snakes & Ladders game exploring wealth inequality and collective action",
           image: "/zine.png",
           categories: ["Product Design", "Visual Design", "Research", "Game Design", "Publications", "Photo Editing"],
           link: "/zine"
+        },
+        {
+          title: "Judaic Tarot Deck",
+          description: "Complete deck design based on Jewish mysticism",
+          image: "/judaictarot.png",
+          categories: ["Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
+          link: "/tarot"
         }
       ]
     },
@@ -90,6 +90,14 @@ export default function LandingPage() {
       icon: <Users className="w-8 h-8 text-blue-400" />,
       description: "Leading teams and managing complex projects across cultures",
       projects: [
+        {
+          title: "Make a Friend",
+          description: "Social platform combining chat functionality with collaborative game creation",
+          image: "/makeafriend.png",
+          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
+          link: "/makeafriend",
+          imageStyle: "contain"
+        },
         {
           title: "Next SaaS",
           description: "Website development and monitoring solutions for businesses",
@@ -140,27 +148,13 @@ export default function LandingPage() {
           image: "/yesican.png",
           categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
           link: "/yesican"
-        }
-      ]
-    },
-    {
-      title: "Product Design",
-      icon: <Store className="w-8 h-8 text-blue-400" />,
-      description: "Creating tangible products and visual experiences",
-      projects: [
+        },
         {
           title: "Sathanee Jam Labels",
           description: "Product label design for artisan restaurant",
           image: "/jamjar.png",
           categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
           link: "/jam-jars"
-        },
-        {
-          title: "Judaic Tarot Deck",
-          description: "Complete deck design based on Jewish mysticism",
-          image: "/judaictarot.png",
-          categories: ["Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
-          link: "/tarot"
         }
       ]
     },
