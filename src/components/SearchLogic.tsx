@@ -147,8 +147,6 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
         description={project.description}
         categories={project.categories}
         highlights={project.highlights || []}
-        technologies={project.technologies || []}
-        achievements={project.achievements || []}
       >
         <div className="space-y-4 group">
           <Link href={project.link}>

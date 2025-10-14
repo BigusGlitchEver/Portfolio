@@ -60,28 +60,43 @@ export default function LandingPage() {
           image: "/makeafriend.png",
           categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
           link: "/makeafriend",
-          imageStyle: "contain"
+          imageStyle: "contain",
+          highlights: [
+            "Guided a diverse team in building a social platform that makes connecting through play natural and rewarding."
+          ]
         },
         {
           title: "Poly Plaza",
           description: "A sandbox game focused on property management and economic systems",
           image: "/polyplaza.png",
           categories: ["Game Design", "Quest Design", "Mechanics Design", "Low Code", "AI Utilization"],
-          link: "/polyplaza"
+          link: "/polyplaza",
+          highlights: [
+            "Designed complex economic systems for property management gameplay",
+            "Created engaging quest structures and mechanics design"
+          ]
         },
         {
           title: "Zine #4 & Snakes and Unions",
           description: "A reimagined Snakes & Ladders game exploring wealth inequality and collective action",
           image: "/zine.png",
           categories: ["Product Design", "Visual Design", "Research", "Game Design", "Publications", "Photo Editing"],
-          link: "/zine"
+          link: "/zine",
+          highlights: [
+            "Reimagined classic board game to explore social commentary on wealth inequality",
+            "Combined game design with visual storytelling and research"
+          ]
         },
         {
           title: "Judaic Tarot Deck",
           description: "Complete deck design based on Jewish mysticism",
           image: "/judaictarot.png",
           categories: ["Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
-          link: "/tarot"
+          link: "/tarot",
+          highlights: [
+            "Researched and designed complete 78-card deck based on Jewish mysticism",
+            "Created unique visual system blending traditional tarot with Judaic imagery"
+          ]
         }
       ]
     },
@@ -96,7 +111,10 @@ export default function LandingPage() {
           image: "/makeafriend.png",
           categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
           link: "/makeafriend",
-          imageStyle: "contain"
+          imageStyle: "contain",
+          highlights: [
+            "Guided a diverse team in building a social platform that makes connecting through play natural and rewarding."
+          ]
         },
         {
           title: "Next SaaS",
@@ -104,7 +122,11 @@ export default function LandingPage() {
           image: "/nextsaaslogo.png",
           categories: ["Business Strategy", "Figma", "UX/UI Design", "Research", "Project Management", "Web Design", "Coding", "AI Utilization"],
           link: "/nextsaas",
-          imageStyle: "contain"
+          imageStyle: "contain",
+          highlights: [
+            "Developed comprehensive business strategy for SaaS website monitoring platform",
+            "Led project management and UX/UI design process from concept to implementation"
+          ]
         },
         {
           title: "Bigus Web Design",
@@ -112,7 +134,11 @@ export default function LandingPage() {
           image: "/BWDCover2.png",
           categories: ["Web Design", "UX/UI Design", "Coding", "AI Utilization", "Project Management"],
           link: "/biguswebdesign",
-          imageStyle: "cover"
+          imageStyle: "cover",
+          highlights: [
+            "Managed component-based design system implementation using AI-assisted workflows",
+            "Coordinated cross-functional team to deliver modern web experiences"
+          ]
         }
       ]
     },
@@ -126,35 +152,55 @@ export default function LandingPage() {
           description: "Video production and fundraising campaign for educational resources",
           image: "/saveyalla.png",
           categories: ["Video Production", "Client Collaboration", "Interview", "Marketing"],
-          link: "/saveyalla"
+          link: "/saveyalla",
+          highlights: [
+            "Produced compelling video content for educational fundraising campaign in Sri Lanka",
+            "Conducted interviews and marketing strategy to support community education"
+          ]
         },
         {
           title: "Wild Breeze Infomercial",
           description: "Commercial production for a boutique bungalow resort",
           image: "/wildbreeze.png",
           categories: ["Video Production", "Narration", "Client Collaboration"],
-          link: "/wildbreeze"
+          link: "/wildbreeze",
+          highlights: [
+            "Created and narrated professional commercial for boutique resort",
+            "Collaborated with client to capture authentic Sri Lankan hospitality"
+          ]
         },
         {
           title: "Zul's Highway Cafe",
           description: "Complete menu redesign and brand refresh",
           image: "/cafemenu.png",
           categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
-          link: "/cafe"
+          link: "/cafe",
+          highlights: [
+            "Redesigned complete menu system and refreshed brand identity for Malaysian cafe",
+            "Combined product design with photo editing to showcase authentic cuisine"
+          ]
         },
         {
           title: "Poetry Book Cover",
           description: "Cover design for local poet's anthology",
           image: "/yesican.png",
           categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
-          link: "/yesican"
+          link: "/yesican",
+          highlights: [
+            "Designed book cover for local Sri Lankan poet's anthology",
+            "Captured cultural authenticity through visual design and photo editing"
+          ]
         },
         {
           title: "Sathanee Jam Labels",
           description: "Product label design for artisan restaurant",
           image: "/jamjar.png",
           categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
-          link: "/jam-jars"
+          link: "/jam-jars",
+          highlights: [
+            "Created artisan product labels for Thai restaurant's jam collection",
+            "Developed visual identity that reflects handcrafted quality"
+          ]
         }
       ]
     },
@@ -178,6 +224,10 @@ export default function LandingPage() {
               label: "View the Process",
               url: "/art-pocketbook"
             }
+          ],
+          highlights: [
+            "Researched and designed comprehensive platform to help artists understand sales data",
+            "Created user-friendly interface reducing stress while improving market insights"
           ]
         },
         {
@@ -185,7 +235,11 @@ export default function LandingPage() {
           description: "Educational platform development and branding",
           image: "/samtheteacher.png",
           categories: ["Visual Design", "UX/UI Design", "Photo Editing"],
-          link: "/instagram"
+          link: "/instagram",
+          highlights: [
+            "Developed brand identity and visual design for educational platform",
+            "Created cohesive Instagram marketing strategy to build brand awareness"
+          ]
         }
       ]
     }
@@ -197,14 +251,24 @@ export default function LandingPage() {
       <IndexNavigation />
 
       <main className="flex-1">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-20 sm:pt-32">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40">
           <div className={`transition-opacity duration-1000 ${isVisible ? 'opacity-100' : 'opacity-0'}`}>
             {/* Hero Section */}
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-16">
-              <div className="w-full md:w-2/3 space-y-6 text-center md:text-left">
-                <h1 className="text-3xl sm:text-4xl md:text-5xl font-light">
-                  Hey, I'm Shmoo.
-                </h1>
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-16 relative">
+              <div className="w-full md:w-2/3 space-y-6 text-center md:text-left relative z-10">
+                <div className="flex items-center gap-6">
+                  <h1 className="text-3xl sm:text-4xl md:text-5xl font-light">
+                    Hey, I'm Shmoo.
+                  </h1>
+                  {/* FGWarsaw Image - positioned directly next to the heading */}
+                  <div className="hidden md:block w-48 h-48 flex-shrink-0">
+                    <img 
+                      src="/FGWarsawCDPR.png" 
+                      alt="FG Warsaw CDPR" 
+                      className="w-full h-full object-contain rounded-2xl"
+                    />
+                  </div>
+                </div>
                 <div className="space-y-4">
                   <p className="text-xl sm:text-2xl md:text-3xl font-light">
                   I am a producer who helps companies bring games and digital experiences to life across cultures.
@@ -251,7 +315,7 @@ export default function LandingPage() {
               </div>
 
               {!isMobile && (
-                <div className="w-64 flex-shrink-0 relative mt-16">
+                <div className="w-64 flex-shrink-0 relative mt-16 z-20">
                   <Portrait />
                 </div>
               )}
