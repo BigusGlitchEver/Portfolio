@@ -106,15 +106,26 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
   const renderProject = (project: Project) => {
     if (isMobile) {
       return (
-        <div className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
+        <div className="flex-shrink-0 w-64 bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
           <Link href={project.link}>
-            <h3 className="text-xl font-light text-white mb-3 hover:text-blue-400 transition-colors">
+            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative cursor-pointer mb-3">
+              <Image
+                src={project.image}
+                alt={project.title}
+                fill
+                sizes="(max-width: 768px) 256px, 256px"
+                className={`transition-all duration-300 object-${project.imageStyle || 'cover'}`}
+              />
+            </div>
+          </Link>
+          <Link href={project.link}>
+            <h3 className="text-lg font-light text-white mb-2 hover:text-blue-400 transition-colors">
               {project.title}
             </h3>
           </Link>
-          <p className="text-sm text-gray-300 mb-3">{project.description}</p>
-          <div className="flex flex-wrap gap-2">
-            {project.categories.map((category, idx) => (
+          <p className="text-sm text-gray-300 mb-3 line-clamp-2">{project.description}</p>
+          <div className="flex flex-wrap gap-1">
+            {project.categories.slice(0, 3).map((category, idx) => (
               <span
                 key={idx}
                 onClick={() => handleTagClick(category)}
@@ -123,9 +134,63 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
                 {category}
               </span>
             ))}
+            {project.categories.length > 3 && (
+              <span className="text-xs text-gray-400 px-2 py-1">
+                +{project.categories.length - 3}
+              </span>
+            )}
           </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        <ProjectTooltip
+          title={project.title}
+          description={project.description}
+          categories={project.categories}
+          highlights={project.highlights || []}
+        >
+          <Link href={project.link}>
+            <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                         ring-1 ring-blue-500/30 transition-all duration-300 group">
+              <Image
+                src={project.image}
+                alt={project.title}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
+                className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            </div>
+          </Link>
+        </ProjectTooltip>
+        
+        <div className="flex flex-wrap gap-2">
+          {project.categories.map((category, catIndex) => (
+            <span
+              key={catIndex}
+              onClick={() => handleTagClick(category)}
+              className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
+            >
+              {category}
+              {catIndex < project.categories.length - 1 && (
+                <span className="ml-2 text-gray-400">•</span>
+              )}
+            </span>
+          ))}
+        </div>
+        
+        <div className="space-y-2">
+          <Link href={project.link}>
+            <h3 className="text-lg font-light hover:text-blue-400 transition-colors cursor-pointer">
+              {project.title}
+            </h3>
+          </Link>
+          <p className="text-gray-400 text-sm">{project.description}</p>
           {project.buttons && (
-            <div className="flex flex-wrap gap-4 mt-4">
+            <div className="flex gap-4 mt-4">
               {project.buttons.map((button, idx) => (
                 <Link
                   key={idx}
@@ -138,68 +203,7 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
             </div>
           )}
         </div>
-      );
-    }
-
-    return (
-      <ProjectTooltip
-        title={project.title}
-        description={project.description}
-        categories={project.categories}
-        highlights={project.highlights || []}
-      >
-        <div className="space-y-4 group">
-          <Link href={project.link}>
-            <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                         ring-1 ring-blue-500/30 transition-all duration-300">
-              <Image
-                src={project.image}
-                alt={project.title}
-                fill
-                className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </Link>
-          
-          <div className="flex flex-wrap gap-2">
-            {project.categories.map((category, catIndex) => (
-              <span
-                key={catIndex}
-                onClick={() => handleTagClick(category)}
-                className="text-sm text-blue-400 hover:text-white transition-colors cursor-pointer"
-              >
-                {category}
-                {catIndex < project.categories.length - 1 && (
-                  <span className="ml-2 text-gray-400">•</span>
-                )}
-              </span>
-            ))}
-          </div>
-          
-          <div className="space-y-2">
-            <Link href={project.link}>
-              <h3 className="text-lg font-light hover:text-blue-400 transition-colors cursor-pointer">
-                {project.title}
-              </h3>
-            </Link>
-            <p className="text-gray-400 text-sm">{project.description}</p>
-            {project.buttons && (
-              <div className="flex gap-4 mt-4">
-                {project.buttons.map((button, idx) => (
-                  <Link
-                    key={idx}
-                    href={button.url}
-                    className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
-                  >
-                    {button.label}
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      </ProjectTooltip>
+      </div>
     );
   };
 
@@ -279,13 +283,25 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
               <p className="text-xl text-gray-400">{section.description}</p>
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {section.projects.map((project, index) => (
-                <div key={index}>
-                  {renderProject(project)}
+            {isMobile ? (
+              <div className="overflow-x-auto scrollbar-hide">
+                <div className="flex gap-4 pb-4" style={{ scrollSnapType: 'x mandatory' }}>
+                  {section.projects.map((project, index) => (
+                    <div key={index} style={{ scrollSnapAlign: 'start' }}>
+                      {renderProject(project)}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                {section.projects.map((project, index) => (
+                  <div key={index}>
+                    {renderProject(project)}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </div>

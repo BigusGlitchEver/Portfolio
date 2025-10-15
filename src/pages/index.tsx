@@ -6,7 +6,9 @@ import SearchLogic from '@/components/SearchLogic';
 import Footer from '@/components/Footer';
 import BackgroundCurve from '@/components/backgroundcurve';
 import ExperienceSection from '@/components/ExperienceSection';
+import CVOptionsModal from '@/components/CVOptionsModal';
 import { Book, Gamepad2, Globe, Brush, Coffee, Camera, Store, Code, Users, Zap } from 'lucide-react';
+import { useRouter } from 'next/router';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -24,6 +26,8 @@ export default function LandingPage() {
   const [isVisible, setIsVisible] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isCVModalOpen, setIsCVModalOpen] = useState(false);
+  const router = useRouter();
   const SHOW_EXPERIENCE = false;
   const SHOW_SEARCH = false;
 
@@ -47,6 +51,15 @@ export default function LandingPage() {
     }
   };
 
+  const handleCVClick = () => {
+    setIsCVModalOpen(true);
+  };
+
+  const handleViewBrowser = () => {
+    router.push('/cv');
+    setIsCVModalOpen(false);
+  };
+
   // Custom sections with reordered and added content
   const sections = [
     {
@@ -58,7 +71,7 @@ export default function LandingPage() {
           title: "Make a Friend",
           description: "Social platform combining chat functionality with collaborative game creation",
           image: "/makeafriend.png",
-          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
+          categories: ["Game Design", "UX Research", "Strategy", "Figma", "UX/UI Design", "Coding", "AI Utilization", "Market Research", "Web Design", "Photo Editing"],
           link: "/makeafriend",
           imageStyle: "contain",
           highlights: [
@@ -69,7 +82,7 @@ export default function LandingPage() {
           title: "Poly Plaza",
           description: "A sandbox game focused on property management and economic systems",
           image: "/polyplaza.png",
-          categories: ["Game Design", "Quest Design", "Mechanics Design", "Low Code", "AI Utilization"],
+          categories: ["Game Design", "Quest Design", "Mechanics Design", "AI Utilization", "Low Code"],
           link: "/polyplaza",
           highlights: [
             "Designed complex economic systems for property management gameplay",
@@ -80,7 +93,7 @@ export default function LandingPage() {
           title: "Zine #4 & Snakes and Unions",
           description: "A reimagined Snakes & Ladders game exploring wealth inequality and collective action",
           image: "/zine.png",
-          categories: ["Product Design", "Visual Design", "Research", "Game Design", "Publications", "Photo Editing"],
+          categories: ["Game Design", "Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
           link: "/zine",
           highlights: [
             "Reimagined classic board game to explore social commentary on wealth inequality",
@@ -109,7 +122,7 @@ export default function LandingPage() {
           title: "Make a Friend",
           description: "Social platform combining chat functionality with collaborative game creation",
           image: "/makeafriend.png",
-          categories: ["Game Design", "Figma", "UX Research", "UX/UI Design", "Strategy", "Market Research", "Web Design", "Photo Editing", "Coding", "AI Utilization"],
+          categories: ["Strategy", "Project Management", "UX Research", "Game Design", "Figma", "UX/UI Design", "Coding", "AI Utilization", "Market Research", "Web Design", "Photo Editing"],
           link: "/makeafriend",
           imageStyle: "contain",
           highlights: [
@@ -120,7 +133,7 @@ export default function LandingPage() {
           title: "Next SaaS",
           description: "Website development and monitoring solutions for businesses",
           image: "/nextsaaslogo.png",
-          categories: ["Business Strategy", "Figma", "UX/UI Design", "Research", "Project Management", "Web Design", "Coding", "AI Utilization"],
+          categories: ["Business Strategy", "Project Management", "UX/UI Design", "Research", "Figma", "Web Design", "Coding", "AI Utilization"],
           link: "/nextsaas",
           imageStyle: "contain",
           highlights: [
@@ -132,7 +145,7 @@ export default function LandingPage() {
           title: "Bigus Web Design",
           description: "Crafting digital experiences through component-based design and AI",
           image: "/BWDCover2.png",
-          categories: ["Web Design", "UX/UI Design", "Coding", "AI Utilization", "Project Management"],
+          categories: ["Project Management", "Web Design", "UX/UI Design", "Coding", "AI Utilization"],
           link: "/biguswebdesign",
           imageStyle: "cover",
           highlights: [
@@ -151,7 +164,7 @@ export default function LandingPage() {
           title: "Save Yalla",
           description: "Video production and fundraising campaign for educational resources",
           image: "/saveyalla.png",
-          categories: ["Video Production", "Client Collaboration", "Interview", "Marketing"],
+          categories: ["Client Collaboration", "Video Production", "Interview", "Marketing"],
           link: "/saveyalla",
           highlights: [
             "Produced compelling video content for educational fundraising campaign in Sri Lanka",
@@ -162,7 +175,7 @@ export default function LandingPage() {
           title: "Wild Breeze Infomercial",
           description: "Commercial production for a boutique bungalow resort",
           image: "/wildbreeze.png",
-          categories: ["Video Production", "Narration", "Client Collaboration"],
+          categories: ["Client Collaboration", "Video Production", "Narration"],
           link: "/wildbreeze",
           highlights: [
             "Created and narrated professional commercial for boutique resort",
@@ -173,7 +186,7 @@ export default function LandingPage() {
           title: "Zul's Highway Cafe",
           description: "Complete menu redesign and brand refresh",
           image: "/cafemenu.png",
-          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
+          categories: ["Client Collaboration", "Product Design", "Visual Design", "Photo Editing"],
           link: "/cafe",
           highlights: [
             "Redesigned complete menu system and refreshed brand identity for Malaysian cafe",
@@ -184,7 +197,7 @@ export default function LandingPage() {
           title: "Poetry Book Cover",
           description: "Cover design for local poet's anthology",
           image: "/yesican.png",
-          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
+          categories: ["Client Collaboration", "Product Design", "Visual Design", "Photo Editing"],
           link: "/yesican",
           highlights: [
             "Designed book cover for local Sri Lankan poet's anthology",
@@ -195,7 +208,7 @@ export default function LandingPage() {
           title: "Sathanee Jam Labels",
           description: "Product label design for artisan restaurant",
           image: "/jamjar.png",
-          categories: ["Product Design", "Visual Design", "Client Collaboration", "Photo Editing"],
+          categories: ["Client Collaboration", "Product Design", "Visual Design", "Photo Editing"],
           link: "/jam-jars",
           highlights: [
             "Created artisan product labels for Thai restaurant's jam collection",
@@ -213,7 +226,7 @@ export default function LandingPage() {
           title: "Art Pocketbook",
           description: "A comprehensive platform helping artists understand their sales data and market presence while reducing stress",
           image: "/hiprototype.png",
-          categories: ["Figma", "UX/UI Design", "Research", "Web Design"],
+          categories: ["UX/UI Design", "Research", "Figma", "Web Design"],
           link: "/art-pocketbook",
           buttons: [
             {
@@ -248,7 +261,7 @@ export default function LandingPage() {
   return (
     <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen flex flex-col text-white`}>
       <BackgroundCurve />
-      <IndexNavigation />
+      <IndexNavigation onCVClick={handleCVClick} />
 
       <main className="flex-1">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-32 sm:pt-40">
@@ -256,12 +269,12 @@ export default function LandingPage() {
             {/* Hero Section */}
             <div className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-16 relative">
               <div className="w-full md:w-2/3 space-y-6 text-center md:text-left relative z-10">
-                <div className="flex items-center gap-6">
+                <div className="flex items-center gap-4 md:gap-6">
                   <h1 className="text-3xl sm:text-4xl md:text-5xl font-light">
                     Hey, I'm Shmoo.
                   </h1>
                   {/* FGWarsaw Image - positioned directly next to the heading */}
-                  <div className="hidden md:block w-48 h-48 flex-shrink-0">
+                  <div className="w-32 h-32 sm:w-40 sm:h-40 md:w-48 md:h-48 flex-shrink-0">
                     <img 
                       src="/FGWarsawCDPR.png" 
                       alt="FG Warsaw CDPR" 
@@ -352,6 +365,13 @@ export default function LandingPage() {
       </main>
 
       <Footer />
+
+      {/* CV Options Modal */}
+      <CVOptionsModal
+        isOpen={isCVModalOpen}
+        onClose={() => setIsCVModalOpen(false)}
+        onViewBrowser={handleViewBrowser}
+      />
     </div>
   );
 }

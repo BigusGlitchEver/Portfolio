@@ -19,6 +19,7 @@ const ProjectNav = () => {
                   height={32}
                   priority
                   className="rounded-full"
+                  style={{ width: "auto", height: "auto" }}
                 />
               </div>
               <span className="text-white/90 group-hover:text-white transition-colors">

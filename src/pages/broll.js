@@ -23,7 +23,7 @@ export default function BrollProject() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
           <div className="flex justify-between items-center">
             <a href="/" className="flex items-center gap-2 text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors">
-              <Image src="/logo.png" alt="Portfolio Logo" width={32} height={32} />
+              <Image src="/logo.png" alt="Portfolio Logo" width={32} height={32} style={{ width: "auto", height: "auto" }} />
               <span className="text-base sm:text-xl font-medium">Back to Portfolio</span>
             </a>
             <div className="hidden md:block text-2xl font-light text-white">Samuel Shmoo Bigus</div>

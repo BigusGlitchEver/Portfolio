@@ -3,7 +3,11 @@ import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
-const IndexNavigation = () => {
+interface IndexNavigationProps {
+  onCVClick?: () => void;
+}
+
+const IndexNavigation: React.FC<IndexNavigationProps> = ({ onCVClick }) => {
   return (
     <header className="fixed top-0 left-0 right-0 bg-gray-900/90 backdrop-blur-sm z-50">
       <div className="max-w-7xl mx-auto px-4 py-4">
@@ -18,6 +22,7 @@ const IndexNavigation = () => {
                 height={32}
                 priority
                 className="rounded-full"
+                style={{ width: "auto", height: "auto" }}
               />
             </div>
             <span className="text-white/90">Portfolio</span>
@@ -42,12 +47,12 @@ const IndexNavigation = () => {
             >
               Email
             </a>
-            <Link 
-              href="/cv"
+            <button 
+              onClick={onCVClick}
               className="text-white/90 hover:text-white transition-colors"
             >
               CV
-            </Link>
+            </button>
           </div>
         </nav>
       </div>

@@ -83,15 +83,25 @@ const SearchResults: React.FC<SearchResultsProps> = ({
   const renderProject = (project: Project) => {
     if (isMobile) {
       return (
-        <div className="bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
+        <div className="flex-shrink-0 w-64 bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
           <Link href={project.link}>
-            <h3 className="text-xl font-light text-white mb-3 hover:text-blue-400 transition-colors">
+            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative cursor-pointer mb-3">
+              <Image
+                src={project.image}
+                alt={project.title}
+                fill
+                className={`transition-all duration-300 object-${project.imageStyle || 'cover'}`}
+              />
+            </div>
+          </Link>
+          <Link href={project.link}>
+            <h3 className="text-lg font-light text-white mb-2 hover:text-blue-400 transition-colors">
               {project.title}
             </h3>
           </Link>
-          <p className="text-sm text-gray-300 mb-3">{project.description}</p>
-          <div className="flex flex-wrap gap-2">
-            {project.categories.map((category, idx) => (
+          <p className="text-sm text-gray-300 mb-3 line-clamp-2">{project.description}</p>
+          <div className="flex flex-wrap gap-1">
+            {project.categories.slice(0, 3).map((category, idx) => (
               <span
                 key={idx}
                 onClick={() => onTagSelect(category)}
@@ -100,20 +110,12 @@ const SearchResults: React.FC<SearchResultsProps> = ({
                 {category}
               </span>
             ))}
+            {project.categories.length > 3 && (
+              <span className="text-xs text-gray-400 px-2 py-1">
+                +{project.categories.length - 3}
+              </span>
+            )}
           </div>
-          {project.buttons && (
-            <div className="flex flex-wrap gap-4 mt-4">
-              {project.buttons.map((button, idx) => (
-                <Link
-                  key={idx}
-                  href={button.url}
-                  className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
-                >
-                  {button.label}
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       );
     }
@@ -182,13 +184,25 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         <>
           <div className="mb-16">
             <h2 className="text-4xl font-light mb-8">Search Results</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              {allFilteredProjects.map((project, index) => (
-                <div key={index}>
-                  {renderProject(project)}
+            {isMobile ? (
+              <div className="overflow-x-auto scrollbar-hide">
+                <div className="flex gap-4 pb-4" style={{ scrollSnapType: 'x mandatory' }}>
+                  {allFilteredProjects.map((project, index) => (
+                    <div key={index} style={{ scrollSnapAlign: 'start' }}>
+                      {renderProject(project)}
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {allFilteredProjects.map((project, index) => (
+                  <div key={index}>
+                    {renderProject(project)}
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="my-32">

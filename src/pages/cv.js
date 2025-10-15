@@ -1,18 +1,47 @@
 import React from 'react';
 
+/**
+ * CV PAGE - IMPORTANT CODING NOTES:
+ * 
+ * ⚠️  CRITICAL REMINDER: Whenever you edit this CV page content, you MUST also update the PDF file!
+ * 
+ * PDF Location: /public/Samuel_Shmoo_Bigus_CV.pdf
+ * 
+ * Why: The "Download PDF" button in the CV modal downloads a pre-generated PDF file.
+ * If you change the content here but don't update the PDF, users will download outdated information.
+ * 
+ * Steps to keep in sync:
+ * 1. Edit this CV page content
+ * 2. Generate a new PDF with the updated content
+ * 3. Replace the file at /public/Samuel_Shmoo_Bigus_CV.pdf
+ * 4. Test the download button to ensure it works
+ * 
+ * Alternative: Consider implementing server-side PDF generation if CV updates become frequent.
+ */
+
 const CVPage = () => {
   return (
     <div className="max-w-4xl mx-auto p-12 bg-white text-black font-sans">
       {/* Header */}
       <header className="mb-12 relative">
-        <h1 className="text-4xl font-bold uppercase tracking-wide mb-4">Samuel Shmoo Bigus</h1>
+        <div className="md:hidden text-center mb-4">
+          <h1 className="text-4xl font-bold uppercase tracking-wide mb-4">Samuel Shmoo Bigus</h1>
+          <img 
+            src="/FGWarsawCDPRclear.png" 
+            alt="Future Games Warsaw Strategic Partner with CD Projekt Red" 
+            className="h-32 w-auto mx-auto"
+          />
+        </div>
+        <h1 className="hidden md:block text-4xl font-bold uppercase tracking-wide mb-4">Samuel Shmoo Bigus</h1>
         <img 
           src="/FGWarsawCDPRclear.png" 
           alt="Future Games Warsaw Strategic Partner with CD Projekt Red" 
-          className="h-40 w-auto absolute top-0 right-0"
+          className="hidden md:block h-40 w-auto absolute top-0 right-0"
         />
         <p className="text-base mb-8">
-          shmoogames@yahoo.com
+          E-mail: <a href="mailto:shmoogames@yahoo.com" className="text-blue-500 hover:underline">
+            shmoogames@yahoo.com
+          </a>
         </p>
         <div className="text-sm mb-4">
           <a href="https://biguswebdesign.com/" className="text-blue-500 hover:underline">

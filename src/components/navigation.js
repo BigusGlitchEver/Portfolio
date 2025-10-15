@@ -16,6 +16,7 @@ export default function Navigation({ showFullNav = false }) {
                   height={32}
                   className="rounded-full"
                   priority
+                  style={{ width: "auto", height: "auto" }}
                 />
               </div>
               <span className="text-xl font-medium">Samuel Shmoo Bigus</span>
@@ -37,6 +38,7 @@ export default function Navigation({ showFullNav = false }) {
                   height={32}
                   className="rounded-full"
                   priority
+                  style={{ width: "auto", height: "auto" }}
                 />
               </div>
               <span>← Back to Portfolio</span>

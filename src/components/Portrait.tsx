@@ -10,6 +10,7 @@ export default function Portrait() {
           src="/shmoo.png"
           alt="Portrait of Samuel Shmoo Bigus"
           fill
+          sizes="(max-width: 768px) 100vw, 256px"
           className="object-cover rounded-lg"
           priority
         />
