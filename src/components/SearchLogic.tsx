@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/router';
 import SearchResults from './SearchResults';
 import ProjectTooltip from './ProjectTooltip';
 
@@ -40,6 +41,8 @@ interface SearchLogicProps {
 }
 
 const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearchResults = false }: SearchLogicProps) => {
+  const router = useRouter();
+  
   // Define suggested tags at the top of the component
   const suggestedTags = [
     "Web Design",
@@ -176,8 +179,11 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
           categories={project.categories}
           highlights={project.highlights || []}
         >
-          <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                       ring-1 ring-blue-500/30 transition-all duration-300 group">
+          <div 
+            className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                       ring-1 ring-blue-500/30 transition-all duration-300 group"
+            onClick={() => router.push(project.link)}
+          >
             <Link href={project.link} className="block w-full h-full">
               <Image
                 src={project.image}
