@@ -107,8 +107,8 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
     if (isMobile) {
       return (
         <div className="flex-shrink-0 w-64 bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
-          <Link href={project.link}>
-            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative cursor-pointer mb-3">
+          <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative cursor-pointer mb-3">
+            <Link href={project.link} className="block w-full h-full">
               <Image
                 src={project.image}
                 alt={project.title}
@@ -116,8 +116,32 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
                 sizes="(max-width: 768px) 256px, 256px"
                 className={`transition-all duration-300 object-${project.imageStyle || 'cover'}`}
               />
-            </div>
-          </Link>
+            </Link>
+            
+            {/* Overlay buttons on the image for mobile */}
+            {project.buttons && (
+              <div className="absolute bottom-2 left-2 right-2 flex gap-1 justify-center">
+                {project.buttons.map((button, idx) => {
+                  const isExternal = button.url.startsWith('http') || button.url.startsWith('https');
+                  const ButtonComponent = isExternal ? 'a' : Link;
+                  const buttonProps = isExternal 
+                    ? { href: button.url, target: '_blank', rel: 'noopener noreferrer' }
+                    : { href: button.url };
+                  
+                  return (
+                    <ButtonComponent
+                      key={idx}
+                      {...buttonProps}
+                      className="px-2 py-1 text-xs rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-colors whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {button.label}
+                    </ButtonComponent>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <Link href={project.link}>
             <h3 className="text-lg font-light text-white mb-2 hover:text-blue-400 transition-colors">
               {project.title}
@@ -152,9 +176,9 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
           categories={project.categories}
           highlights={project.highlights || []}
         >
-          <Link href={project.link}>
-            <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                         ring-1 ring-blue-500/30 transition-all duration-300 group">
+          <div className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                       ring-1 ring-blue-500/30 transition-all duration-300 group">
+            <Link href={project.link} className="block w-full h-full">
               <Image
                 src={project.image}
                 alt={project.title}
@@ -162,9 +186,33 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                 className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-          </Link>
+            </Link>
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+            
+            {/* Overlay buttons on the image */}
+            {project.buttons && (
+              <div className="absolute bottom-2 left-2 right-2 flex gap-2 justify-center">
+                {project.buttons.map((button, idx) => {
+                  const isExternal = button.url.startsWith('http') || button.url.startsWith('https');
+                  const ButtonComponent = isExternal ? 'a' : Link;
+                  const buttonProps = isExternal 
+                    ? { href: button.url, target: '_blank', rel: 'noopener noreferrer' }
+                    : { href: button.url };
+                  
+                  return (
+                    <ButtonComponent
+                      key={idx}
+                      {...buttonProps}
+                      className="px-3 py-1 text-xs rounded-full bg-black/70 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-colors whitespace-nowrap"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      {button.label}
+                    </ButtonComponent>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </ProjectTooltip>
         
         <div className="flex flex-wrap gap-2">
@@ -183,25 +231,12 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
         </div>
         
         <div className="space-y-2">
-          <Link href={project.link}>
-            <h3 className="text-lg font-light hover:text-blue-400 transition-colors cursor-pointer">
+          <h3 className="text-lg font-light">
+            <Link href={project.link} className="hover:text-blue-400 transition-colors cursor-pointer">
               {project.title}
-            </h3>
-          </Link>
+            </Link>
+          </h3>
           <p className="text-gray-400 text-sm">{project.description}</p>
-          {project.buttons && (
-            <div className="flex gap-4 mt-4">
-              {project.buttons.map((button, idx) => (
-                <Link
-                  key={idx}
-                  href={button.url}
-                  className="px-4 py-2 text-sm rounded-full border border-gray-600 hover:bg-gray-800 transition-colors"
-                >
-                  {button.label}
-                </Link>
-              ))}
-            </div>
-          )}
         </div>
       </div>
     );

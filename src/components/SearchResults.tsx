@@ -84,21 +84,21 @@ const SearchResults: React.FC<SearchResultsProps> = ({
     if (isMobile) {
       return (
         <div className="flex-shrink-0 w-64 bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
-          <Link href={project.link}>
-            <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative cursor-pointer mb-3">
+          <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative cursor-pointer mb-3">
+            <Link href={project.link} className="block w-full h-full">
               <Image
                 src={project.image}
                 alt={project.title}
                 fill
                 className={`transition-all duration-300 object-${project.imageStyle || 'cover'}`}
               />
-            </div>
-          </Link>
-          <Link href={project.link}>
-            <h3 className="text-lg font-light text-white mb-2 hover:text-blue-400 transition-colors">
+            </Link>
+          </div>
+          <h3 className="text-lg font-light text-white mb-2">
+            <Link href={project.link} className="hover:text-blue-400 transition-colors">
               {project.title}
-            </h3>
-          </Link>
+            </Link>
+          </h3>
           <p className="text-sm text-gray-300 mb-3 line-clamp-2">{project.description}</p>
           <div className="flex flex-wrap gap-1">
             {project.categories.slice(0, 3).map((category, idx) => (
@@ -122,18 +122,18 @@ const SearchResults: React.FC<SearchResultsProps> = ({
 
     return (
       <div className="space-y-4 group">
-        <Link href={project.link}>
-          <div className="aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
-                       ring-2 ring-blue-500/50 transition-all duration-300">
+        <div className="aspect-[4/3] bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
+                     ring-2 ring-blue-500/50 transition-all duration-300">
+          <Link href={project.link} className="block w-full h-full">
             <Image
               src={project.image}
               alt={project.title}
               fill
               className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-          </div>
-        </Link>
+          </Link>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
         
         <div className="flex flex-wrap gap-2">
           {project.categories.map((category, catIndex) => (
@@ -151,11 +151,11 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         </div>
         
         <div className="space-y-2">
-          <Link href={project.link}>
-            <h3 className="text-2xl font-light hover:text-blue-400 transition-colors cursor-pointer">
+          <h3 className="text-2xl font-light">
+            <Link href={project.link} className="hover:text-blue-400 transition-colors cursor-pointer">
               {project.title}
-            </h3>
-          </Link>
+            </Link>
+          </h3>
           <p className="text-gray-400 text-lg">{project.description}</p>
           {project.buttons && (
             <div className="flex gap-4 mt-4">

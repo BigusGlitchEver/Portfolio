@@ -27,6 +27,8 @@ export default function LandingPage() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isCVModalOpen, setIsCVModalOpen] = useState(false);
+  const [isGameDesignOpen, setIsGameDesignOpen] = useState(false);
+  const [isScrumMasterOpen, setIsScrumMasterOpen] = useState(false);
   const router = useRouter();
   const SHOW_EXPERIENCE = false;
   const SHOW_SEARCH = false;
@@ -84,6 +86,12 @@ export default function LandingPage() {
           image: "/polyplaza.png",
           categories: ["Game Design", "Quest Design", "Mechanics Design", "AI Utilization", "Low Code"],
           link: "/polyplaza",
+          buttons: [
+            {
+              label: "View on Steam",
+              url: "https://store.steampowered.com/app/2716030/Poly_Plaza/"
+            }
+          ],
           highlights: [
             "Designed complex economic systems for property management gameplay",
             "Created engaging quest structures and mechanics design"
@@ -95,6 +103,12 @@ export default function LandingPage() {
           image: "/zine.png",
           categories: ["Game Design", "Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
           link: "/zine",
+          buttons: [
+            {
+              label: "Bang Bang Zine",
+              url: "https://www.bangbangzine.com/collections/zinemate/products/zinemate-the-zine-bathroom-reader-4"
+            }
+          ],
           highlights: [
             "Reimagined classic board game to explore social commentary on wealth inequality",
             "Combined game design with visual storytelling and research"
@@ -106,6 +120,12 @@ export default function LandingPage() {
           image: "/judaictarot.png",
           categories: ["Product Design", "Visual Design", "Research", "Publications", "Photo Editing"],
           link: "/tarot",
+          buttons: [
+            {
+              label: "Judaic Tarot Deck",
+              url: "https://shmoobigus.gumroad.com/l/lmqwdc?_gl=1*fvo3i4*_ga*ODg3MTA3Nzc2LjE3NTIwODM0Mzg.*_ga_6LJN6D94N6*czE3NjA2MjMyMTMkbzIyJGcxJHQxNzYwNjIzMjQyJGozMSRsMCRoMA.."
+            }
+          ],
           highlights: [
             "Researched and designed complete 78-card deck based on Jewish mysticism",
             "Created unique visual system blending traditional tarot with Judaic imagery"
@@ -148,6 +168,12 @@ export default function LandingPage() {
           categories: ["Project Management", "Web Design", "UX/UI Design", "Coding", "AI Utilization"],
           link: "/biguswebdesign",
           imageStyle: "cover",
+          buttons: [
+            {
+              label: "Visit Website",
+              url: "https://biguswebdesign.com/"
+            }
+          ],
           highlights: [
             "Managed component-based design system implementation using AI-assisted workflows",
             "Coordinated cross-functional team to deliver modern web experiences"
@@ -166,6 +192,12 @@ export default function LandingPage() {
           image: "/saveyalla.png",
           categories: ["Client Collaboration", "Video Production", "Interview", "Marketing"],
           link: "/saveyalla",
+          buttons: [
+            {
+              label: "Watch Video",
+              url: "https://www.youtube.com/embed/tcOjjBmDXsc"
+            }
+          ],
           highlights: [
             "Produced compelling video content for educational fundraising campaign in Sri Lanka",
             "Conducted interviews and marketing strategy to support community education"
@@ -177,6 +209,12 @@ export default function LandingPage() {
           image: "/wildbreeze.png",
           categories: ["Client Collaboration", "Video Production", "Narration"],
           link: "/wildbreeze",
+          buttons: [
+            {
+              label: "Watch Video",
+              url: "https://www.youtube.com/embed/m1-keRN0FCY"
+            }
+          ],
           highlights: [
             "Created and narrated professional commercial for boutique resort",
             "Collaborated with client to capture authentic Sri Lankan hospitality"
@@ -230,12 +268,12 @@ export default function LandingPage() {
           link: "/art-pocketbook",
           buttons: [
             {
-              label: "Hi-Fidelity Prototype",
-              url: "#prototype"
+              label: "High Fidelity",
+              url: "/hiprototype.png"
             },
             {
-              label: "View the Process",
-              url: "/art-pocketbook"
+              label: "Low Fidelity",
+              url: "/lowprototype.png"
             }
           ],
           highlights: [
@@ -249,6 +287,16 @@ export default function LandingPage() {
           image: "/samtheteacher.png",
           categories: ["Visual Design", "UX/UI Design", "Photo Editing"],
           link: "/instagram",
+          buttons: [
+            {
+              label: "Sam the Teacher",
+              url: "https://www.instagram.com/samtheteacherman/?hl=en"
+            },
+            {
+              label: "Big Art with Sam",
+              url: "https://www.instagram.com/bigartwithsam/?hl=en"
+            }
+          ],
           highlights: [
             "Developed brand identity and visual design for educational platform",
             "Created cohesive Instagram marketing strategy to build brand awareness"
@@ -291,37 +339,70 @@ export default function LandingPage() {
                   </p>
                   {/* Descriptions for the two key skills */}
                   <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                    {/* Game Design Dropdown */}
                     <div>
-                      <div className="mb-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/30">
-                        <Zap className="w-5 h-5 text-blue-300" />
-                        <span className="text-base">Game Design</span>
-                      </div>
-                      <div className="rounded-xl bg-gray-800/40 ring-1 ring-blue-400/20 p-4">
-                      <h3 className="mb-2 text-lg font-medium text-blue-200">Game Design</h3>
-                      <ul className="list-disc pl-5 space-y-1 text-gray-200/90">
-                        <li>Designing player-focused mechanics that feel intuitive and satisfying.</li>
-                        <li>Crafting engaging quests and narratives that immerse players in the experience.</li>
-                        <li>Optimizing user experience (UX) to ensure smooth, intuitive gameplay flows.</li>
-                        <li>Analyzing player behavior through data to inform design improvements.</li>
-                        <li>Rapid prototyping and iteration to refine gameplay and test ideas efficiently.</li>
-                      </ul>
-                      </div>
+                      <button
+                        onClick={() => setIsGameDesignOpen(!isGameDesignOpen)}
+                        className="mb-3 inline-flex items-center justify-between gap-2 px-4 py-2 rounded-full bg-blue-500/20 text-blue-200 ring-1 ring-blue-400/30 hover:bg-blue-500/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Zap className="w-5 h-5 text-blue-300" />
+                          <span className="text-base">Game Design</span>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 transform transition-transform ${isGameDesignOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {isGameDesignOpen && (
+                        <div className="rounded-xl bg-gray-800/40 ring-1 ring-blue-400/20 p-4 animate-in slide-in-from-top-2 duration-200">
+                          <h3 className="mb-2 text-lg font-medium text-blue-200">Game Design</h3>
+                          <ul className="list-disc pl-5 space-y-1 text-gray-200/90">
+                            <li>Designing player-focused mechanics that feel intuitive and satisfying.</li>
+                            <li>Crafting engaging quests and narratives that immerse players in the experience.</li>
+                            <li>Optimizing user experience (UX) to ensure smooth, intuitive gameplay flows.</li>
+                            <li>Analyzing player behavior through data to inform design improvements.</li>
+                            <li>Rapid prototyping and iteration to refine gameplay and test ideas efficiently.</li>
+                          </ul>
+                        </div>
+                      )}
                     </div>
+                    
+                    {/* Scrum Master Dropdown */}
                     <div>
-                      <div className="mb-3 inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30">
-                        <Users className="w-5 h-5 text-emerald-300" />
-                        <span className="text-base">Scrum Master</span>
-                      </div>
-                      <div className="rounded-xl bg-gray-800/40 ring-1 ring-emerald-400/20 p-4">
-                      <h3 className="mb-2 text-lg font-medium text-emerald-200">Scrum Master</h3>
-                      <ul className="list-disc pl-5 space-y-1 text-gray-200/90">
-                        <li>Facilitating Agile ceremonies such as stand-ups, sprint planning, and retrospectives.</li>
-                        <li>Removing blockers and impediments to keep teams productive and focused.</li>
-                        <li>Enhancing team collaboration and communication across cross-functional teams.</li>
-                        <li>Managing backlogs and workflows to align priorities with business goals.</li>
-                        <li>Coaching teams in Agile practices to drive continuous improvement and efficiency.</li>
-                      </ul>
-                      </div>
+                      <button
+                        onClick={() => setIsScrumMasterOpen(!isScrumMasterOpen)}
+                        className="mb-3 inline-flex items-center justify-between gap-2 px-4 py-2 rounded-full bg-emerald-500/20 text-emerald-200 ring-1 ring-emerald-400/30 hover:bg-emerald-500/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Users className="w-5 h-5 text-emerald-300" />
+                          <span className="text-base">Scrum Master</span>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 transform transition-transform ${isScrumMasterOpen ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </button>
+                      {isScrumMasterOpen && (
+                        <div className="rounded-xl bg-gray-800/40 ring-1 ring-emerald-400/20 p-4 animate-in slide-in-from-top-2 duration-200">
+                          <h3 className="mb-2 text-lg font-medium text-emerald-200">Scrum Master</h3>
+                          <ul className="list-disc pl-5 space-y-1 text-gray-200/90">
+                            <li>Facilitating Agile ceremonies such as stand-ups, sprint planning, and retrospectives.</li>
+                            <li>Removing blockers and impediments to keep teams productive and focused.</li>
+                            <li>Enhancing team collaboration and communication across cross-functional teams.</li>
+                            <li>Managing backlogs and workflows to align priorities with business goals.</li>
+                            <li>Coaching teams in Agile practices to drive continuous improvement and efficiency.</li>
+                          </ul>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

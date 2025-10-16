@@ -44,10 +44,6 @@ const CVPage = () => {
           </a>
         </p>
         <div className="text-sm mb-4">
-          <a href="https://biguswebdesign.com/" className="text-blue-500 hover:underline">
-            biguswebdesign
-          </a>
-          <span className="mx-2">|</span>
           <a href="https://store.steampowered.com/app/2716030/Poly_Plaza/" className="text-blue-500 hover:underline">
             Poly Plaza on Steam
           </a>
