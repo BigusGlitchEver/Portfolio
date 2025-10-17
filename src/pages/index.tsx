@@ -58,7 +58,7 @@ export default function LandingPage() {
   };
 
   const handleViewBrowser = () => {
-    router.push('/cv');
+    window.open('/ShmooCV.pdf', '_blank');
     setIsCVModalOpen(false);
   };
 

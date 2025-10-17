@@ -20,8 +20,8 @@ const CVOptionsModal: React.FC<CVOptionsModalProps> = ({
     try {
       // Create download link for pre-generated PDF
       const link = document.createElement('a');
-      link.href = '/Samuel_Shmoo_Bigus_CV.pdf';
-      link.download = 'Samuel_Shmoo_Bigus_CV.pdf';
+      link.href = '/ShmooCV.pdf';
+      link.download = 'ShmooCV.pdf';
       link.click();
       
       // Close modal after brief delay to show loading state
@@ -41,7 +41,7 @@ const CVOptionsModal: React.FC<CVOptionsModalProps> = ({
     setIsEmailing(true);
     try {
       // Generate PDF and create mailto link
-      const mailtoLink = `mailto:?subject=Samuel Shmoo Bigus - CV&body=Please find my CV attached. You can also view it online at: ${window.location.origin}/cv`;
+      const mailtoLink = `mailto:?subject=Samuel Shmoo Bigus - CV&body=Please find my CV attached. You can also view it online at: ${window.location.origin}/ShmooCV.pdf`;
       window.location.href = mailtoLink;
     } catch (error) {
       console.error('Error creating email:', error);
@@ -52,7 +52,7 @@ const CVOptionsModal: React.FC<CVOptionsModalProps> = ({
   };
 
   const handleShareLink = () => {
-    const cvUrl = `${window.location.origin}/cv`;
+    const cvUrl = `${window.location.origin}/ShmooCV.pdf`;
     if (navigator.share) {
       navigator.share({
         title: 'Samuel Shmoo Bigus - CV',
