@@ -65,7 +65,7 @@ export default function LandingPage() {
   // Custom sections with reordered and added content
   const sections = [
     {
-      title: "Game Development",
+      title: "Game Production",
       icon: <Gamepad2 className="w-8 h-8 text-blue-400" />,
       description: "Interactive experiences designed to engage and entertain",
       projects: [
@@ -80,6 +80,48 @@ export default function LandingPage() {
             "Guided a diverse team in building a social platform that makes connecting through play natural and rewarding."
           ]
         },
+        {
+          title: "Poly Plaza",
+          description: "Produced a sandbox game focused on property management and economic systems",
+          image: "/polyplaza.png",
+          categories: ["Production", "Project Management", "Analytics", "Business Development", "Post-Launch Support"],
+          link: "/polyplaza-producer",
+          buttons: [
+            {
+              label: "View on Steam",
+              url: "https://store.steampowered.com/app/2716030/Poly_Plaza/"
+            }
+          ],
+          highlights: [
+            "Set milemarkers and monitored progress throughout development cycle",
+            "Worked with potential investors to secure funding and communicate project vision",
+            "Maintained product cohesion post-launch and made data-driven decisions based on analytics"
+          ]
+        },
+        {
+          title: "Necromeowcy",
+          description: "A city builder cat necromancer game developed during a 7-day Game Jam",
+          image: "/Necromeowcy_logo.png",
+          categories: ["Game Jam", "Production", "City Builder", "Team Leadership"],
+          link: "/necromeowcy",
+          buttons: [
+            {
+              label: "View on itch.io",
+              url: "https://pandagp.itch.io/necromeowcy"
+            }
+          ],
+          highlights: [
+            "Led art production and coordinated team meetings during intensive 7-day Game Jam",
+            "Managed art pipeline and cross-cultural collaboration with international team"
+          ]
+        }
+      ]
+    },
+    {
+      title: "Game Design",
+      icon: <Zap className="w-8 h-8 text-blue-400" />,
+      description: "Designing mechanics, systems, and experiences that engage players",
+      projects: [
         {
           title: "Poly Plaza",
           description: "A sandbox game focused on property management and economic systems",
