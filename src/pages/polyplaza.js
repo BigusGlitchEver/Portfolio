@@ -29,7 +29,7 @@ export default function PolyPlazaProject() {
             <div className="hidden md:block text-2xl font-light text-white">Samuel Shmoo Bigus</div>
             <div className="flex gap-4 sm:gap-8">
               <a 
-                href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
+                href="https://www.linkedin.com/in/shmoogames" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"

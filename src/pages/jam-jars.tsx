@@ -67,7 +67,7 @@ export default function JamLabelsProject() {
 
                 <div className="flex gap-4 sm:gap-8">
                   <a 
-                    href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
+                    href="https://www.linkedin.com/in/shmoogames" 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="text-sm sm:text-base hover:text-blue-400 transition-colors"

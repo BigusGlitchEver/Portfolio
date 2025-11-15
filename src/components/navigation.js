@@ -22,7 +22,7 @@ export default function Navigation({ showFullNav = false }) {
               <span className="text-xl font-medium">Samuel Shmoo Bigus</span>
             </div>
             <div className="flex gap-8">
-              <a href="#" className="hover:text-blue-400 transition-colors">LinkedIn</a>
+              <a href="https://www.linkedin.com/in/shmoogames" target="_blank" rel="noopener noreferrer" className="hover:text-blue-400 transition-colors">LinkedIn</a>
               <a href="#" className="hover:text-blue-400 transition-colors">Email</a>
               <a href="#" className="hover:text-blue-400 transition-colors">CV</a>
             </div>

@@ -32,7 +32,7 @@ export default function NextSaaSProject() {
             
             <div className="flex items-center gap-8">
               <a 
-                href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
+                href="https://www.linkedin.com/in/shmoogames" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white transition-colors"

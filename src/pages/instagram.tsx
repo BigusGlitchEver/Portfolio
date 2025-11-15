@@ -83,7 +83,7 @@ const InstagramPage = () => {
                       </div>
                       <div className="text-center">
                         <span className="font-semibold">1.2k</span>
-                        <Link href="https://www.linkedin.com/in/samuel-bigus-60b948217" className="block text-sm">LinkedIn</Link>
+                        <Link href="https://www.linkedin.com/in/shmoogames" className="block text-sm">LinkedIn</Link>
                       </div>
                       <div className="text-center">
                         <span className="font-semibold">326</span>

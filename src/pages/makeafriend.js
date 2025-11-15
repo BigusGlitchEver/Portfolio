@@ -30,7 +30,7 @@ export default function MakeAFriendProject() {
 
             <div className="flex items-center gap-4 sm:gap-8">
               <a 
-                href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
+                href="https://www.linkedin.com/in/shmoogames" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="text-black opacity-60 hover:opacity-100 transition-opacity text-sm sm:text-md font-bold"

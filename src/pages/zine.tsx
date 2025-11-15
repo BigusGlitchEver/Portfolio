@@ -46,7 +46,7 @@ export default function ZineProject() {
                   {/* Right side - Links */}
                   <div className="flex-shrink-0 flex gap-4">
                     <a 
-                      href="https://www.linkedin.com/in/samuel-bigus-60b948217" 
+                      href="https://www.linkedin.com/in/shmoogames" 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="bg-[#FFE144] border-8 border-[#FF69B4] px-4 py-2 text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap inline-block"

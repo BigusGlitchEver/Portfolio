@@ -70,14 +70,16 @@ export default function LandingPage() {
       description: "Interactive experiences designed to engage and entertain",
       projects: [
         {
-          title: "Make a Friend",
-          description: "Social platform combining chat functionality with collaborative game creation",
-          image: "/makeafriend.png",
-          categories: ["Game Design", "UX Research", "Strategy", "Figma", "UX/UI Design", "Coding", "AI Utilization", "Market Research", "Web Design", "Photo Editing"],
-          link: "/makeafriend",
-          imageStyle: "contain",
+          title: "Wastemancer",
+          description: "Brought together a team from Poland, Sweden, and China to create a combo-hitting competitive game within 3 weeks",
+          image: "/WastemancerPoster.png",
+          categories: ["Production", "Team Leadership", "Project Management", "Coaching", "Cross-Cultural Collaboration"],
+          link: "/wastemancer",
+          imageStyle: "cover",
           highlights: [
-            "Guided a diverse team in building a social platform that makes connecting through play natural and rewarding."
+            "Led international team from Poland, Sweden, and China to deliver complete game in 3 weeks",
+            "Used leading-from-behind leadership style while coaching Audio Designer",
+            "Managed project with Notion and Jira, used Miro for design consistency across disciplines"
           ]
         },
         {
