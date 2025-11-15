@@ -160,6 +160,20 @@ export default function WastemancerProject() {
             />
           </div>
         </section>
+
+        {/* Itch.io Link */}
+        <section>
+          <div className="mt-6 sm:mt-8">
+            <a 
+              href="https://shmoogames.itch.io/wastemancer"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-block px-3 py-2 sm:px-4 sm:py-2 bg-[#4C6B22] hover:bg-[#6AA621] text-[#FFFFFF] text-sm sm:text-base transition-colors"
+            >
+              View Game on itch.io
+            </a>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>

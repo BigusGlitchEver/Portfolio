@@ -76,6 +76,12 @@ export default function LandingPage() {
           categories: ["Production", "Team Leadership", "Project Management", "Coaching", "Cross-Cultural Collaboration"],
           link: "/wastemancer",
           imageStyle: "cover",
+          buttons: [
+            {
+              label: "View on itch.io",
+              url: "https://shmoogames.itch.io/wastemancer"
+            }
+          ],
           highlights: [
             "Led international team from Poland, Sweden, and China to deliver complete game in 3 weeks",
             "Used leading-from-behind leadership style while coaching Audio Designer",

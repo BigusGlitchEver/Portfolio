@@ -26,10 +26,7 @@ const ProjectTooltip: React.FC<ProjectTooltipProps> = ({
       {children}
       
       {isVisible && highlights && highlights.length > 0 && (
-        <div className="absolute z-50 w-80 p-4 bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-2xl border border-blue-400/30 transform -translate-x-1/2 left-1/2 -top-2 pointer-events-none">
-          {/* Arrow pointing down */}
-          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900/95"></div>
-          
+        <div className="absolute z-50 w-80 p-4 bg-gray-900/95 backdrop-blur-sm rounded-lg shadow-2xl border border-blue-400/30 right-full mr-4 top-0 pointer-events-none">
           <div className="space-y-3">
             {/* Header */}
             <div>
