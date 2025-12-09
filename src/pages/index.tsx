@@ -71,7 +71,7 @@ export default function LandingPage() {
       projects: [
         {
           title: "Wastemancer",
-          description: "Brought together a team of 10 from Poland, Sweden, and China to create a combo-hitting competitive game within 3 weeks",
+          description: "Managed a team of 12 from Poland, Sweden, and China to create a combo-hitting competitive game within 3 weeks",
           image: "/WastemancerPoster.png",
           categories: ["Production", "Team Leadership", "Project Management", "Coaching", "Cross-Cultural Collaboration"],
           link: "/wastemancer",
