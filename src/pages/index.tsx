@@ -70,6 +70,28 @@ export default function LandingPage() {
       description: "Interactive experiences designed to engage and entertain",
       projects: [
         {
+          title: "Whimpact!",
+          description: "Producer Intern contributing to multiplayer game launch on Steam",
+          image: "/LevelHeadedLogo.png",
+          categories: [
+            "Production",
+            "Game Testing",
+            "Strategy",
+            "Scrum",
+            "Launch Preparation",
+            "Steam Release"
+          ],
+          link: "/whimpact",
+          imageStyle: "contain",
+          highlights: [
+            "Facilitate action on in-game items and track progress across departments",
+            "Participate in meetings and support cross-team coordination",
+            "Strategize directly with CEO/Producer Leah Hoyer on project direction",
+            "Organize and manage internal and external game tests",
+            "Support preparation and launch readiness for online multiplayer Steam release"
+          ]
+        },
+        {
           title: "Wastemancer",
           description: "Managed a team of 12 from Poland, Sweden, and China to create a combo-hitting competitive game within 3 weeks",
           image: "/WastemancerPoster.png",
