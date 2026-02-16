@@ -83,6 +83,12 @@ export default function LandingPage() {
           ],
           link: "/whimpact",
           imageStyle: "contain",
+          buttons: [
+            {
+              label: "View on Steam",
+              url: "https://store.steampowered.com/app/3131260/Whimpact/"
+            }
+          ],
           highlights: [
             "Facilitate action on in-game items and track progress across departments",
             "Participate in meetings and support cross-team coordination",

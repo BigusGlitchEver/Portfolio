@@ -107,7 +107,7 @@ export default function WhimpactProject() {
         <section>
           <div className="mt-6 sm:mt-8">
             <a
-              href="https://store.steampowered.com/"
+              href="https://store.steampowered.com/app/3131260/Whimpact/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-block px-3 py-2 sm:px-4 sm:py-2 bg-[#4C6B22] hover:bg-[#6AA621] text-[#FFFFFF] text-sm sm:text-base transition-colors"
