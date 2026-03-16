@@ -87,7 +87,7 @@ const InstagramPage = () => {
                       </div>
                       <div className="text-center">
                         <span className="font-semibold">326</span>
-                        <Link href="/cv" className="block text-sm">CV</Link>
+                        <Link href="/ShmooCV.pdf" className="block text-sm">CV</Link>
                       </div>
                     </div>
                     <div className="mt-4">

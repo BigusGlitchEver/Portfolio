@@ -44,7 +44,7 @@ export default function MakeAFriendProject() {
                 Email
               </a>
               <Link 
-                href="/cv" 
+                href="/ShmooCV.pdf" 
                 className="text-black opacity-60 hover:opacity-100 transition-opacity text-sm sm:text-md font-bold"
               >
                 CV

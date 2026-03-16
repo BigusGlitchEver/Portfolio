@@ -30,7 +30,7 @@ export default function WhimpactProject() {
           <div className="flex gap-4 sm:gap-8 text-[#dcdedf] text-sm sm:text-base">
             <a href="https://www.linkedin.com/in/shmoogames" target="_blank" rel="noopener noreferrer" className="hover:text-[#66c0f4] hover:underline">LinkedIn</a>
             <a href="mailto:samuelshmoobigus@yahoo.com" className="hover:text-[#66c0f4] hover:underline">Email</a>
-            <a href="/cv" className="hover:text-[#66c0f4] hover:underline">CV</a>
+            <a href="/ShmooCV.pdf" className="hover:text-[#66c0f4] hover:underline">CV</a>
           </div>
         </div>
       </nav>

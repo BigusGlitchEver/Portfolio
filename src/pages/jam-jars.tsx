@@ -81,7 +81,7 @@ export default function JamLabelsProject() {
                     Email
                   </a>
                   <Link 
-                    href="/cv" 
+                    href="/ShmooCV.pdf" 
                     className="text-sm sm:text-base hover:text-blue-400 transition-colors"
                   >
                     CV

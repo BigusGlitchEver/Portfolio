@@ -60,7 +60,7 @@ export default function ZineProject() {
                       Email
                     </a>
                     <Link 
-                      href="/cv" 
+                      href="/ShmooCV.pdf" 
                       className="bg-[#FFE144] border-8 border-[#FF69B4] px-4 py-2 text-xl hover:bg-[#FF8C00] transition-colors whitespace-nowrap inline-block"
                     >
                       CV

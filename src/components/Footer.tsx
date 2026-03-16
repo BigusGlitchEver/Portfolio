@@ -32,13 +32,13 @@ const Footer = () => {
             <h3 className="text-white/90 font-medium mb-4">Quick Links</h3>
             <div className="space-y-2">
               <Link 
-                href="/cv" 
+                href="https://bigusdesign.com/ShmooCV.pdf" 
                 className="text-gray-400 hover:text-white block transition-colors"
               >
                 View CV
               </Link>
               <Link 
-                href="/polyplaza" 
+                href="/whimpact" 
                 className="text-gray-400 hover:text-white block transition-colors"
               >
                 Latest Project

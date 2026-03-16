@@ -43,7 +43,7 @@ export default function BrollProject() {
                 Email
               </a>
               <a 
-                href="/cv" 
+                href="/ShmooCV.pdf" 
                 className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
               >
                 CV
