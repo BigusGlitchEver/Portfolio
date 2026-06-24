@@ -7,6 +7,29 @@ import { useRouter } from 'next/router';
 import SearchResults from './SearchResults';
 import ProjectTooltip from './ProjectTooltip';
 
+// Treat http(s) links as external so cards for off-site titles (e.g. Steam pages)
+// open in a new tab instead of routing to a non-existent internal page.
+const isExternal = (href: string) => /^https?:\/\//.test(href);
+
+const ProjectLink = ({
+  href,
+  className,
+  children,
+}: {
+  href: string;
+  className?: string;
+  children: React.ReactNode;
+}) =>
+  isExternal(href) ? (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={className}>
+      {children}
+    </a>
+  ) : (
+    <Link href={href} className={className}>
+      {children}
+    </Link>
+  );
+
 // Interfaces
 interface ProjectButton {
   label: string;
@@ -111,7 +134,7 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
       return (
         <div className="flex-shrink-0 w-64 bg-gray-800/50 p-4 rounded-lg ring-1 ring-blue-400/20">
           <div className="aspect-square bg-gray-700 rounded-lg overflow-hidden relative cursor-pointer mb-3">
-            <Link href={project.link} className="block w-full h-full">
+            <ProjectLink href={project.link} className="block w-full h-full">
               <Image
                 src={project.image}
                 alt={project.title}
@@ -119,7 +142,7 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
                 sizes="(max-width: 768px) 256px, 256px"
                 className={`transition-all duration-300 object-${project.imageStyle || 'cover'}`}
               />
-            </Link>
+            </ProjectLink>
             
             {/* Overlay buttons on the image for mobile */}
             {project.buttons && (
@@ -145,11 +168,11 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
               </div>
             )}
           </div>
-          <Link href={project.link}>
+          <ProjectLink href={project.link}>
             <h3 className="text-lg font-light text-white mb-2 hover:text-blue-400 transition-colors">
               {project.title}
             </h3>
-          </Link>
+          </ProjectLink>
           <p className="text-sm text-gray-300 mb-3 line-clamp-2">{project.description}</p>
           <div className="flex flex-wrap gap-1">
             {project.categories.slice(0, 3).map((category, idx) => (
@@ -182,9 +205,9 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
           <div 
             className="aspect-square bg-gray-800 rounded-lg overflow-hidden relative cursor-pointer 
                        ring-1 ring-blue-500/30 transition-all duration-300 group"
-            onClick={() => router.push(project.link)}
+            onClick={() => isExternal(project.link) ? window.open(project.link, '_blank', 'noopener,noreferrer') : router.push(project.link)}
           >
-            <Link href={project.link} className="block w-full h-full">
+            <ProjectLink href={project.link} className="block w-full h-full">
               <Image
                 src={project.image}
                 alt={project.title}
@@ -192,7 +215,7 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, (max-width: 1280px) 33vw, 25vw"
                 className={`transition-all duration-300 group-hover:scale-105 object-${project.imageStyle || 'cover'}`}
               />
-            </Link>
+            </ProjectLink>
             <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             
             {/* Overlay buttons on the image */}
@@ -238,9 +261,9 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
         
         <div className="space-y-2">
           <h3 className="text-lg font-light">
-            <Link href={project.link} className="hover:text-blue-400 transition-colors cursor-pointer">
+            <ProjectLink href={project.link} className="hover:text-blue-400 transition-colors cursor-pointer">
               {project.title}
-            </Link>
+            </ProjectLink>
           </h3>
           <p className="text-gray-400 text-sm">{project.description}</p>
         </div>
