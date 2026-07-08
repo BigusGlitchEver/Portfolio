@@ -73,11 +73,8 @@ export default function ProtoIndex() {
 
       <nav className="fixed w-full top-0 z-50 bg-[#171a21]">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex justify-between items-center">
-            <a href="/" className="flex items-center gap-2 text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors">
-              <span className="text-base sm:text-xl font-medium">← Back to Portfolio</span>
-            </a>
-            <div className="hidden md:block text-2xl font-light text-white">Prototype Lab</div>
+          <div className="flex justify-center items-center">
+            <div className="text-2xl font-light text-white">Prototype Lab</div>
           </div>
         </div>
       </nav>

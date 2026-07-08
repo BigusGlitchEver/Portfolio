@@ -7,17 +7,6 @@ export default function BeaverNecromancerPlay() {
         <title>Beaver Necromancer — Prototype</title>
         <meta name="robots" content="noindex, nofollow" />
       </Head>
-      <a
-        href="/proto"
-        style={{
-          position: 'fixed', top: 10, left: 10, zIndex: 100,
-          fontFamily: 'Courier New, monospace', fontSize: 13, fontWeight: 700,
-          color: '#050308', background: '#ffd54f', border: '2px solid #050308',
-          borderRadius: 8, padding: '6px 12px', textDecoration: 'none',
-        }}
-      >
-        ← Back to prototypes
-      </a>
       <iframe
         src="/proto/games/beaver-necromancer.html"
         title="Beaver Necromancer"
