@@ -1,0 +1,3147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex, nofollow">
+<meta charset="UTF-8">
+<title>Coin Flipper — Prototype</title>
+<style>
+  :root{
+    --paper:#f5ecd7; --ink:#3a2d1f; --red:#e06a5a; --yellow:#f2d15c; --blue:#7fb3d9;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:#c9b98f;
+    font-family:"Comic Sans MS","Chalkboard SE","Segoe Print",cursive;
+    color:var(--ink);
+    display:flex; flex-direction:column; align-items:center; min-height:100vh; padding:10px;
+    cursor:pointer; /* the hand — everywhere except over the board mid-flip */
+  }
+  #topbar{
+    width:1160px; display:none; align-items:center; gap:10px; margin-bottom:6px;
+    background:var(--paper); border:3px solid var(--ink); border-radius:10px; padding:6px 12px;
+  }
+  #topbar .face{font-size:26px}
+  #tugwrap{flex:1; height:26px; border:3px solid var(--ink); border-radius:8px; overflow:hidden; background:#b8524a; position:relative;}
+  #tugfill{height:100%; width:50%; background:#5a9e58; transition:width .5s;}
+  #tuglabel{position:absolute; inset:0; text-align:center; font-weight:bold; color:#fff; text-shadow:1px 1px 0 #0006; font-size:14px; line-height:24px;}
+  #wrap{display:flex; gap:10px; align-items:flex-start;}
+  #sidebar{
+    width:250px; background:var(--paper); border:3px solid var(--ink); border-radius:12px;
+    padding:12px; display:flex; flex-direction:column; gap:10px;
+  }
+  #sidebar h1{font-size:20px; transform:rotate(-2deg);}
+  .box{border:2px dashed var(--ink); border-radius:8px; padding:8px;}
+  .box .lbl{font-size:11px; letter-spacing:1px; opacity:.7;}
+  #floorinfo{font-size:15px; font-weight:bold;}
+  #candyline{font-size:15px;}
+  #candybarwrap{height:16px; border:2px solid var(--ink); border-radius:6px; background:#fff; overflow:hidden; margin-top:4px;}
+  #candybar{height:100%; width:0%; background:repeating-linear-gradient(45deg,#e88bc4,#e88bc4 8px,#f7b3dd 8px,#f7b3dd 16px); transition:width .3s;}
+  #chain{font-size:44px; font-weight:bold; text-align:center; color:#b8452f; transition:transform .15s;}
+  #chain.pop{transform:scale(1.35) rotate(-4deg);}
+  #pips{display:flex; gap:6px; justify-content:center; margin-top:4px;}
+  .pip{width:16px;height:16px;border:2px solid var(--ink);border-radius:50%;background:#fff;}
+  .pip.on{background:#f2a33c;}
+  #streakmsg{text-align:center; font-size:13px; font-weight:bold; color:#b8452f; min-height:18px;}
+  #turns{font-size:15px;}
+  #log{font-size:12px; min-height:52px; line-height:1.25;}
+  #giveupBtn{
+    display:none; font-family:inherit; font-size:13px; font-weight:bold; padding:5px 10px;
+    background:#e8e0cd; border:2px solid var(--ink); border-radius:8px; cursor:pointer;
+  }
+  .chipRow{display:flex; gap:6px;}
+  .chip{
+    flex:1; font-family:inherit; font-size:13px; font-weight:bold; padding:6px 4px;
+    background:#fff8e8; border:2px solid var(--ink); border-radius:8px; cursor:pointer;
+  }
+  .chip:hover{background:var(--yellow);}
+  #cv{background:var(--paper); border:4px solid var(--ink); border-radius:14px; cursor:pointer;}
+
+  /* ---- income panel (map only) ---- */
+  #econ{
+    width:230px; background:var(--paper); border:3px solid var(--ink); border-radius:12px;
+    padding:12px; display:none; flex-direction:column; gap:8px;
+  }
+  #econ h2{font-size:16px; transform:rotate(1.5deg);}
+  #bankBig{font-size:30px; font-weight:bold; text-align:center;}
+  #bankRate{font-size:12px; text-align:center; opacity:.7; margin-top:-4px;}
+  .prop{border:2px solid var(--ink); border-radius:8px; padding:6px 8px; background:#fff8e8; position:relative; overflow:hidden;}
+  .prop .pname{font-weight:bold; font-size:13px;}
+  .prop .prate{font-size:11px; opacity:.75;}
+  .prop.off{opacity:.45; border-style:dashed;}
+  .floater{position:absolute; right:8px; top:6px; font-weight:bold; color:#2e8b57; font-size:13px; animation:floatup 1.2s forwards;}
+  @keyframes floatup{ from{opacity:1; transform:translateY(0);} to{opacity:0; transform:translateY(-18px);} }
+
+  /* ---- dev toolbox (bottom right) ---- */
+  #devbox{position:fixed; right:14px; bottom:14px; z-index:50; display:flex; flex-direction:column-reverse; align-items:flex-end;}
+  #devToggle{
+    font-size:26px; background:#8a6f4d; border:3px solid var(--ink); border-radius:10px;
+    width:52px; height:46px; cursor:pointer; box-shadow:3px 3px 0 #0006;
+  }
+  #devPanel{
+    display:none; margin-bottom:6px; background:#8a6f4d; border:3px solid var(--ink); border-radius:10px;
+    padding:10px; flex-direction:column; gap:6px; box-shadow:4px 4px 0 #0006;
+    max-height:calc(100vh - 80px); overflow-y:auto;
+  }
+  #devPanel.open{display:flex;}
+  #devPanel button{
+    font-family:inherit; font-size:13px; font-weight:bold; padding:6px 10px;
+    background:var(--paper); border:2px solid var(--ink); border-radius:7px; cursor:pointer; text-align:left;
+  }
+  #devPanel button:hover{background:var(--yellow);}
+  #devPanel .dlbl{color:#fff; font-size:11px; letter-spacing:1px; text-shadow:1px 1px 0 #0006;}
+  #devPanel .dhelp{
+    max-width:240px; background:var(--paper); border:2px dashed var(--ink); border-radius:7px;
+    padding:7px 9px; font-size:11px; line-height:1.35; color:var(--ink);
+  }
+
+  .overlay{
+    position:fixed; inset:0; background:#0007; display:flex; align-items:center; justify-content:center; z-index:10;
+  }
+  #menuOverlay{background:#0004;} /* board stays visible behind pickers */
+  .card{
+    background:var(--paper); border:4px solid var(--ink); border-radius:16px; padding:28px 36px;
+    max-width:560px; text-align:center; transform:rotate(-1deg); box-shadow:6px 6px 0 #0004;
+  }
+  .card .speaker{font-size:52px;}
+  .card h2{font-size:28px; margin-bottom:10px;}
+  .card p{font-size:15px; margin-bottom:10px; line-height:1.4;}
+  .card button{
+    font-family:inherit; font-size:17px; font-weight:bold; padding:8px 22px; margin:4px;
+    background:var(--yellow); border:3px solid var(--ink); border-radius:10px; cursor:pointer;
+    box-shadow:3px 3px 0 var(--ink);
+  }
+  .card button.alt{background:#e8e0cd;}
+  .card button:active{transform:translate(2px,2px); box-shadow:1px 1px 0 var(--ink);}
+  .hidden{display:none !important;}
+
+  /* ---- generic menu shell ---- */
+  #menuCard{max-width:680px; text-align:left; max-height:84vh; overflow-y:auto;}
+  #menuCard h2{text-align:center;}
+  #menuFoot{text-align:center; margin-top:8px;}
+  #menuNote{text-align:center; font-size:13px; font-weight:bold; margin-bottom:8px;}
+
+  /* loadout rows */
+  .mrow{
+    display:flex; align-items:center; gap:10px; border:2px solid var(--ink); border-radius:10px;
+    background:#fff8e8; padding:8px 10px; margin-bottom:8px;
+  }
+  .mrow .micon{font-size:28px; width:38px; text-align:center;}
+  .mrow .mmain{flex:1;}
+  .mrow .mname{font-weight:bold; font-size:15px;}
+  .mrow .mdesc{font-size:12px; opacity:.8; line-height:1.25;}
+  .mrow .mside{text-align:right; font-size:13px; font-weight:bold; white-space:nowrap;}
+  .mrow button, .shopItem button{
+    font-family:inherit; font-weight:bold; font-size:15px; border:2px solid var(--ink);
+    border-radius:8px; background:var(--yellow); cursor:pointer; padding:3px 10px; margin:0 2px;
+    box-shadow:2px 2px 0 var(--ink);
+  }
+  .mrow button:disabled, .shopItem button:disabled{opacity:.4; cursor:default; box-shadow:none;}
+
+  /* card deck spread */
+  .deckWrap{display:flex; gap:12px; overflow-x:auto; padding:14px 6px; background:#5a7a4a; border:3px solid var(--ink); border-radius:12px;}
+  .cardTile{
+    min-width:122px; width:122px; height:170px; border:3px solid var(--ink); border-radius:10px;
+    background:linear-gradient(160deg,#ffffff,#f0e4c8); box-shadow:3px 4px 0 #0004; padding:8px;
+    display:flex; flex-direction:column; transform:rotate(-2.5deg); flex-shrink:0;
+  }
+  .cardTile:nth-child(even){transform:rotate(2.5deg);}
+  .cardTile .cName{font-weight:bold; font-size:12.5px; line-height:1.15;}
+  .cardTile .cIcon{font-size:36px; text-align:center; margin:10px 0 6px;}
+  .cardTile .cDesc{font-size:10px; line-height:1.25; opacity:.85;}
+  .cardTile .cTag{margin-top:auto; font-size:9px; text-align:center; letter-spacing:1px; opacity:.6;}
+
+  /* coin bag */
+  .bagWrap{
+    background:radial-gradient(circle at 50% 30%, #9a7c55, #6f5636); border:3px solid var(--ink);
+    border-radius:40% 40% 14px 14px / 60px 60px 14px 14px; padding:18px 12px 14px;
+    display:flex; flex-wrap:wrap; gap:12px; justify-content:center;
+  }
+  .coinTok{width:96px; text-align:center; color:#fff;}
+  .coinTok .tok{
+    width:64px; height:64px; margin:0 auto; border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #ffe9a8, #d9b64e); border:3px solid var(--ink);
+    font-size:30px; line-height:60px; position:relative;
+  }
+  .coinTok .cnt{position:absolute; right:-8px; bottom:-4px; background:var(--ink); color:#fff; border-radius:10px; font-size:11px; padding:1px 7px;}
+  .coinTok .nm{font-size:11.5px; font-weight:bold; margin-top:5px; text-shadow:1px 1px 0 #0008;}
+  .coinTok .ds{font-size:9.5px; line-height:1.2; opacity:.92;}
+
+  /* the bicycle shop */
+  .shopScene{text-align:center; font-size:38px; line-height:1;}
+  .shopWrap{
+    background:repeating-linear-gradient(45deg,#b85c4a,#b85c4a 22px,#c9705e 22px,#c9705e 44px);
+    border:3px solid var(--ink); border-radius:12px; padding:14px 10px;
+    display:flex; flex-wrap:wrap; gap:10px; justify-content:center;
+  }
+  .shopItem{
+    width:106px; background:var(--paper); border:3px solid var(--ink); border-radius:10px;
+    padding:8px 6px; text-align:center; box-shadow:2px 3px 0 #0004;
+  }
+  .shopItem .si{font-size:30px;}
+  .shopItem .sn{font-size:11px; font-weight:bold; line-height:1.15; min-height:26px;}
+  .shopItem .sp{font-size:13px; font-weight:bold; color:#b8452f;}
+
+  /* ---- reworked shop: round coins in rows + card-size cards ---- */
+  .shopSection{font-weight:bold; font-size:12px; letter-spacing:1px; opacity:.7; margin:10px 0 5px; text-align:center;}
+  .shopCoinGrid{
+    display:grid; grid-template-columns:repeat(4,1fr); gap:12px 8px;
+    background:radial-gradient(circle at 50% 20%, #8a6f4d, #6f5636);
+    border:3px solid var(--ink); border-radius:12px; padding:14px 10px;
+  }
+  .shopCoin{text-align:center; color:#fff;}
+  .shopCoin .scoin{
+    width:52px; height:52px; margin:0 auto; border-radius:50%;
+    border:3px solid var(--ink); font-size:26px; line-height:46px;
+    box-shadow:2px 2px 0 #0005;
+  }
+  .shopCoin .scname{font-size:11px; font-weight:bold; margin-top:4px; text-shadow:1px 1px 0 #0008;}
+  .shopCoin .scown{font-size:9.5px; opacity:.85;}
+  .shopCoin .scprice{font-size:12px; font-weight:bold; color:#ffe08a; margin-bottom:2px;}
+  .shopCardRow{display:flex; flex-wrap:wrap; gap:12px; justify-content:center; padding:8px 4px;
+    background:#5a7a4a; border:3px solid var(--ink); border-radius:12px;}
+  .shopCardTile{transform:rotate(-1.5deg);}
+  .shopCardTile:nth-child(even){transform:rotate(1.5deg);}
+  .cardBuy{
+    margin-top:6px; font-family:inherit; font-weight:bold; font-size:13px; border:2px solid var(--ink);
+    border-radius:8px; background:var(--yellow); cursor:pointer; padding:3px 12px; box-shadow:2px 2px 0 var(--ink);
+  }
+  .cardBuy:disabled{opacity:.4; cursor:default; box-shadow:none;}
+
+  /* ---- right-side run column: setup panel + floor vignette ---- */
+  #runcol{width:230px; display:none; flex-direction:column; gap:10px;}
+  #runside{
+    background:var(--paper); border:3px solid var(--ink); border-radius:12px;
+    padding:12px; display:flex; flex-direction:column; gap:10px;
+  }
+  #vignette{
+    background:var(--paper); border:3px solid var(--ink); border-radius:12px;
+    padding:10px; text-align:center;
+  }
+  #vignette canvas{border:2px dashed var(--ink); border-radius:8px; background:#fdf6e3; display:block; margin:0 auto;}
+  #vtitle{font-size:11px; opacity:.7; margin-top:5px; font-weight:bold;}
+  #runside h2{font-size:16px; transform:rotate(-1.5deg);}
+  #equipCards{display:flex; gap:6px; flex-wrap:wrap; margin-top:4px;}
+  .eqCard{
+    width:46px; height:62px; border:2px solid var(--ink); border-radius:7px;
+    background:linear-gradient(160deg,#ffffff,#f0e4c8); box-shadow:2px 2px 0 #0003;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:8.5px; text-align:center; line-height:1.05; padding:2px; overflow:hidden;
+  }
+  .eqCard .ei{font-size:20px; line-height:1;}
+  .eqCard.empty{opacity:.4; border-style:dashed; background:none; box-shadow:none; font-size:16px;}
+  /* pocket tricks — one-use schoolyard treasures */
+  #pocketSlots{display:flex; gap:8px; margin-top:4px;}
+  .pkSlot{
+    width:56px; height:56px; border:2px solid var(--ink); border-radius:9px;
+    background:#fff8e8; box-shadow:2px 2px 0 #0003; cursor:pointer;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    font-size:8.5px; font-weight:bold; text-align:center; line-height:1.05; overflow:hidden;
+  }
+  .pkSlot .pi{font-size:22px; line-height:1.15;}
+  .pkSlot.armed{outline:3px solid #f2a33c; background:var(--yellow);}
+  .pkSlot.empty{opacity:.4; border-style:dashed; background:none; box-shadow:none; cursor:default; font-size:15px;}
+  #coinLoadout{display:flex; gap:9px; flex-wrap:wrap; margin-top:4px;}
+  .ldCoin{width:34px; text-align:center;}
+  .ldCoin .lc{
+    width:30px; height:30px; margin:0 auto; border-radius:50%; border:2px solid var(--ink);
+    font-size:15px; line-height:26px;
+  }
+  .ldCoin .lc.broke{background:#5a544c !important; opacity:.55;}
+  .ldCoin .lp{display:flex; gap:2px; justify-content:center; margin-top:3px; min-height:7px;}
+  .ldCoin .lp i{width:5px; height:5px; border-radius:50%; border:1px solid var(--ink); display:inline-block;}
+  .ldCoin .lp i.on{background:#f2a33c;}
+  /* equip picker tiles */
+  .equipTile{cursor:pointer;}
+  .equipTile.equipOn{outline:4px solid #2aa8d8; box-shadow:0 0 0 2px #fff, 3px 4px 0 #0004;}
+</style>
+</head>
+<body>
+
+<div id="topbar">
+  <span class="face">🧒</span>
+  <div id="tugwrap"><div id="tugfill"></div><div id="tuglabel">FLIP-OFF!</div></div>
+  <span class="face" id="bossface">👦</span>
+</div>
+
+<div id="wrap">
+  <div id="sidebar">
+    <h1>COIN FLIPPER</h1>
+    <div class="box">
+      <div class="lbl">WHERE</div>
+      <div id="floorinfo">The Map</div>
+      <div id="turns"></div>
+    </div>
+    <div class="box" id="candyBox">
+      <div class="lbl">CANDY</div>
+      <div id="candyline">0 🍬</div>
+      <div id="candybarwrap"><div id="candybar"></div></div>
+    </div>
+    <div class="box" id="chainBox">
+      <div class="lbl">CHAIN</div>
+      <div id="chain">×1</div>
+      <div id="pips"></div>
+      <div id="streakmsg"></div>
+    </div>
+    <div class="chipRow">
+      <button class="chip" onclick="MENU.bag()">💰 Coin Bag</button>
+      <button class="chip" onclick="MENU.deck()">🃏 Card Deck</button>
+    </div>
+    <div class="box">
+      <div class="lbl">WHAT HAPPENED</div>
+      <div id="log">Welcome to the neighborhood.</div>
+    </div>
+    <button id="giveupBtn" onclick="giveUp()">🏳️ Give up (back to map)</button>
+  </div>
+  <canvas id="cv" width="900" height="640"></canvas>
+  <div id="econ">
+    <h2>MY EMPIRE 📒</h2>
+    <div class="box">
+      <div class="lbl">CANDY BANK</div>
+      <div id="bankBig">0 🍬</div>
+      <div id="bankRate"></div>
+    </div>
+    <div id="propList"></div>
+  </div>
+  <div id="runcol">
+    <div id="runside">
+      <h2>MY SETUP 🎒</h2>
+      <div class="box" id="equipBox">
+        <div class="lbl">EQUIPPED CARDS</div>
+        <div id="equipCards"></div>
+      </div>
+      <div class="box" id="coinBox">
+        <div class="lbl">YOUR COINS</div>
+        <div id="coinLoadout"></div>
+      </div>
+      <div class="box" id="pocketBox">
+        <div class="lbl">YOUR POCKET</div>
+        <div id="pocketSlots"></div>
+      </div>
+    </div>
+    <div id="vignette">
+      <canvas id="vcv" width="200" height="190"></canvas>
+      <div id="vtitle"></div>
+    </div>
+  </div>
+</div>
+
+<div id="devbox">
+  <button id="devToggle" title="Developer toolbox" onclick="DEV.toggle()">🧰</button>
+  <div id="devPanel">
+    <span class="dlbl">DEV TOOLBOX</span>
+    <button onclick="DEV.preview()">🎯 Trajectory preview: <span id="pvState">OFF</span></button>
+    <button onclick="DEV.skipFloor()">⏭ Skip to next floor</button>
+    <button onclick="DEV.conquer()">🏆 Win / conquer this place</button>
+    <button onclick="DEV.candy()">🍬 +100 candy</button>
+    <button onclick="DEV.coins()">💰 +3 of every coin</button>
+    <button onclick="DEV.turns()">🔄 +10 turns</button>
+    <button onclick="DEV.maxChain()">⛓ Max chain (×5)</button>
+    <button onclick="DEV.unlockAll()">🔓 Unlock whole map</button>
+    <button onclick="DEV.summonShop()">🚲 Roll in the bike shop</button>
+    <button onclick="DEV.pocketItem()">🎒 +1 pocket trick</button>
+    <button onclick="DEV.toMap()">🗺 Jump to map</button>
+    <button onclick="DEV.reset()">🗑 Reset save + reload</button>
+    <span class="dlbl">HOW TO PLAY / SHORTCUTS</span>
+    <div class="dhelp">
+      Touch a coin with the striker — where it touches decides the shot (inside the ring = short hop, outside = long drive). <b>One click</b> flips it. Land on the <b>marked zones</b> — bare table pays nothing and wears your coin's value down.<br><br>
+      <b>P</b> = debug trajectory preview<br>
+      <b>A / D</b> = switch which coin under the striker flips<br>
+      <b>Right-click</b> = aim a pocket trick (call a zone, tack a coin)<br>
+      <b>Esc</b> = put an aimed trick back in your pocket<br>
+      <b>🧰</b> = this toolbox
+    </div>
+  </div>
+</div>
+
+<div class="overlay hidden" id="msgOverlay">
+  <div class="card">
+    <div class="speaker" id="msgFace"></div>
+    <h2 id="msgTitle"></h2>
+    <p id="msgBody"></p>
+    <button id="msgBtn"></button>
+    <button id="msgBtn2" class="alt hidden"></button>
+  </div>
+</div>
+
+<div class="overlay hidden" id="menuOverlay">
+  <div class="card" id="menuCard">
+    <h2 id="menuTitle"></h2>
+    <div id="menuNote"></div>
+    <div id="menuBody"></div>
+    <div id="menuFoot"><button id="menuBtn">CLOSE</button></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   COIN FLIPPER — single-file prototype, v4 "Real Flips"
+   - Everything FLIPS (arcs off the table); only the Slide Coin slides
+   - Walls always bounce the coin back — nothing leaves the table
+   - Themed zone layouts per board; bare table = no points and the
+     coin's value wears down High → Med → Low
+   - Grandma's dining table confiscates coins that land on it
+   - Entry fees until a house is conquered; houses replayable
+   - Coin drops after floors, chance of a run-card on entry
+   - Bicycle-blanket shop, card-spread deck, cloth coin bag
+   ============================================================ */
+
+/* ---------------- Tunables ---------------- */
+const CFG = {
+  board: { x: 30, y: 30, w: 840, h: 580 },
+  coinR: 15,
+  contactThreshold: 0.65,
+  // ---- ported from the real Love2D game (states/game + entities/coin.lua) ----
+  // The tool is a disc of 1.5x the coin radius, sitting on the cursor; a coin
+  // engages the moment the tool disc overlaps it. Flight is a fixed-time,
+  // deterministic launch — a two-zone power/arc curve split hard at 0.65:
+  // inner press = short + high pop, outer press = long + flat drive. Values are
+  // the game's own constants scaled from its 536x556 board to this 840x580 one.
+  toolRFactor: 1.5,
+  toolRadius: 23,     // the circular tool's fixed pixel radius; its edge activates coins
+  flightTime: 0.45,   // seconds — fixed per flight (short shots slow, long fast)
+  tumbleRate: 18,     // x-squash tumble frequency (the "flip")
+  shot: {
+    threshold: 0.65,
+    innerPower: [125, 204], innerArc: [230, 167],   // center -> edge
+    outerPower: [282, 533], outerArc: [73, 26],     // center -> edge
+  },
+  innerDist: { min: 95, max: 230 },
+  outerDist: { min: 380, max: 620 },
+  chainHopDist: 250,
+  slideDist: 200,
+  maxBounces: 8,                 // walls always send it back — nothing leaves the table
+  chainDepthBonus: [1, 2, 4, 8],
+  chainStep: 0.5, chainCap: 5,
+  streakNeed: 5, streakPct: 0.10,
+  valMult: [1, 0.6, 0.3],        // coin point value: High / Med / Low
+  goldenChance: 0.2, goldenMult: 5,
+  bombRadius: 130,
+  maxChainHops: 14,
+  loadoutSlots: 4,
+  duelMaxShift: 0.2,
+  actionCapPct: 0.45,
+  coinDropsPerFloor: 2,
+  entryCardPct: 0.4,    // the guaranteed entry find: usually a pocket trick, sometimes a card
+  pickupChance: 0.65,   // chance a schoolyard treasure is lying on a floor board
+  production: {
+    playground: { candy: 2,  every: 10, coin: "slide",  coinEvery: 60 },
+    grandma:    { candy: 5,  every: 10, coin: "cookie", coinEvery: 45 },
+    cat:        { candy: 8,  every: 10, coin: "yarn",   coinEvery: 55 },
+    jock:       { candy: 14, every: 10, coin: "plate",  coinEvery: 65 },
+  },
+  fees: { grandma: 25, cat: 60, jock: 100 },
+};
+
+/* ---------------- Boards — every floor its own themed layout ----------------
+   zones: marked scoring shapes (val 3/2/1). Everything OUTSIDE them is bare
+   table: no candy, and the landing coin's value wears High → Med → Low.
+   sand:  playground sandboxes — dead, chain-breaking, "no points, ever".
+   table: Grandma's dining table — land on it and she CONFISCATES the coin.  */
+const BOARDS = {
+  kid1: { venue: "playground", title: "Hopscotch Court",
+    zones: [
+      { shape: "rect",   px: .50, py: .80, w: 150, h: 100, val: 1 },
+      { shape: "rect",   px: .41, py: .62, w: 115, h: 90,  val: 1 },
+      { shape: "rect",   px: .59, py: .62, w: 115, h: 90,  val: 1 },
+      { shape: "rect",   px: .50, py: .44, w: 130, h: 90,  val: 2 },
+      { shape: "circle", px: .50, py: .20, r: 62,          val: 3 },
+    ],
+    sand: [] },
+  kid2: { venue: "playground", title: "Four Square",
+    zones: [
+      { shape: "rect", px: .36, py: .38, w: 170, h: 150, val: 1 },
+      { shape: "rect", px: .60, py: .38, w: 170, h: 150, val: 2 },
+      { shape: "rect", px: .36, py: .66, w: 170, h: 150, val: 2 },
+      { shape: "rect", px: .60, py: .66, w: 170, h: 150, val: 1 },
+      { shape: "circle", px: .48, py: .52, r: 40, val: 3 },
+    ],
+    sand: [ { px: .85, py: .22, r: 48 } ] },
+  slide: { venue: "playground", title: "The Slide Run",
+    zones: [
+      { shape: "rect",   px: .42, py: .82, w: 330, h: 105, val: 1 }, // wood-chip landing pit
+      { shape: "circle", px: .60, py: .58, r: 68, val: 2 },
+      { shape: "circle", px: .73, py: .38, r: 52, val: 2 },
+      { shape: "circle", px: .85, py: .20, r: 40, val: 3 },          // top of the slide
+    ],
+    sand: [ { px: .18, py: .28, r: 52 }, { px: .30, py: .68, r: 46 } ] },
+  gf1: { venue: "grandma", title: "Doily Parlor",
+    zones: [
+      { shape: "circle", px: .30, py: .38, r: 95, val: 1 },
+      { shape: "circle", px: .64, py: .62, r: 72, val: 2 },
+      { shape: "circle", px: .79, py: .24, r: 46, val: 3 },
+    ],
+    table: { px: .16, py: .78, w: 160, h: 100 } },
+  gf2: { venue: "grandma", title: "The Hallway Rug",
+    zones: [
+      { shape: "rect",   px: .46, py: .72, w: 430, h: 95, val: 1 },  // carpet runner
+      { shape: "circle", px: .27, py: .33, r: 66, val: 2 },
+      { shape: "circle", px: .58, py: .28, r: 50, val: 2 },
+      { shape: "circle", px: .84, py: .46, r: 38, val: 3 },
+    ],
+    table: { px: .78, py: .80, w: 180, h: 100 } },
+  gf3: { venue: "grandma", title: "Dinner Is Served",
+    zones: [
+      { shape: "circle", px: .30, py: .62, r: 54, val: 1 },
+      { shape: "circle", px: .52, py: .74, r: 48, val: 1 },
+      { shape: "circle", px: .44, py: .40, r: 44, val: 2 },
+      { shape: "circle", px: .67, py: .52, r: 38, val: 2 },
+      { shape: "circle", px: .58, py: .22, r: 30, val: 3 },
+    ],
+    table: { px: .18, py: .22, w: 190, h: 115 } },
+  gduel: { venue: "grandma", title: "Grandma's Game Table",
+    zones: [
+      { shape: "circle", px: .34, py: .50, r: 80, val: 1 },
+      { shape: "circle", px: .62, py: .66, r: 58, val: 2 },
+      { shape: "circle", px: .74, py: .28, r: 42, val: 3 },
+    ],
+    table: { px: .16, py: .78, w: 160, h: 95 } },
+  /* ---- The Cat's house: yarn tangles eat turns, the litter box eats coins ---- */
+  cf1: { venue: "cat", title: "The Yarn Jungle",
+    zones: [
+      { shape: "circle", px: .32, py: .38, r: 85, val: 1 },
+      { shape: "circle", px: .62, py: .62, r: 62, val: 2 },
+      { shape: "circle", px: .80, py: .26, r: 44, val: 3 },
+    ],
+    sand: [ { px: .20, py: .74, r: 55 }, { px: .55, py: .28, r: 42 } ] },
+  cf2: { venue: "cat", title: "Food Bowl Alley",
+    zones: [
+      { shape: "rect",   px: .42, py: .76, w: 320, h: 95, val: 1 },   // the placemat
+      { shape: "circle", px: .28, py: .32, r: 52, val: 2 },
+      { shape: "circle", px: .55, py: .42, r: 44, val: 2 },
+      { shape: "circle", px: .84, py: .30, r: 34, val: 3 },
+    ],
+    sand: [ { px: .14, py: .50, r: 42 } ],
+    table: { px: .82, py: .78, w: 155, h: 95 } },
+  cf3: { venue: "cat", title: "The Cat Tower",
+    zones: [
+      { shape: "rect",   px: .74, py: .78, w: 190, h: 85, val: 1 },
+      { shape: "rect",   px: .72, py: .52, w: 150, h: 70, val: 2 },
+      { shape: "circle", px: .70, py: .26, r: 40, val: 3 },
+      { shape: "circle", px: .32, py: .64, r: 62, val: 1 },
+    ],
+    sand: [ { px: .30, py: .30, r: 50 } ],
+    table: { px: .14, py: .80, w: 155, h: 95 } },
+  cduel: { venue: "cat", title: "The Cat's Throne",
+    zones: [
+      { shape: "circle", px: .36, py: .54, r: 82, val: 1 },
+      { shape: "circle", px: .64, py: .68, r: 55, val: 2 },
+      { shape: "circle", px: .76, py: .28, r: 44, val: 3 },
+    ],
+    sand: [ { px: .50, py: .18, r: 40 } ],
+    table: { px: .14, py: .26, w: 150, h: 90 } },
+  /* ---- Gym Bro's house: tiny weight-plate pockets, big dead sweat towels ---- */
+  jf1: { venue: "jock", title: "The Dumbbell Rack",
+    zones: [
+      { shape: "rect",   px: .50, py: .78, w: 360, h: 88, val: 1 },   // the rubber mat
+      { shape: "circle", px: .30, py: .40, r: 48, val: 2 },
+      { shape: "circle", px: .60, py: .34, r: 36, val: 2 },
+      { shape: "circle", px: .83, py: .22, r: 26, val: 3 },
+    ],
+    sand: [ { px: .14, py: .66, r: 50 } ] },
+  jf2: { venue: "jock", title: "Bench Press Bay",
+    zones: [
+      { shape: "rect",   px: .34, py: .62, w: 200, h: 105, val: 1 },  // the bench
+      { shape: "circle", px: .20, py: .28, r: 38, val: 2 },
+      { shape: "circle", px: .66, py: .44, r: 34, val: 2 },
+      { shape: "circle", px: .84, py: .70, r: 26, val: 3 },
+    ],
+    sand: [ { px: .56, py: .20, r: 44 }, { px: .82, py: .28, r: 38 } ] },
+  jf3: { venue: "jock", title: "The Protein Bar",
+    zones: [
+      { shape: "rect",   px: .26, py: .30, w: 150, h: 80, val: 1 },
+      { shape: "circle", px: .32, py: .68, r: 34, val: 1 },
+      { shape: "circle", px: .52, py: .52, r: 28, val: 2 },
+      { shape: "circle", px: .70, py: .38, r: 24, val: 2 },
+      { shape: "circle", px: .86, py: .24, r: 18, val: 3 },
+    ],
+    sand: [ { px: .62, py: .76, r: 52 } ] },
+  jduel: { venue: "jock", title: "Center Court Flex-Off",
+    zones: [
+      { shape: "circle", px: .36, py: .50, r: 70, val: 1 },
+      { shape: "circle", px: .63, py: .66, r: 48, val: 2 },
+      { shape: "circle", px: .79, py: .28, r: 32, val: 3 },
+    ],
+    sand: [ { px: .18, py: .78, r: 46 } ] },
+};
+/* Per-venue table dressing: surface, dead-zone naming, confiscation flavour */
+const VENUES = {
+  playground: { base: "#8f8a84", missName: "SANDBOX",     missFill: "#e8d9a0", missEdge: "#b09a5a" },
+  grandma:    { base: "#cbb9a4", missName: "SANDBOX",     missFill: "#e8d9a0", missEdge: "#b09a5a",
+                loseName: "GRANDMA'S TABLE", losePop: "ON THE TABLE!", loseSign: "DINING TABLE — coins confiscated!",
+                loseMsg: "Right onto Grandma's dining table. She keeps that one. Chain broke." },
+  cat:        { base: "#c9aebc", missName: "YARN TANGLE", missFill: "#e8b8d4", missEdge: "#a86a92",
+                loseName: "THE LITTER BOX", losePop: "BURIED!", loseSign: "LITTER BOX — coins get buried!",
+                loseMsg: "Straight into the litter box. The Cat buries it forever. Chain broke." },
+  jock:       { base: "#b09878", missName: "SWEAT TOWEL", missFill: "#f0efe6", missEdge: "#b0aca0" },
+};
+
+/* ---------------- Opponents ---------------- */
+const OPPS = {
+  kid1:   { name: "Tutorial Tommy", face: "👦", level: 1, barScale: 200, board: "kid1",
+            coins: ["basic","basic","basic","basic"],
+            taunt: "Rule one: touch the coin's EDGE, not the middle of the board. Rule two: you can NEVER beat me." },
+  kid2:   { name: "Rex",            face: "😤", level: 2, barScale: 240, board: "kid2",
+            coins: ["basic","basic","basic","basic","basic","heavy"],
+            taunt: "Tommy went easy on you. I don't do easy." },
+  slide:  { name: "The Slide King", face: "👑", level: 3, barScale: 260, board: "slide",
+            coins: ["basic","basic","basic","basic","basic","heavy","heavy"],
+            taunt: "Nobody flips on MY slide. Climb back down, new kid." },
+  grandma:{ name: "Grandma",        face: "👵", level: 4, barScale: 260, board: "gduel",
+            coins: ["basic","basic","basic","basic","heavy","heavy"],
+            taunt: "Back in my day we flipped uphill. Both ways. Show me what you got, dear." },
+  cat:    { name: "The Cat",        face: "🐱", level: 5, barScale: 300, board: "cduel",
+            coins: ["basic","basic","basic","basic","heavy","heavy","heavy"],
+            taunt: "Mrrrow. (She bats a coin off the shelf without breaking eye contact.)" },
+  jock:   { name: "Gym Bro",        face: "💪", level: 6, barScale: 340, board: "jduel",
+            coins: ["basic","basic","basic","basic","heavy","heavy","heavy","heavy"],
+            taunt: "Coin flipping? That's just wrist day, little bro. I NEVER skip wrist day." },
+};
+
+/* ---------------- Houses — fee, themed floors, boss at the top ---------------- */
+const HOUSES = {
+  grandma: { boss: "grandma",
+    floors: [
+      { threshold: 30,  turns: 12, board: "gf1" },
+      { threshold: 75,  turns: 14, board: "gf2" },
+      { threshold: 150, turns: 16, board: "gf3" },
+    ] },
+  cat: { boss: "cat",
+    floors: [
+      { threshold: 60,  turns: 12, board: "cf1" },
+      { threshold: 130, turns: 14, board: "cf2" },
+      { threshold: 240, turns: 16, board: "cf3" },
+    ] },
+  jock: { boss: "jock",
+    floors: [
+      { threshold: 100, turns: 12, board: "jf1" },
+      { threshold: 200, turns: 14, board: "jf2" },
+      { threshold: 350, turns: 16, board: "jf3" },
+    ] },
+};
+const houseFloors = () => HOUSES[G.house].floors;
+
+/* ---------------- Cards ---------------- */
+const CARDS = {
+  luckyStreak: { name: "Lucky Streak", suit: "♥", icon: "🍬", desc: "Every 3rd scoring flip in a row: +5 × your chain candy." },
+  trickShot:   { name: "Trick Shot",   suit: "♠", icon: "🎯", desc: "Bank a coin off a wall: that landing scores ×2." },
+  piggy:       { name: "Piggy Bank",   suit: "♦", icon: "🐷", desc: "+15% candy on every scoring flip." },
+  feather:     { name: "Feather Flick",suit: "♣", icon: "🪶", desc: "Every flip travels 30 farther." },
+  // --- combo / chain ---
+  domino:      { name: "Domino",       suit: "♠", icon: "🔗", desc: "Every chain-reaction hit scores ×1.5." },
+  snowball:    { name: "Snowball",     suit: "♦", icon: "❄️", desc: "A miss only drops your chain by 1 — it never resets to ×1." },
+  // --- precision ---
+  deadEye:     { name: "Dead Eye",     suit: "♥", icon: "👁️", desc: "Landing in the red centre scores ×2.5." },
+  steady:      { name: "Steady Hand",  suit: "♣", icon: "✋", desc: "Bare-table misses no longer wear your coin's value down." },
+  // --- scaling economy ---
+  onARoll:     { name: "On a Roll",    suit: "♦", icon: "🎳", desc: "Each scoring flip this floor adds +0.2× to all scores (resets each floor)." },
+  compound:    { name: "Compound Interest", suit: "♠", icon: "📈", desc: "+2% score per point of your current chain multiplier." },
+};
+const RUN_CARD_POOL = ["piggy", "feather", "luckyStreak", "trickShot", "domino", "snowball", "deadEye", "steady", "onARoll", "compound"];
+
+/* ---------------- Coin catalog ---------------- */
+/* Specials are SPENT when you pack them for a floor — they never come home.
+   Durability is short on purpose: coins are ammo, not heirlooms. */
+const TYPES = {
+  basic:  { icon: "🪙", color: "#c9a227", bp: Infinity, name: "Basic", r: 15,
+            desc: "Unlimited supply. Never breaks." },
+  split:  { icon: "🍊", color: "#d9822b", bp: 2, name: "Split", r: 17,
+            desc: "Breaks into two Basic Coins (each may come up GOLDEN)." },
+  heavy:  { icon: "🪨", color: "#8a8f98", bp: 3, name: "Heavy", ticks: 2, r: 24, distBonus: 60, threshold: 0.8,
+            desc: "Flies farther, hits harder — a big pop centre, and it wears out twice as fast." },
+  bomb:   { icon: "💣", color: "#4a4a4a", bp: 2, name: "Bomb", r: 21,
+            desc: "On breaking, blasts every nearby coin into a chain." },
+  glass:  { icon: "💎", color: "#bfe3ee", bp: 1, name: "Glass", mult: 2, noGrace: true, r: 11,
+            desc: "Scores DOUBLE. Shatters on its very first scoring flip." },
+  lucky:  { icon: "🍀", color: "#7ac74f", bp: 0, name: "Lucky", r: 14,
+            desc: "Durability rolled 1–4 and shown on the coin each floor." },
+  slide:  { icon: "🛝", color: "#f0924a", bp: 2, name: "Slide", distBonus: 70, slides: true, r: 10,
+            desc: "SLIDES flat along the board instead of flipping — it stops at the first coin it touches." },
+  cookie: { icon: "🍪", color: "#c9873a", bp: 3, name: "Cookie", crumbs: true, r: 22,
+            desc: "Crumbles as it wears — every wear tick sheds a crumb onto the board." },
+  yarn:   { icon: "🧶", color: "#c86a9a", bp: 2, name: "Yarn", r: 16, tangle: true,
+            desc: "Tangles the table — loose coins nearby are dragged toward wherever it lands." },
+  plate:  { icon: "🏋️", color: "#7a8494", bp: 2, name: "Plate", r: 26, distBonus: 30, shockwave: true,
+            desc: "Lands like a truck — coins NEAR the landing get blasted into the chain without being touched." },
+  crumb:  { icon: "🍪", color: "#a86f2e", bp: Infinity, name: "Crumb", r: 9,
+            desc: "A bite of cookie. Flips like a Basic, never breaks." },
+};
+const SHOP_PRICES = { split: 12, heavy: 12, bomb: 18, glass: 22, lucky: 18, slide: 30, cookie: 15, yarn: 25, plate: 35 };
+const SHOP_CARD_PRICE = 20;
+
+/* ---------------- Pocket tricks — schoolyard treasures, one use each ---------------- */
+const ITEMS = {
+  marble: { name: "Shooter Marble", icon: "🔮",
+    desc: "Call your shot: right-click a marked zone BEFORE you flip. Land that flip there and the whole turn pays DOUBLE — land anywhere else and it pays NOTHING and your chain breaks." },
+  armyman: { name: "Army Man", icon: "🪖",
+    desc: "Do-over! Play him before a flip — after it lands you may take the whole turn back: coins, candy, wear, everything. One rescue per soldier." },
+  tack: { name: "Thumbtack", icon: "📌",
+    desc: "Right-click any coin to pin it down for a turn — it can't be flipped, and chain reactions pass right through it." },
+};
+const ITEM_POOL = ["marble", "armyman", "tack"];
+const ITEM_BASE_PRICE = 15;
+
+/* ---------------- Special cards — ONLY sold by the traveling bike kid ---------------- */
+const SPECIAL_CARDS = {
+  highRoller: { name: "High Roller", suit: "🎲", icon: "🎲", special: true,
+                desc: "+30% candy on every scoring flip." },
+  chainGang:  { name: "Chain Gang",  suit: "⛓️", icon: "⛓️", special: true,
+                desc: "Chain combos count one link deeper — fatter multipliers." },
+  reinforced: { name: "Reinforced",  suit: "🛡️", icon: "🛡️", special: true,
+                desc: "Your special coins survive one extra scoring flip before breaking." },
+  // --- golden gamble (buy from the bike kid) ---
+  midas:      { name: "Midas Touch", suit: "✨", icon: "✨", special: true,
+                desc: "Each scoring flip has a 20% chance to strike GOLD (×5)." },
+  jackpot:    { name: "Jackpot",     suit: "💰", icon: "💰", special: true,
+                desc: "Golden strikes are worth double — ×10 instead of ×5." },
+  glassCannon:{ name: "Glass Cannon", suit: "💥", icon: "💥", special: true,
+                desc: "Glass coins score ×2 more — but all your coins break one flip sooner." },
+};
+Object.assign(CARDS, SPECIAL_CARDS);
+const SPECIAL_CARD_POOL = ["highRoller", "chainGang", "reinforced", "midas", "jackpot", "glassCannon"];
+const SPECIAL_CARD_PRICE = { highRoller: 55, chainGang: 50, reinforced: 45, midas: 50, jackpot: 60, glassCannon: 45 };
+
+/* ---------------- Save / persistence ---------------- */
+let SAVE;
+function defaultSave() {
+  return { introSeen:false, pg1:false, pg2:false, pgBoss:false, grandma:false, cat:false, jock:false,
+           bank:0, cards:[], last:Date.now(), prodAcc:{},
+           coinInv: { split:2, heavy:2, bomb:1, glass:1, lucky:1, slide:0, cookie:0, yarn:0, plate:0 } };
+}
+function loadSave() {
+  try {
+    const s = JSON.parse(localStorage.getItem("coinflipper_save"));
+    if (s && typeof s.bank === "number") {
+      if (!s.coinInv) s.coinInv = defaultSave().coinInv;
+      for (const k of ["cookie","yarn","plate"]) if (s.coinInv[k] === undefined) s.coinInv[k] = 0;
+      if (typeof s.slideCoins === "number") { s.coinInv.slide = (s.coinInv.slide||0) + s.slideCoins; delete s.slideCoins; }
+      return s;
+    }
+  } catch(e){}
+  return defaultSave();
+}
+function persist() { SAVE.last = Date.now(); try { localStorage.setItem("coinflipper_save", JSON.stringify(SAVE)); } catch(e){} }
+SAVE = loadSave();
+
+function ownedProps() {
+  const out = [];
+  if (SAVE.pgBoss)  out.push({ key:"playground", name:"The Playground 🛝", ...CFG.production.playground });
+  if (SAVE.grandma) out.push({ key:"grandma",    name:"Grandma's House 🏠", ...CFG.production.grandma });
+  if (SAVE.cat)     out.push({ key:"cat",        name:"The Cat's House 🐱", ...CFG.production.cat });
+  if (SAVE.jock)    out.push({ key:"jock",       name:"Gym Bro's House 💪", ...CFG.production.jock });
+  return out;
+}
+function catchUp() {
+  const now = Date.now();
+  for (const p of ownedProps()) {
+    SAVE.prodAcc[p.key] = SAVE.prodAcc[p.key] || { c:0, k:0 };
+    const acc = SAVE.prodAcc[p.key];
+    acc.c += (now - SAVE.last) / 1000;
+    const cycles = Math.floor(acc.c / p.every);
+    if (cycles > 0) { SAVE.bank += cycles * p.candy; acc.c -= cycles * p.every; econFloat(p.key, "+" + cycles * p.candy + "🍬"); }
+    if (p.coin) {
+      acc.k += (now - SAVE.last) / 1000;
+      const kc = Math.floor(acc.k / p.coinEvery);
+      if (kc > 0) { SAVE.coinInv[p.coin] = (SAVE.coinInv[p.coin]||0) + kc; acc.k -= kc * p.coinEvery; econFloat(p.key, "+" + kc + " " + TYPES[p.coin].icon); }
+    }
+  }
+  SAVE.last = now;
+}
+function discoveredTypes() {
+  const t = ["split","heavy","bomb","glass","lucky"];
+  if (SAVE.pgBoss) t.push("slide");
+  if (SAVE.grandma) t.push("cookie");
+  if (SAVE.cat) t.push("yarn");
+  if (SAVE.jock) t.push("plate");
+  return t;
+}
+
+/* ---------------- State ---------------- */
+const cv = document.getElementById("cv"), ctx = cv.getContext("2d");
+const G = {
+  mode: "map",
+  mapPage: 0, pageFlipT: -1,
+  house: "grandma", floor: 0, turnsLeft: 0,
+  runCandy: 0, floorCandy: 0,
+  pocket: [], armedItem: null, doOverArmed: null, doOverSnap: null,
+  callShot: null, callShotHit: false, itemPlayedThisTurn: false,
+  pickup: null, shopItemsBought: 0,
+  chain: 1, streak: 0, streakArmed: false, consecScores: 0, chainLocked: 0, rollMult: 0,
+  coins: [], popups: [], bursts: [], flights: [], launchQueue: [], shake: 0,
+  mouse: { x: 0, y: 0 }, mouseOnCanvas: false, preview: false, toolAngle: -Math.PI / 2, armedCoin: null,
+  boardKey: "",
+  busy: false, actionScore: 0,
+  duel: null, bossBar: 0.5, bossTurnNext: false, playerRoundScore: 0,
+  zones: [], sand: [], gTable: null, venue: "grandma", boardTitle: "",
+  loadout: null, runCards: [], activeCards: [],
+  hotspots: [], wobbleSeed: Math.random() * 1000, time: 0, prodTimer: 0,
+  shopEvent: false,
+};
+
+/* ---------------- Helpers ---------------- */
+const B = CFG.board;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const rnd = (a, b) => a + Math.random() * (b - a);
+const easeOut = t => 1 - Math.pow(1 - t, 1.7);
+const boardCenter = () => ({ x: B.x + B.w / 2, y: B.y + B.h / 2 });
+function log(msg) { document.getElementById("log").innerHTML = msg; }
+// A card only takes effect if it is EQUIPPED for this run (max 3). Owning a card
+// no longer auto-applies it — you pick your 3 at the start of each run.
+function active(id) { return G.activeCards.includes(id); }
+// Do you possess this card at all (owned permanently, or found/bought this run)?
+function haveCard(id) { return SAVE.cards.includes(id) || G.runCards.includes(id); }
+
+function makeCoin(type, owner, x, y) {
+  const t = TYPES[type];
+  const c = {
+    type, owner, x, y,
+    r: t.r || CFG.coinR,
+    bp: t.bp, wear: 0, scoredFlips: 0, valTier: 0, // 0 High, 1 Med, 2 Low
+    broken: false, gone: false, golden: false,
+    graceUsed: false, crackAngle: rnd(0, Math.PI),
+  };
+  if (type === "lucky") c.bp = 1 + Math.floor(Math.random() * 4);
+  return c;
+}
+/* point-in-zone test with an optional margin */
+function pointInZone(z, p, margin) {
+  margin = margin || 0;
+  if (z.shape === "circle") return dist(p, z) <= z.r + margin;
+  return p.x > z.x - z.w/2 - margin && p.x < z.x + z.w/2 + margin &&
+         p.y > z.y - z.h/2 - margin && p.y < z.y + z.h/2 + margin;
+}
+/* is a point p (with the coin's radius as margin) sitting in a scoring zone? */
+function coinInScoringZone(p, margin) {
+  for (const z of G.zones) if (pointInZone(z, p, margin || 0)) return true;
+  return false;
+}
+function scatter(coin) {
+  // NO coin ever starts inside (or touching) a point zone — any board, any mode.
+  for (let i = 0; i < 200; i++) {
+    coin.x = rnd(B.x + 50, B.x + B.w - 50);
+    coin.y = rnd(B.y + 50, B.y + B.h - 50);
+    const clear = !G.coins.some(o => !o.gone && dist(o, coin) < o.r + coin.r + 26);
+    const offTable = G.gTable && insideTable({x:coin.x,y:coin.y}, coin.r);
+    const inZone = coinInScoringZone(coin, coin.r);
+    if (clear && !offTable && !inZone) break;
+  }
+  G.coins.push(coin);
+}
+
+/* ---------------- Loadout ---------------- */
+function defaultLoadout() {
+  const l = {};
+  let slots = CFG.loadoutSlots;
+  for (const t of discoveredTypes()) {
+    const take = Math.min(SAVE.coinInv[t] || 0, slots, 2);
+    if (take > 0) { l[t] = take; slots -= take; }
+    if (!slots) break;
+  }
+  return l;
+}
+function loadoutList() {
+  const l = G.loadout || defaultLoadout();
+  const out = ["basic","basic","basic","basic"];
+  for (const t in l) for (let i = 0; i < l[t]; i++) out.push(t);
+  return out;
+}
+// Packing a special SPENDS it — inventory is paid when the coins hit the board,
+// and whatever survives the floor stays behind. Coins are ammo.
+function spawnPlayerCoins() {
+  loadoutList().forEach(t => {
+    if (t !== "basic" && SAVE.coinInv[t] !== undefined) SAVE.coinInv[t] = Math.max(0, SAVE.coinInv[t] - 1);
+    scatter(makeCoin(t, "player", 0, 0));
+  });
+  persist();
+}
+
+/* ---------------- Board / fight setup ---------------- */
+function resetFightState() {
+  G.chain = 1; G.streak = 0; G.streakArmed = false; G.consecScores = 0; G.rollMult = 0;
+  G.coins = []; G.popups = []; G.bursts = []; G.flights = []; G.launchQueue = [];
+  G.armedItem = null; G.doOverArmed = null; G.doOverSnap = null;
+  G.callShot = null; G.callShotHit = false; G.itemPlayedThisTurn = false;
+  G.busy = false;
+}
+function loadBoard(key) {
+  const def = BOARDS[key];
+  G.venue = def.venue; G.boardTitle = def.title; G.boardKey = key;
+  document.getElementById("vtitle").textContent = "~ " + def.title + " ~";
+  G.zones = def.zones.map(z => ({ ...z, x: B.x + B.w * z.px, y: B.y + B.h * z.py }));
+  G.sand = (def.sand || []).map(s => ({ x: B.x + B.w * s.px, y: B.y + B.h * s.py, r: s.r }));
+  G.gTable = def.table ? { x: B.x + B.w * def.table.px, y: B.y + B.h * def.table.py, w: def.table.w, h: def.table.h } : null;
+}
+function insideTable(p, coinR) {
+  const t = G.gTable;
+  return t && p.x > t.x - t.w/2 - coinR*0.3 && p.x < t.x + t.w/2 + coinR*0.3 &&
+             p.y > t.y - t.h/2 - coinR*0.3 && p.y < t.y + t.h/2 + coinR*0.3;
+}
+
+/* prepare a floor's board so the player can SEE it, then pick coins */
+function gotoFloor(n) {
+  const f = houseFloors()[n];
+  G.mode = "floor"; G.floor = n;
+  G.turnsLeft = f.turns; G.floorCandy = 0;
+  resetFightState();
+  G.busy = true; // frozen until coins are picked
+  loadBoard(f.board);
+  for (let i = 0; i < 6; i++) scatter(makeCoin("basic", "floor", 0, 0));
+  scatter(makeCoin(["split","heavy","bomb"][n % 3], "floor", 0, 0));
+  // a schoolyard treasure may be lying around — flip a coin ONTO it to pocket it
+  G.pickup = null;
+  if (Math.random() < CFG.pickupChance) {
+    const pk = { x: 0, y: 0, id: ITEM_POOL[Math.floor(Math.random() * ITEM_POOL.length)] };
+    for (let i = 0; i < 200; i++) {
+      pk.x = rnd(B.x + 60, B.x + B.w - 60);
+      pk.y = rnd(B.y + 60, B.y + B.h - 60);
+      const clear = !G.coins.some(o => !o.gone && dist(o, pk) < 60);
+      if (clear && !coinInScoringZone(pk, 22) && !(G.gTable && insideTable(pk, 22))) break;
+    }
+    G.pickup = pk;
+  }
+  showRunUI(true);
+  updateHUD();
+  // board is visible behind the picker
+  MENU.loadout(() => {
+    spawnPlayerCoins();
+    G.busy = false;
+    updateHUD();
+    log("<b>" + G.boardTitle + "</b> — threshold <b>" + f.threshold + "</b> in <b>" + f.turns + "</b> turns. Bare table pays nothing!");
+  });
+}
+
+function setupDuel(oppKey) {
+  const opp = OPPS[oppKey];
+  G.mode = "duel"; G.duel = { key: oppKey, opp };
+  G.bossBar = 0.5; G.bossTurnNext = false;
+  resetFightState();
+  G.pickup = null; // no treasures during a flip-off
+  loadBoard(opp.board);
+  for (let i = 0; i < 5; i++) scatter(makeCoin("basic", "floor", 0, 0));
+  spawnPlayerCoins();
+  opp.coins.forEach(t => scatter(makeCoin(t, "boss", 0, 0)));
+  document.getElementById("topbar").style.display = "flex";
+  document.getElementById("bossface").textContent = opp.face;
+  showRunUI(true);
+  updateHUD(); updateTug();
+  log("<b>" + opp.name + ":</b> “" + opp.taunt + "”");
+}
+
+function showRunUI(inRun) {
+  // right column: the empire (map) vs. your setup + floor vignette (in a run)
+  document.getElementById("econ").style.display = inRun ? "none" : "flex";
+  document.getElementById("runcol").style.display = inRun ? "flex" : "none";
+  document.getElementById("giveupBtn").style.display = inRun ? "block" : "none";
+  // left sidebar: these only make sense mid-run — hide them on the map so it
+  // isn't just a copy of the empire panel
+  document.getElementById("candyBox").style.display = inRun ? "block" : "none";
+  document.getElementById("chainBox").style.display = inRun ? "block" : "none";
+  if (inRun) { updateSidebarCards(); updateCoinLoadout(); updatePocket(); }
+  if (!inRun) document.getElementById("topbar").style.display = "none";
+  // refresh the cursor immediately (don't wait for the next mousemove)
+  cv.style.cursor = inRun ? (mouseOnBoard() ? "none" : "pointer") : "default";
+}
+
+/* ---------------- Aiming (ported from the real game) ---------------- */
+const lerp = (a, b, t) => a + (b - a) * t;
+
+// Two-zone power/arc curve. Hard discontinuity at the threshold (0.65):
+// inner press = short high pop, outer press = long flat drive. offDist in [0,1]
+// (0 = coin center, 1 = coin edge). Mirrors flip.lua's resolveShot.
+function resolveShot(offDist, th) {
+  const S = CFG.shot;
+  th = th || S.threshold;
+  if (offDist < th) {
+    const t = offDist / th;
+    return { power: lerp(S.innerPower[0], S.innerPower[1], t),
+             arc:   lerp(S.innerArc[0],   S.innerArc[1],   t) };
+  }
+  const t = (offDist - th) / (1 - th);
+  return { power: lerp(S.outerPower[0], S.outerPower[1], t),
+           arc:   lerp(S.outerArc[0],   S.outerArc[1],   t) };
+}
+// Given a contact point on/near the coin, resolve the shot the way the real
+// game does: normalized offset (clamped to the unit disc) picks power/arc, and
+// the direction is a straight line from the contact point through the center.
+function contactShot(coin, cx, cy) {
+  let ox = (cx - coin.x) / coin.r, oy = (cy - coin.y) / coin.r;
+  let offDist = Math.hypot(ox, oy);
+  if (offDist > 1) { const s = 1 / offDist; ox *= s; oy *= s; offDist = 1; }
+  const ang = Math.atan2(coin.y - cy, coin.x - cx);
+  const dir = { x: Math.cos(ang), y: Math.sin(ang) };
+  // the pop/drive split is PER COIN — the ring drawn on the coin is this value
+  const th = TYPES[coin.type].threshold || CFG.shot.threshold;
+  const shot = resolveShot(offDist, th);
+  let power = shot.power + (TYPES[coin.type].distBonus || 0);
+  if (active("feather")) power += 30;
+  return { dir, distTotal: power, arc: shot.arc, offset: offDist,
+           zone: offDist < th ? "inner" : "outer" };
+}
+// The tool is a disc of 1.5x the coin radius centered on the cursor. The
+// contact sits on the coin's NEAR side (toward the tool), so the launch always
+// pushes the coin AWAY from the cursor. (flip.lua findPressedCoin + fireFlip.)
+function aimInfo(coin, mouse) {
+  const toolR = CFG.toolRadius;
+  const dx = coin.x - mouse.x, dy = coin.y - mouse.y;
+  let d = Math.hypot(dx, dy); if (d < 0.0001) d = 0.0001;
+  const off = Math.abs(d - toolR);
+  const f = off / d;
+  const contact = { x: coin.x - dx * f, y: coin.y - dy * f };
+  const s = contactShot(coin, contact.x, contact.y);
+  return { dir: s.dir, distTotal: s.distTotal, arc: s.arc, offset: s.offset, zone: s.zone, contact };
+}
+
+/* walls always bounce — the coin never leaves the table */
+function computePath(coin, dir, distTotal) {
+  const r = coin.r;
+  const minX = B.x + r, maxX = B.x + B.w - r, minY = B.y + r, maxY = B.y + B.h - r;
+  let px = clamp(coin.x, minX, maxX), py = clamp(coin.y, minY, maxY);
+  let dx = dir.x, dy = dir.y, rem = distTotal;
+  const points = [];
+  for (let b = 0; b <= CFG.maxBounces; b++) {
+    const ex = px + dx * rem, ey = py + dy * rem;
+    let tHit = Infinity, wall = null;
+    if (dx < 0) { const t = (minX - px) / (dx * rem); if (t > 1e-4 && t < 1 && t < tHit) { tHit = t; wall = "V"; } }
+    if (dx > 0) { const t = (maxX - px) / (dx * rem); if (t > 1e-4 && t < 1 && t < tHit) { tHit = t; wall = "V"; } }
+    if (dy < 0) { const t = (minY - py) / (dy * rem); if (t > 1e-4 && t < 1 && t < tHit) { tHit = t; wall = "H"; } }
+    if (dy > 0) { const t = (maxY - py) / (dy * rem); if (t > 1e-4 && t < 1 && t < tHit) { tHit = t; wall = "H"; } }
+    if (wall === null || b === CFG.maxBounces) {
+      const fx = clamp(ex, minX, maxX), fy = clamp(ey, minY, maxY);
+      points.push({ x: fx, y: fy });
+      return { points, end: points[points.length - 1], bounced: points.length > 1 };
+    }
+    px += dx * rem * tHit; py += dy * rem * tHit;
+    points.push({ x: px, y: py });
+    rem *= (1 - tHit);
+    if (wall === "V") dx = -dx; else dy = -dy;
+  }
+}
+
+/* ---------------- Zones & scoring ---------------- */
+const VAL_COLOR = { 3: "#e06a5a", 2: "#f2d15c", 1: "#7fb3d9" };
+const VAL_NAME  = { 3: "HIGH", 2: "MED", 1: "LOW" };
+
+function zoneAt(p, coinR) {
+  const V = VENUES[G.venue];
+  if (insideTable(p, coinR)) return { lose: true, name: V.loseName || "OFF LIMITS", color: "#8a5a3a" };
+  for (const dz of G.sand) if (dist(p, dz) < dz.r + coinR * 0.3) return { miss: true, name: V.missName, color: "#b09a5a" };
+  let best = 0;
+  for (const z of G.zones) {
+    let hit = false;
+    if (z.shape === "circle") hit = dist(p, z) <= z.r + coinR;
+    else hit = p.x > z.x - z.w/2 - coinR && p.x < z.x + z.w/2 + coinR &&
+               p.y > z.y - z.h/2 - coinR && p.y < z.y + z.h/2 + coinR;
+    if (hit && z.val > best) best = z.val;
+  }
+  if (best > 0) return { val: best, name: VAL_NAME[best], color: VAL_COLOR[best] };
+  return { empty: true, name: "bare table", color: "#8a8175" };
+}
+function popup(x, y, text, color, big) { G.popups.push({ x, y, text, color: color || "#3a2d1f", t: 0, big: !!big }); }
+// A punchy points number that scales up then floats away (zone-coloured).
+function scorePop(x, y, amount, color) { G.popups.push({ x, y, text: "+" + amount, color: color || "#3a2d1f", t: 0, score: true }); }
+// An expanding ring burst on the board (landing juice), sized by coin weight.
+function burst(x, y, color, weight) { G.bursts.push({ x, y, color: color || "#f2a33c", t: 0, w: weight || 1 }); }
+function bumpChain() {
+  G.chain = Math.min(CFG.chainCap, G.chain + CFG.chainStep);
+  const el = document.getElementById("chain");
+  el.classList.remove("pop"); void el.offsetWidth; el.classList.add("pop");
+}
+// A miss breaks the chain — Snowball softens it to a 1-step drop instead of a full reset.
+function breakChain() { G.chain = active("snowball") ? Math.max(1, G.chain - 1) : 1; }
+function addCandy(n) {
+  if (G.mode === "floor") {
+    const cap = Math.ceil(houseFloors()[G.floor].threshold * CFG.actionCapPct);
+    n = Math.min(n, Math.max(0, cap - G.actionScore));
+    if (n <= 0) { updateHUD(); return 0; }
+  }
+  G.floorCandy += n; G.runCandy += n; G.actionScore += n; updateHUD();
+  return n;
+}
+
+function scoreLanding(coin, isPlayerFlip, depth, bounced) {
+  const p = { x: coin.x, y: coin.y };
+  const zone = zoneAt(p, coin.r);
+  let scored = false;
+
+  // Called Shot bookkeeping: did the player's OWN flip land in the called zone?
+  if (isPlayerFlip && depth === 0 && G.callShot) {
+    G.callShotHit = !zone.lose && !zone.miss && !zone.empty && pointInZone(G.callShot, p, coin.r);
+  }
+  if (zone.lose) {
+    // the house confiscates coins that land here (dining table / litter box)
+    const V = VENUES[G.venue];
+    coin.gone = true;
+    popup(p.x, p.y, V.losePop || "GONE!", "#8a5a3a", true);
+    popup(p.x, p.y - 26, "coin confiscated", "#8a5a3a");
+    if (isPlayerFlip && depth === 0) { breakChain(); G.streak = 0; G.consecScores = 0; log(V.loseMsg || "Confiscated. Chain broke."); }
+    return false;
+  }
+  if (zone.miss) {
+    popup(p.x, p.y, zone.name + "!", "#888", true);
+    if (isPlayerFlip && depth === 0) { breakChain(); G.streak = 0; G.consecScores = 0; log(zone.name + ". Chain broke."); }
+  } else if (zone.empty) {
+    // bare table: nothing gained, and the coin's point value wears down (unless Steady Hand)
+    if (active("steady")) {
+      popup(p.x, p.y, "bare table (steady)", "#6a8fbf");
+    } else if (coin.valTier < 2) {
+      coin.valTier++;
+      popup(p.x, p.y, "bare table — value down!", "#8756b8", true);
+    } else {
+      popup(p.x, p.y, "bare table…", "#8a8175");
+    }
+  } else {
+    let mult = 1;
+    if (TYPES[coin.type].mult) mult *= TYPES[coin.type].mult;
+    if (coin.type === "glass" && active("glassCannon")) mult *= 2;   // Glass Cannon
+    // GOLD: a real golden coin, or a Midas proc — Jackpot doubles either.
+    const goldX = CFG.goldenMult * (active("jackpot") ? 2 : 1);
+    if (coin.golden) { mult *= goldX; coin.golden = false; popup(p.x, p.y - 22, active("jackpot") ? "JACKPOT!" : "GOLDEN!", "#c9911a", true); }
+    else if (active("midas") && Math.random() < 0.20) { mult *= goldX; popup(p.x, p.y - 22, "MIDAS ✨", "#c9911a", true); }
+    if (isPlayerFlip && bounced && active("trickShot")) { mult *= 2; popup(p.x, p.y - 48, "TRICK SHOT ×2!", "#4a7fb5", true); }
+    if (zone.val === 3 && active("deadEye")) { mult *= 2.5; popup(p.x, p.y - 34, "DEAD EYE ×2.5", "#b8452f", true); }
+    if (depth > 0 && active("domino")) mult *= 1.5;
+    if (active("piggy")) mult *= 1.15;
+    if (active("highRoller")) mult *= 1.30;
+    if (active("compound")) mult *= 1 + 0.02 * (G.chainLocked || G.chain);
+    if (active("onARoll")) mult *= 1 + G.rollMult;
+    const depthBonus = CFG.chainDepthBonus[Math.min(depth + (active("chainGang") ? 1 : 0), 3)];
+    let candy = zone.val * CFG.valMult[coin.valTier] * (G.chainLocked || G.chain) * depthBonus * mult;
+    candy = Math.max(1, Math.round(candy));
+    const gained = addCandy(candy);
+    scored = true;
+    if (gained > 0) {
+      // impact scales with the coin's WEIGHT (bigger = heavier). Light coins barely
+      // shake the table; heavy ones land with a thud.
+      const weight = clamp(coin.r / CFG.coinR, 0.55, 1.7);
+      scorePop(p.x, p.y, gained, zone.color);        // the points number sprite
+      burst(p.x, p.y, zone.color, weight);           // ring-burst sized to weight
+      G.shake = Math.max(G.shake, clamp((1.0 + depth * 1.1) * weight * weight, 0, 8));
+    } else {
+      popup(p.x, p.y, "capped!", "#999", true);
+    }
+    if (depth > 0) popup(p.x, p.y - 34, "CHAIN ×" + depthBonus, "#b8452f", true);
+    bumpChain();
+    if (active("onARoll")) G.rollMult += 0.2;   // On a Roll: snowball this floor's scores
+    if (isPlayerFlip) {
+      G.consecScores++;
+      if (active("luckyStreak") && G.consecScores % 3 === 0) {
+        const ls = addCandy(Math.round(5 * (G.chainLocked || G.chain)));
+        if (ls) popup(p.x, p.y - 62, "LUCKY STREAK +" + ls, "#2e8b57", true);
+      }
+    }
+  }
+
+  if (scored && !coin.broken && coin.type !== "basic" && isFinite(coin.bp)) {
+    coin.scoredFlips++;
+    const t = TYPES[coin.type];
+    // Reinforced card grants one free flip before any wear starts
+    if (active("reinforced") && !coin.graceUsed) {
+      coin.graceUsed = true;
+      popup(coin.x, coin.y - 20, "reinforced!", "#6a8fbf");
+    } else {
+      coin.wear += t.ticks || 1;
+      if (active("glassCannon")) coin.wear += 1;   // Glass Cannon: everything breaks sooner
+      if (t.crumbs && coin.wear < coin.bp) {
+        const crumb = makeCoin("crumb", coin.owner, coin.x + rnd(-28, 28), coin.y + rnd(-28, 28));
+        keepOnBoard(crumb); G.coins.push(crumb);
+        popup(crumb.x, crumb.y, "crumb!", "#c9873a");
+      }
+      if (coin.wear >= coin.bp) breakCoin(coin, depth);
+    }
+  } else if (scored) coin.scoredFlips++;
+  return scored;
+}
+
+function breakCoin(coin, depth) {
+  coin.broken = true;
+  popup(coin.x, coin.y - 18, "SNAP!", "#555", true);
+  if (TYPES[coin.type].crumbs) {
+    // the cookie breaks apart into crumbs
+    popup(coin.x, coin.y, "crumbles!", "#c9873a", true);
+    for (let i = 0; i < 3; i++) {
+      const nc = makeCoin("crumb", coin.owner, coin.x + rnd(-26, 26), coin.y + rnd(-26, 26));
+      keepOnBoard(nc); G.coins.push(nc);
+    }
+  }
+  if (coin.type === "split") {
+    for (let i = 0; i < 2; i++) {
+      const nc = makeCoin("basic", coin.owner, coin.x + rnd(-30, 30), coin.y + rnd(-30, 30));
+      if (Math.random() < CFG.goldenChance) { nc.golden = true; popup(nc.x, nc.y, "✨", "#c9911a"); }
+      keepOnBoard(nc); G.coins.push(nc);
+    }
+  }
+  if (coin.type === "bomb") {
+    popup(coin.x, coin.y, "BOOM!", "#b8452f", true);
+    for (const o of G.coins) {
+      if (o !== coin && !o.broken && !o.gone && !o.pinned && !inFlight(o) && dist(o, coin) < CFG.bombRadius) {
+        const d = dist(o, coin) || 1;
+        const invD = 1 / d;
+        const cx = o.x - (o.x - coin.x) * invD * o.r * 0.8;
+        const cy = o.y - (o.y - coin.y) * invD * o.r * 0.8;
+        const s = contactShot(o, cx, cy);
+        enqueueLaunch(o, s.dir, s.distTotal, s.arc, (depth || 0) + 1, false);
+      }
+    }
+  }
+}
+function keepOnBoard(c) {
+  c.x = clamp(c.x, B.x + c.r, B.x + B.w - c.r);
+  c.y = clamp(c.y, B.y + c.r, B.y + B.h - c.r);
+}
+function inFlight(c) { return G.flights.some(f => f.coin === c) || G.launchQueue.some(q => q.coin === c); }
+
+/* ---------------- Launch / flight engine ---------------- */
+let hopCount = 0;
+function enqueueLaunch(coin, dir, distTotal, arc, depth, isPlayerFlip) {
+  if (hopCount > CFG.maxChainHops) return;
+  hopCount++;
+  G.launchQueue.push({ coin, dir, distTotal, arc, depth, isPlayerFlip });
+}
+function processQueue() {
+  if (G.flights.length > 0) return;
+  if (!G.launchQueue.length) { settleTurn(); return; }
+  // Launch the whole wave AT ONCE — coins struck by the same landing flip
+  // together, like a real table reaction. Each landing may queue the next wave.
+  while (G.launchQueue.length) {
+    const next = G.launchQueue.shift();
+    const path = computePath(next.coin, next.dir, next.distTotal);
+    const pts = [{ x: next.coin.x, y: next.coin.y }, ...path.points];
+    let total = 0; const segs = [];
+    for (let i = 1; i < pts.length; i++) { const L = dist(pts[i - 1], pts[i]); segs.push(L); total += L; }
+    const slides = TYPES[next.coin.type].slides; // ONLY the Slide Coin slides — everything else flips
+    // Fixed flight time + per-shot arc, straight from the real game. The visual
+    // (tumble/arc/trail) is cosmetic and never alters where the coin lands.
+    G.flights.push({
+      coin: next.coin, pts, segs, total: Math.max(total, 1), path,
+      depth: next.depth, isPlayerFlip: next.isPlayerFlip,
+      dir: next.dir, angle: Math.atan2(next.dir.y, next.dir.x),
+      t: 0, dur: CFG.flightTime,
+      arc: slides ? 0 : (next.arc || 0),
+    });
+    if (slides) popup(next.coin.x, next.coin.y - 20, "sliiide!", "#f0924a");
+  }
+}
+// Position at parametric time tt in [0,1] along the (possibly bounced) path.
+// LINEAR in tt — constant speed, exactly like Coin:update in the real game.
+function flightPosAt(f, tt) {
+  const t = clamp(tt, 0, 1);
+  let target = t * f.total, acc = 0;
+  for (let i = 0; i < f.segs.length; i++) {
+    if (target <= acc + f.segs[i] || i === f.segs.length - 1) {
+      const k = f.segs[i] ? (target - acc) / f.segs[i] : 1;
+      return { x: f.pts[i].x + (f.pts[i + 1].x - f.pts[i].x) * clamp(k, 0, 1),
+               y: f.pts[i].y + (f.pts[i + 1].y - f.pts[i].y) * clamp(k, 0, 1) };
+    }
+    acc += f.segs[i];
+  }
+  return f.path.end;
+}
+function flightPos(f) { return flightPosAt(f, f.t); }
+function updateFlights(dt) {
+  const landed = [];
+  for (const f of G.flights) {
+    f.t += dt / f.dur;
+    // the Slide Coin scoots along the ground — it stops at the FIRST coin it touches
+    if (f.t < 1 && TYPES[f.coin.type].slides) {
+      const pos = flightPos(f);
+      for (const o of G.coins) {
+        if (o !== f.coin && !o.broken && !o.gone && !inFlight(o) && dist(o, pos) < o.r + f.coin.r) {
+          f.path.end = { x: pos.x, y: pos.y };
+          f.t = 1;
+          break;
+        }
+      }
+    }
+    if (f.t >= 1) landed.push(f);
+  }
+  for (const f of landed) {
+    G.flights.splice(G.flights.indexOf(f), 1);
+    const c = f.coin;
+    c.x = f.path.end.x; c.y = f.path.end.y;
+    scoreLanding(c, f.isPlayerFlip, f.depth, f.path.bounced);
+    if (!c.gone) {
+      // Chain: every coin the landing coin touches flips too — queued into the
+      // SAME wave, so multiple contacts fly simultaneously. Contact is taken
+      // 0.8r INSIDE the struck coin toward the landing coin (tryChainFlip).
+      for (const o of G.coins) {
+        if (o !== c && !o.broken && !o.gone && !o.pinned && !inFlight(o) && dist(o, c) < o.r + c.r) {
+          const d = dist(o, c);
+          const invD = d > 0 ? 1 / d : 0;
+          const cx = o.x - (o.x - c.x) * invD * o.r * 0.8;
+          const cy = o.y - (o.y - c.y) * invD * o.r * 0.8;
+          const s = contactShot(o, cx, cy);
+          enqueueLaunch(o, s.dir, s.distTotal, s.arc, f.depth + 1, f.isPlayerFlip);
+        }
+      }
+      // Plate Coin: shockwave landing — blasts NEARBY coins into the chain too
+      if (TYPES[c.type].shockwave) {
+        let slammed = false;
+        for (const o of G.coins) {
+          const d = dist(o, c);
+          if (o !== c && !o.broken && !o.gone && !o.pinned && !inFlight(o) && d >= o.r + c.r && d < 85) {
+            const cx = o.x - (o.x - c.x) / d * o.r * 0.8;
+            const cy = o.y - (o.y - c.y) / d * o.r * 0.8;
+            const s = contactShot(o, cx, cy);
+            enqueueLaunch(o, s.dir, s.distTotal, s.arc, f.depth + 1, f.isPlayerFlip);
+            slammed = true;
+          }
+        }
+        if (slammed) { popup(c.x, c.y - 26, "SLAM!", "#4a4a4a", true); G.shake = Math.max(G.shake, 6); }
+      }
+      // Yarn Coin: tangles the table — loose coins get dragged toward the landing
+      if (TYPES[c.type].tangle) {
+        let tangled = false;
+        for (const o of G.coins) {
+          const d = dist(o, c);
+          if (o !== c && !o.broken && !o.gone && !inFlight(o) && d < 95 && d > o.r + c.r + 2) {
+            const pull = Math.min(26, d - (o.r + c.r + 2));
+            o.x += (c.x - o.x) / d * pull;
+            o.y += (c.y - o.y) / d * pull;
+            keepOnBoard(o);
+            tangled = true;
+          }
+        }
+        if (tangled) popup(c.x, c.y - 26, "tangled!", "#c86a9a");
+      }
+      // schoolyard treasure: land a coin on it to pocket it
+      if (f.isPlayerFlip && G.pickup && dist(c, G.pickup) < c.r + 20) {
+        if (G.pocket.length < 2) {
+          popup(G.pickup.x, G.pickup.y, "pocketed! " + ITEMS[G.pickup.id].icon, "#2e8b57", true);
+          G.pocket.push({ id: G.pickup.id });
+          G.pickup = null;
+          updatePocket();
+        } else {
+          popup(G.pickup.x, G.pickup.y, "pocket full!", "#888", true);
+        }
+      }
+    }
+  }
+  if (landed.length && G.flights.length === 0) processQueue();
+}
+
+/* ---------------- Turn resolution ---------------- */
+function beginAction() {
+  G.busy = true; G.actionScore = 0; hopCount = 0; G.chainLocked = G.chain;
+  G.callShotHit = false;
+  const isPlayerAction = (G.mode === "floor") || (G.mode === "duel" && !G.bossTurnNext);
+  // Army Man ships out with this flip: snapshot everything so the whole
+  // turn can be rewound after the dust settles.
+  if (isPlayerAction && G.doOverArmed) {
+    consumePocket(G.doOverArmed);
+    G.doOverArmed = null;
+    G.itemPlayedThisTurn = true;
+    G.doOverSnap = {
+      coins: G.coins.map(c => ({ ...c })),
+      floorCandy: G.floorCandy, runCandy: G.runCandy,
+      chain: G.chain, streak: G.streak, streakArmed: G.streakArmed,
+      consecScores: G.consecScores, rollMult: G.rollMult,
+      pickup: G.pickup,
+    };
+  }
+}
+
+function settleTurn() {
+  const isPlayerAction = (G.mode === "floor") || (G.mode === "duel" && !G.bossTurnNext);
+  // Army Man: offer the do-over BEFORE anything is banked or spent
+  if (isPlayerAction && G.doOverSnap) {
+    const snap = G.doOverSnap;
+    G.doOverSnap = null;
+    showMsg2("🪖", "DO-OVER?",
+      "The army man salutes. This turn scored <b>" + G.actionScore + "</b> candy. Keep it — or take the WHOLE thing back (coins, candy, wear, everything)?",
+      "KEEP IT", () => finishSettle(),
+      "DO-OVER! ⏪", () => {
+        G.coins = snap.coins;
+        G.floorCandy = snap.floorCandy; G.runCandy = snap.runCandy;
+        G.chain = snap.chain; G.streak = snap.streak; G.streakArmed = snap.streakArmed;
+        G.consecScores = snap.consecScores; G.rollMult = snap.rollMult;
+        G.pickup = snap.pickup;
+        G.actionScore = 0; G.callShot = null;
+        G.popups = []; G.bursts = []; G.shake = 0;
+        G.busy = false;
+        updateHUD();
+        log("Do-over! The board rewinds. The army man has done his duty. 🫡");
+      });
+    return;
+  }
+  finishSettle();
+}
+function finishSettle() {
+  const isPlayerAction = (G.mode === "floor") || (G.mode === "duel" && !G.bossTurnNext);
+  // tacked coins work themselves loose over time
+  for (const c of G.coins) if (c.pinned) c.pinned--;
+  // Shooter Marble: the called shot pays double — or the whole turn pays nothing
+  if (isPlayerAction && G.callShot) {
+    const z = G.callShot; G.callShot = null;
+    if (G.callShotHit && G.actionScore > 0) {
+      const bonus = G.actionScore;
+      G.floorCandy += bonus; G.runCandy += bonus; G.actionScore += bonus;
+      popup(z.x, z.y, "CALLED IT! ×2", "#c9911a", true);
+      log("Called shot! The marble pays out — the whole turn counts <b>DOUBLE</b>.");
+    } else {
+      G.floorCandy -= G.actionScore; G.runCandy -= G.actionScore; G.actionScore = 0;
+      breakChain();
+      popup(z.x, z.y, "blew the call…", "#8756b8", true);
+      log("You called it… and missed. The turn pays nothing and the chain broke.");
+    }
+  }
+  if (isPlayerAction) {
+    G.itemPlayedThisTurn = false;
+    if (G.actionScore > 0) {
+      if (G.streakArmed) {
+        const bonus = Math.ceil(CFG.streakPct * currentThreshold());
+        const paid = addCandy(bonus);
+        popup(boardCenter().x, B.y + 60, "HOT STREAK +" + paid + "!", "#f2a33c", true);
+        G.streakArmed = false; G.streak = 0;
+      } else {
+        G.streak++;
+        if (G.streak >= CFG.streakNeed) G.streakArmed = true;
+      }
+    } else { G.streak = 0; G.streakArmed = false; }
+  }
+  updateHUD();
+
+  if (G.mode === "floor") {
+    const f = houseFloors()[G.floor];
+    if (G.floorCandy >= f.threshold) { floorCleared(); return; }
+    G.turnsLeft--;
+    updateHUD();
+    if (G.turnsLeft <= 0) { runFailed("Out of turns on Floor " + (G.floor + 1) + ". The threshold was " + f.threshold + " candy."); return; }
+    if (!anyStrikeable("player")) { runFailed("No coins left to flip!"); return; }
+    // the Cat's paw bats something around between turns
+    if (G.venue === "cat" && Math.random() < 0.4) pawShove();
+    G.busy = false;
+  } else if (G.mode === "duel") {
+    if (!G.bossTurnNext) {
+      G.playerRoundScore = G.actionScore;
+      G.bossTurnNext = true;
+      setTimeout(bossTurn, 700);
+    } else {
+      const diff = (G.playerRoundScore || 0) - G.actionScore;
+      const shift = clamp(diff / G.duel.opp.barScale, -CFG.duelMaxShift, CFG.duelMaxShift);
+      G.bossBar = clamp(G.bossBar + shift, 0, 1);
+      updateTug();
+      G.bossTurnNext = false;
+      if (G.bossBar >= 1) { duelWon(); return; }
+      if (G.bossBar <= 0) { runFailed(G.duel.opp.name + " out-flipped you. Run candy forfeited."); return; }
+      if (!anyStrikeable("player")) { runFailed("No coins left to flip!"); return; }
+      log(diff >= 0 ? "You won that exchange! (+" + diff + ")" : G.duel.opp.name + " won that exchange. (" + diff + ")");
+      if (G.duel.key === "cat" && Math.random() < 0.5) pawShove();
+      G.busy = false;
+    }
+  }
+}
+// The Cat's paw: shoves a random loose coin somewhere less convenient
+function pawShove() {
+  const cands = G.coins.filter(c => !c.broken && !c.gone && !c.pinned && !inFlight(c));
+  if (!cands.length) return;
+  const c = cands[Math.floor(Math.random() * cands.length)];
+  for (let i = 0; i < 12; i++) {
+    const ang = rnd(0, Math.PI * 2), d = rnd(40, 90);
+    const nx = clamp(c.x + Math.cos(ang) * d, B.x + c.r, B.x + B.w - c.r);
+    const ny = clamp(c.y + Math.sin(ang) * d, B.y + c.r, B.y + B.h - c.r);
+    if (!coinInScoringZone({ x: nx, y: ny }, c.r) && !(G.gTable && insideTable({ x: nx, y: ny }, c.r))) {
+      c.x = nx; c.y = ny;
+      popup(c.x, c.y - 20, "🐾 paw!", "#a86a92", true);
+      return;
+    }
+  }
+}
+function currentThreshold() { return G.mode === "floor" ? houseFloors()[G.floor].threshold : 100; }
+function anyStrikeable(side) {
+  return G.coins.some(c => !c.broken && !c.gone && (c.owner === side || c.owner === "floor"));
+}
+
+/* ---------------- Opponent AI — aims at real zones ---------------- */
+function bossTurn() {
+  if (G.mode !== "duel") return;
+  const opp = G.duel.opp;
+  log(opp.name + " is flipping…");
+  const lvl = opp.level;
+  // target the best marked zone (never flips into bare table on purpose)
+  const bestVal = Math.max(...G.zones.map(z => z.val));
+  const targets = G.zones.filter(z => z.val === bestVal);
+  const tz = targets[Math.floor(Math.random() * targets.length)];
+  const err = (10 - lvl) * 9;
+  const ang = Math.random() * Math.PI * 2, mag = Math.random() * err;
+  const target = { x: tz.x + Math.cos(ang) * mag, y: tz.y + Math.sin(ang) * mag };
+  const cands = G.coins.filter(c => !c.broken && !c.gone && !c.pinned &&
+    !coinInScoringZone({ x: c.x, y: c.y }, 0) &&
+    (c.owner === "boss" || c.owner === "floor"));
+  if (!cands.length) { beginAction(); settleTurn(); return; }
+  const scored = cands.map(c => ({ c, quality: -Math.abs(dist(c, target) - 300) }))
+                      .sort((a, b) => b.quality - a.quality);
+  const pickPool = Math.max(1, Math.min(scored.length, 11 - lvl));
+  const chosen = scored[Math.floor(Math.random() * pickPool)].c;
+  const d = dist(chosen, target) || 1;
+  const dir = { x: (target.x - chosen.x) / d, y: (target.y - chosen.y) / d };
+  let distTotal;
+  if (d <= CFG.innerDist.max) distTotal = clamp(d, CFG.innerDist.min, CFG.innerDist.max);
+  else distTotal = clamp(d, CFG.outerDist.min, CFG.outerDist.max);
+  const arc = distTotal <= 250 ? 150 : 45; // high pop for short shots, flat for long
+  beginAction();
+  enqueueLaunch(chosen, dir, distTotal, arc, 0, false);
+  processQueue();
+}
+
+/* ---------------- Flow ---------------- */
+function bankRun() { SAVE.bank += G.runCandy; G.runCandy = 0; persist(); }
+
+function dropCoins(n) {
+  const pool = discoveredTypes();
+  const got = [];
+  for (let i = 0; i < n; i++) {
+    const t = pool[Math.floor(Math.random() * pool.length)];
+    SAVE.coinInv[t] = (SAVE.coinInv[t] || 0) + 1;
+    got.push(TYPES[t].icon);
+  }
+  persist();
+  return got.join(" ");
+}
+// Every boss coughs up pocket change — cheap shop coins, nothing fancy
+function grantCheapCoins(n) {
+  const cheap = ["split", "heavy"];
+  const got = [];
+  for (let i = 0; i < n; i++) {
+    const t = cheap[Math.floor(Math.random() * cheap.length)];
+    SAVE.coinInv[t] = (SAVE.coinInv[t] || 0) + 1;
+    got.push(TYPES[t].icon);
+  }
+  persist();
+  return got.join(" ");
+}
+
+function duelWon() {
+  G.busy = true;
+  const key = G.duel.key;
+  const already = (key === "kid1" && SAVE.pg1) || (key === "kid2" && SAVE.pg2) ||
+                  (key === "slide" && SAVE.pgBoss) || (key === "grandma" && SAVE.grandma) ||
+                  (key === "cat" && SAVE.cat) || (key === "jock" && SAVE.jock);
+  if (already) {
+    const won = G.runCandy;
+    const pc = grantCheapCoins(1);
+    bankRun();
+    showMsg("🏆", "REMATCH WON!", "Still the champ. <b>" + won + "</b> candy banked, plus pocket change: " + pc, "BACK TO THE MAP", goMap);
+    return;
+  }
+  if (key === "kid1") {
+    SAVE.pg1 = true;
+    if (!SAVE.cards.includes("luckyStreak")) SAVE.cards.push("luckyStreak");
+    const pc = grantCheapCoins(2);
+    bankRun();
+    showMsg("👦", "TOMMY IS DOWN!", "“Okay okay okay. Beginner's luck.”<br><br>You won his candy, his <b>Lucky Streak ♥</b> card — yours forever — and his pocket change: " + pc + "<br><br><b>Rex</b> wants a piece of you next.",
+      "BRING ON REX", () => setupDuel("kid2"));
+  } else if (key === "kid2") {
+    SAVE.pg2 = true;
+    if (!SAVE.cards.includes("trickShot")) SAVE.cards.push("trickShot");
+    const pc = grantCheapCoins(2);
+    bankRun();
+    showMsg("😤", "REX IS DEFEATED!", "“…tell nobody about this.”<br><br>You won his <b>Trick Shot ♠</b> card — permanent: bank a coin off a wall and it scores ×2. Plus his coins: " + pc + "<br><br>Now for the real test: the kid at the top of the <b>slide</b>.",
+      "TO THE MAP", goMap);
+  } else if (key === "slide") {
+    SAVE.pgBoss = true;
+    SAVE.coinInv.slide = (SAVE.coinInv.slide || 0) + 2;
+    const pc = grantCheapCoins(2);
+    bankRun();
+    showMsg("👑", "PLAYGROUND CONQUERED! 🏳️", "The Slide King hands over his crown… and his coins: " + pc + "<br><br>You discovered the <b>Slide Coin 🛝</b> — the only coin that <b>slides</b> instead of flipping. The playground now produces candy and Slide Coins for you.<br><br>Flip the map page — the neighborhood awaits!",
+      "BACK TO THE MAP", goMap);
+  } else if (key === "grandma") {
+    SAVE.grandma = true;
+    const pc = grantCheapCoins(2);
+    bankRun();
+    showMsg("👵", "HOUSE CONQUERED! 🏳️", "“Ohh, you little rascal. Take a cookie. Take the whole jar.”<br><br>Grandma's House joins your empire — it bakes <b>candy AND Cookie Coins 🍪</b> for you now. Entry is free forever. She also slips you some change: " + pc,
+      "BACK TO THE MAP", goMap);
+  } else if (key === "cat") {
+    SAVE.cat = true;
+    SAVE.coinInv.yarn = (SAVE.coinInv.yarn || 0) + 2;
+    const pc = grantCheapCoins(2);
+    bankRun();
+    showMsg("🐱", "HOUSE CONQUERED! 🏳️", "The Cat blinks slowly. That means respect.<br><br>You discovered the <b>Yarn Coin 🧶</b> — it tangles the table and drags coins toward wherever it lands. The Cat's house now mints <b>candy AND Yarn Coins</b> for you. Loose change under the sofa: " + pc,
+      "BACK TO THE MAP", goMap);
+  } else if (key === "jock") {
+    SAVE.jock = true;
+    SAVE.coinInv.plate = (SAVE.coinInv.plate || 0) + 2;
+    const pc = grantCheapCoins(2);
+    bankRun();
+    showMsg("💪", "GYM CONQUERED! 🏳️", "“Respect, little bro. RESPECT.”<br><br>You discovered the <b>Plate Coin 🏋️</b> — it lands like a truck and blasts nearby coins into the chain. The gym now reps out <b>candy AND Plate Coins</b>. Locker-room change: " + pc + "<br><br>The cul-de-sac is <b>YOURS</b>.",
+      "BACK TO THE MAP", goMap);
+  }
+}
+
+function floorCleared() {
+  G.busy = true;
+  const drops = dropCoins(CFG.coinDropsPerFloor);
+  const floors = houseFloors();
+  if (G.floor < floors.length - 1) {
+    const nxt = G.floor + 1;
+    showMsg2("🏠", "FLOOR " + (G.floor + 1) + " CLEARED!",
+      "You banked <b>" + G.floorCandy + "</b> candy — and found coins on the way up: <b>" + drops + "</b><br><br>The nerd has his stash spread out on the landing.",
+      "BROWSE THE STASH 🤓", () => MENU.shop(() => gotoFloor(nxt)),
+      "HEAD UP ➜", () => gotoFloor(nxt));
+  } else {
+    const bossKey = HOUSES[G.house].boss, boss = OPPS[bossKey];
+    showMsg2(boss.face, "TOP FLOOR CLEARED!",
+      "Found on the stairs: <b>" + drops + "</b><br><br><b>" + boss.name + "</b> is waiting. You made it to the boss — so you may also <b>walk away and keep</b> your <b>" + G.runCandy + "</b> run candy.",
+      "FIGHT " + boss.name.toUpperCase(), () => MENU.loadout(() => setupDuel(bossKey)),
+      "WALK AWAY (bank " + G.runCandy + " 🍬)", () => { bankRun(); log("Banked it. You'll be back."); goMap(); });
+  }
+}
+
+function runFailed(why) {
+  G.busy = true;
+  G.runCandy = 0;
+  showMsg("💀", "RUN OVER", why + "<br><br>Run candy is gone. The bank is safe. Broken coins stay broken — check your bag.", "BACK TO THE MAP", goMap);
+}
+
+function giveUp() {
+  if (G.mode !== "floor" && G.mode !== "duel") return;
+  G.busy = true;
+  showMsg2("🏳️", "GIVE UP?", "Pull back now and you forfeit <b>" + G.runCandy + "</b> run candy (you only keep candy by walking away at the boss door).",
+    "YES, RETREAT", () => { G.runCandy = 0; goMap(); },
+    "KEEP FLIPPING", () => { G.busy = false; closeMsg(); });
+}
+
+function goMap() {
+  closeMsg(); closeMenu();
+  G.mode = "map"; G.duel = null; G.busy = false;
+  G.coins = []; G.flights = []; G.launchQueue = []; G.popups = []; G.bursts = []; G.shake = 0;
+  G.runCards = []; G.activeCards = [];
+  // pocket tricks don't survive the walk home
+  G.pocket = []; G.armedItem = null; G.doOverArmed = null; G.doOverSnap = null;
+  G.callShot = null; G.pickup = null; G.itemPlayedThisTurn = false; G.shopItemsBought = 0;
+  showRunUI(false);
+  persist();
+  // every now and then, the bike kid rolls up on the map as a special event
+  if (!G.shopEvent && SAVE.introSeen && Math.random() < 0.15) G.shopEvent = true;
+  updateHUD(); updateEcon();
+  if (!SAVE.introSeen) {
+    SAVE.introSeen = true; persist();
+    showMsg("👦", "PSST. NEW KID.", "“This is <b>my</b> playground. But I'll teach you the game we play here — coin flipping. It's a tutorial, basically. I talk, you lose.<br><br>Meet me at the <b>SWING SET</b>.”", "OKAY…", closeMsg);
+  } else if (SAVE.pgBoss && G.mapPage === 0 && !SAVE.grandma) {
+    log("The playground is earning for you. Flip the page ➤ to see the neighborhood.");
+  } else {
+    log("Pick a spot on the map.");
+  }
+}
+
+/* run start: you always trip over SOMETHING on the way in — usually a
+   schoolyard treasure for your pocket, sometimes a run card */
+function startHouseRun(house) {
+  G.house = house;
+  G.runCards = [];
+  G.activeCards = [];
+  G.pocket = []; G.shopItemsBought = 0;
+  const proceed = () => {
+    if (MENU.equipPool().length) MENU.equip(() => gotoFloor(0));
+    else gotoFloor(0);
+  };
+  const cardPool = RUN_CARD_POOL.filter(id => !haveCard(id));
+  if (cardPool.length && Math.random() < CFG.entryCardPct) {
+    const id = cardPool[Math.floor(Math.random() * cardPool.length)];
+    showMsg2("🃏", "FOUND A CARD!",
+      "Tucked in the hedge by the porch: <b>" + CARDS[id].name + " " + CARDS[id].suit + "</b><br><i>" + CARDS[id].desc + "</i><br><br>Take it into your deck for this run? You'll still choose your final <b>3</b> next — and you can swap this one out for another.",
+      "TAKE IT ➜", () => { G.runCards.push(id); proceed(); },
+      "LEAVE IT", proceed);
+  } else {
+    const id = ITEM_POOL[Math.floor(Math.random() * ITEM_POOL.length)];
+    const d = ITEMS[id];
+    showMsg2(d.icon, "FOUND: " + d.name.toUpperCase() + "!",
+      "Lying by the porch: <b>" + d.name + " " + d.icon + "</b><br><i>" + d.desc + "</i><br><br>One use, this run only. Pocket it? (Your pocket holds two tricks.)",
+      "POCKET IT ➜", () => { G.pocket.push({ id }); proceed(); },
+      "LEAVE IT", proceed);
+  }
+}
+
+/* ---------------- Map hotspot actions ---------------- */
+function clickSwing() {
+  if (!SAVE.pg1) {
+    showMsg("👦", "TUTORIAL TOMMY", "“Listen up, it's easy: touch your striker to a coin — the coin flips <i>away</i> from wherever you touch it. <b>One click</b> and it's airborne.<br><br>Middle touch = short hop. Edge touch = long drive. Land on the <b>marked zones</b> — bare ground pays squat. Push my bar over, you win.<br><br>Which you won't. You can <b>NEVER</b> beat me.”",
+      "WE'LL SEE", () => setupDuel("kid1"));
+  } else if (!SAVE.pg2) {
+    showMsg("😤", "REX", "“Back for more? Same rules. Less mercy.”", "FLIP!", () => setupDuel("kid2"));
+  } else {
+    showMsg2("🛝", "THE SWINGS", "The swing kids nod respectfully. Rex is always up for a rematch, though.",
+      "REMATCH REX", () => setupDuel("kid2"), "LATER", closeMsg);
+  }
+}
+function clickSlide() {
+  if (!SAVE.pg2) { showMsg("👑", "THE SLIDE", "A crowned kid looks down at you. “Beat the swing kids first, rookie.”", "FINE", closeMsg); return; }
+  if (SAVE.pgBoss) {
+    showMsg2("🛝", "YOUR SLIDE", "Your flag flies on top — it mints candy and Slide Coins. The old king skulks around wanting his crown back.",
+      "REMATCH THE KING", () => setupDuel("slide"), "LATER", closeMsg);
+    return;
+  }
+  showMsg("👑", "THE SLIDE KING", "“" + OPPS.slide.taunt + "”", "DETHRONE HIM", () => setupDuel("slide"));
+}
+function clickGrandma() {
+  if (!SAVE.pgBoss) { showMsg("🔒", "LOCKED", "Conquer the playground first — every empire starts small.", "OK", closeMsg); return; }
+  if (SAVE.grandma) {
+    showMsg2("🏠", "GRANDMA'S HOUSE", "Conquered — entry is free, and she bakes candy + Cookie Coins for you. Fancy another run for the candy?",
+      "PLAY AGAIN (free)", () => startHouseRun("grandma"), "LATER", closeMsg);
+    return;
+  }
+  const fee = CFG.fees.grandma;
+  if (SAVE.bank < fee) {
+    showMsg("👵", "GRANDMA'S HOUSE", "The neighborhood kids guard the porch: <b>“" + fee + " candy to get in.”</b><br><br>Your bank: " + SAVE.bank + " 🍬 — not enough. Let the playground earn a while, or win some rematches.", "FINE", closeMsg);
+    return;
+  }
+  showMsg2("👵", "GRANDMA'S HOUSE", "The kids on the porch want <b>" + fee + " 🍬</b> to let you in (every attempt, until you win the house). Three themed floors, then Grandma. Reach her and you can always walk away with the bag.<br><br>Bank: " + SAVE.bank + " 🍬",
+    "PAY " + fee + " 🍬 & GO IN", () => { SAVE.bank -= fee; persist(); startHouseRun("grandma"); },
+    "NOT TODAY", closeMsg);
+}
+function clickCat() {
+  if (!SAVE.grandma) { showMsg("🔒", "LOCKED", "The Cat only respects kids who beat Grandma.", "OK", closeMsg); return; }
+  if (SAVE.cat) {
+    showMsg2("🐱", "THE CAT'S HOUSE", "Conquered — the Cat naps on YOUR flag and coughs up candy + Yarn Coins. Fancy another run?",
+      "PLAY AGAIN (free)", () => startHouseRun("cat"), "LATER", closeMsg);
+    return;
+  }
+  const fee = CFG.fees.cat;
+  if (SAVE.bank < fee) {
+    showMsg("🐱", "THE CAT'S HOUSE", "The kids on the porch whisper: <b>“" + fee + " candy. And do NOT wake the Cat.”</b><br><br>Your bank: " + SAVE.bank + " 🍬 — not enough. Let the empire earn a while.", "FINE", closeMsg);
+    return;
+  }
+  showMsg2("🐱", "THE CAT'S HOUSE", "Entry: <b>" + fee + " 🍬</b> per attempt, until the house is yours. Inside: yarn tangles pay nothing, the <b>litter box BURIES coins forever</b>, and a paw shoves things around between turns. Three floors, then the Cat herself.<br><br>Bank: " + SAVE.bank + " 🍬",
+    "PAY " + fee + " 🍬 & GO IN", () => { SAVE.bank -= fee; persist(); startHouseRun("cat"); },
+    "NOT TODAY", closeMsg);
+}
+function clickJock() {
+  if (!SAVE.cat) { showMsg("🔒", "LOCKED", "Gym Bro doesn't even see you yet. Beat the Cat first.", "OK", closeMsg); return; }
+  if (SAVE.jock) {
+    showMsg2("💪", "GYM BRO'S HOUSE", "Conquered — the gym reps out candy + Plate Coins for you now. Back for more gains?",
+      "PLAY AGAIN (free)", () => startHouseRun("jock"), "LATER", closeMsg);
+    return;
+  }
+  const fee = CFG.fees.jock;
+  if (SAVE.bank < fee) {
+    showMsg("💪", "GYM BRO'S HOUSE", "“Entry's <b>" + fee + " candy</b>, little bro. Come back when you're swole. Financially.”<br><br>Bank: " + SAVE.bank + " 🍬", "FINE", closeMsg);
+    return;
+  }
+  showMsg2("💪", "GYM BRO'S HOUSE", "Entry: <b>" + fee + " 🍬</b> per attempt. Inside: <b>tiny</b> weight-plate pockets worth big numbers, and sweat towels that pay squat. Three floors, then the Flex-Off.<br><br>Bank: " + SAVE.bank + " 🍬",
+    "PAY " + fee + " 🍬 & GO IN", () => { SAVE.bank -= fee; persist(); startHouseRun("jock"); },
+    "NOT TODAY", closeMsg);
+}
+
+/* ---------------- Overlays ---------------- */
+function showMsg(face, title, body, btn, cb) {
+  document.getElementById("msgFace").textContent = face || "";
+  document.getElementById("msgTitle").innerHTML = title;
+  document.getElementById("msgBody").innerHTML = body;
+  const b = document.getElementById("msgBtn");
+  b.textContent = btn;
+  b.onclick = () => { closeMsg(); cb && cb(); };
+  document.getElementById("msgBtn2").classList.add("hidden");
+  document.getElementById("msgOverlay").classList.remove("hidden");
+}
+function showMsg2(face, title, body, btn1, cb1, btn2, cb2) {
+  showMsg(face, title, body, btn1, cb1);
+  const b2 = document.getElementById("msgBtn2");
+  b2.textContent = btn2;
+  b2.onclick = () => { closeMsg(); cb2 && cb2(); };
+  b2.classList.remove("hidden");
+}
+function closeMsg() { document.getElementById("msgOverlay").classList.add("hidden"); }
+function closeMenu() { document.getElementById("menuOverlay").classList.add("hidden"); }
+
+/* ---------------- Menus ---------------- */
+const MENU = {
+  open(title, note, bodyHTML, btnLabel, cb) {
+    document.getElementById("menuTitle").innerHTML = title;
+    document.getElementById("menuNote").innerHTML = note || "";
+    document.getElementById("menuBody").innerHTML = bodyHTML;
+    const b = document.getElementById("menuBtn");
+    b.textContent = btnLabel || "CLOSE";
+    b.onclick = () => { closeMenu(); cb && cb(); };
+    document.getElementById("menuOverlay").classList.remove("hidden");
+  },
+
+  /* --- coin bag: an actual pouch of coins --- */
+  bag() {
+    let html = "<div class='bagWrap'>" + this.coinTok("basic", "∞");
+    for (const t of discoveredTypes()) html += this.coinTok(t, SAVE.coinInv[t] || 0);
+    html += "</div>";
+    this.open("💰 COIN BAG", "Coins break for good — restock at the shop, win them after floors, or let your buildings mint them.", html, "TIE IT SHUT");
+  },
+  coinTok(t, count) {
+    const T = TYPES[t];
+    const dur = isFinite(T.bp) ? (t === "lucky" ? "1–4 dur (rolled)" : T.bp + " dur") : "unbreakable";
+    return "<div class='coinTok'><div class='tok'>" + T.icon + "<span class='cnt'>" + count + "</span></div>" +
+      "<div class='nm'>" + T.name + "</div><div class='ds'>" + T.desc + "</div>" +
+      "<div class='ds' style='opacity:.7; margin-top:2px'>" + dur + "</div></div>";
+  },
+
+  /* --- card deck: a spread you flip through --- */
+  deck() {
+    let html = "<div class='deckWrap'>";
+    let any = false;
+    for (const id of SAVE.cards) { html += this.cardTile(id, "PERMANENT"); any = true; }
+    for (const id of G.runCards) { html += this.cardTile(id, "THIS RUN ONLY"); any = true; }
+    html += "</div>";
+    if (!any) html = "<p style='text-align:center'>No cards yet — beat the playground kids to win permanent ones, and keep an eye out during runs.</p>";
+    this.open("🃏 CARD DECK", SAVE.cards.length + G.runCards.length + " card(s) — scroll to flip through the spread.", html, "SQUARE 'EM UP");
+  },
+  cardTile(id, tag) {
+    const c = CARDS[id];
+    return "<div class='cardTile'><div class='cName'>" + c.name + " " + c.suit + "</div>" +
+      "<div class='cIcon'>" + c.icon + "</div><div class='cDesc'>" + c.desc + "</div>" +
+      "<div class='cTag'>" + tag + "</div></div>";
+  },
+
+  /* --- equip step: pick up to 3 cards to use this run --- */
+  equipPool() {
+    const seen = {}, pool = [];
+    for (const id of SAVE.cards) if (!seen[id]) { seen[id] = 1; pool.push(id); }
+    for (const id of G.runCards) if (!seen[id]) { seen[id] = 1; pool.push(id); }
+    return pool;
+  },
+  equip(next) {
+    this._equipNext = next;
+    const pool = this.equipPool();
+    // pre-equip the found/run cards (up to 3); the player can swap them out
+    G.activeCards = [];
+    for (const id of G.runCards) if (G.activeCards.length < 3 && pool.includes(id)) G.activeCards.push(id);
+    this.renderEquip();
+  },
+  renderEquip() {
+    const pool = this.equipPool();
+    let html;
+    if (!pool.length) {
+      html = "<p style='text-align:center'>No cards yet — win them from the playground kids or buy them from the bike kid on the map.</p>";
+    } else {
+      html = "<div class='deckWrap'>";
+      for (const id of pool) {
+        const c = CARDS[id], on = G.activeCards.includes(id);
+        const runOnly = G.runCards.includes(id) && !SAVE.cards.includes(id);
+        html += "<div class='cardTile equipTile" + (on ? " equipOn" : "") + "' onclick='MENU.toggleEquip(\"" + id + "\")'>" +
+          "<div class='cName'>" + c.name + " " + c.suit + "</div>" +
+          "<div class='cIcon'>" + c.icon + "</div><div class='cDesc'>" + c.desc + "</div>" +
+          "<div class='cTag'>" + (on ? "✓ EQUIPPED" : (runOnly ? "THIS RUN" : "OWNED")) + "</div></div>";
+      }
+      html += "</div>";
+    }
+    this.open("🃏 EQUIP YOUR CARDS",
+      "Tap a card to equip it (up to <b>3</b>); tap an equipped card to swap it back out. Equipped: <b>" + G.activeCards.length + "/3</b>",
+      html, "LET'S GO ➜", () => { updateSidebarCards(); this._equipNext && this._equipNext(); });
+  },
+  toggleEquip(id) {
+    const i = G.activeCards.indexOf(id);
+    if (i >= 0) G.activeCards.splice(i, 1);
+    else if (G.activeCards.length < 3) G.activeCards.push(id);
+    this.renderEquip();
+  },
+
+  /* --- the bicycle shop (Slay-the-Spire energy, kid edition) --- */
+  shop(next) {
+    this._shopNext = next;
+    if (!this._shopCard || this._shopStale) {
+      const pool = RUN_CARD_POOL.filter(id => !haveCard(id));
+      this._shopCard = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
+      this._shopItem = ITEM_POOL[Math.floor(Math.random() * ITEM_POOL.length)];
+      this._shopStale = false;
+    }
+    this.renderShop();
+  },
+  renderShop() {
+    // coins are round, laid out in rows
+    let html = "<div class='shopScene'>🤓</div>";
+    html += "<div class='shopSection'>COINS</div><div class='shopCoinGrid'>";
+    for (const t of discoveredTypes()) {
+      const price = SHOP_PRICES[t];
+      const afford = G.runCandy >= price;
+      html += "<div class='shopCoin'><div class='scoin' style='background:radial-gradient(circle at 35% 30%, #fff9, " + TYPES[t].color + ")'>" + TYPES[t].icon + "</div>" +
+        "<div class='scname'>" + TYPES[t].name + "</div>" +
+        "<div class='scown'>own " + (SAVE.coinInv[t] || 0) + "</div>" +
+        "<div class='scprice'>" + price + " 🍬</div>" +
+        "<button class='cardBuy' " + (afford ? "" : "disabled ") + "onclick='MENU.buy(\"" + t + "\")'>BUY</button></div>";
+    }
+    html += "</div>";
+    // the card is shown at real card size, legible
+    if (this._shopCard) {
+      const c = CARDS[this._shopCard];
+      const afford = G.runCandy >= SHOP_CARD_PRICE;
+      html += "<div class='shopSection'>CARD</div><div class='shopCardRow'>" +
+        "<div class='cardTile shopCardTile'><div class='cName'>" + c.name + " " + c.suit + "</div>" +
+        "<div class='cIcon'>" + c.icon + "</div><div class='cDesc'>" + c.desc + "</div>" +
+        "<div class='cTag'>THIS RUN · " + SHOP_CARD_PRICE + " 🍬</div>" +
+        "<button class='cardBuy' " + (afford ? "" : "disabled ") + "onclick='MENU.buyCard()'>BUY</button></div></div>";
+    }
+    // one schoolyard treasure per visit, price climbs the more you buy
+    if (this._shopItem) {
+      const d = ITEMS[this._shopItem];
+      const price = ITEM_BASE_PRICE + G.shopItemsBought * 10;
+      const full = G.pocket.length >= 2;
+      const afford = G.runCandy >= price && !full;
+      html += "<div class='shopSection'>POCKET TRICK</div><div class='shopCardRow'>" +
+        "<div class='cardTile shopCardTile'><div class='cName'>" + d.name + "</div>" +
+        "<div class='cIcon'>" + d.icon + "</div><div class='cDesc'>" + d.desc + "</div>" +
+        "<div class='cTag'>ONE USE · " + price + " 🍬" + (full ? " · POCKET FULL" : "") + "</div>" +
+        "<button class='cardBuy' " + (afford ? "" : "disabled ") + "onclick='MENU.buyItem()'>BUY</button></div></div>";
+    }
+    this.open("🤓 THE NERD'S STASH",
+      "“I laid it all out on the landing. No refunds. Obviously.” — your run candy: <b>" + G.runCandy + " 🍬</b>",
+      html, "LEAVE SHOP ➜", () => { this._shopStale = true; this._shopNext && this._shopNext(); });
+  },
+  buy(t) {
+    const price = SHOP_PRICES[t];
+    if (G.runCandy < price) return;
+    G.runCandy -= price;
+    SAVE.coinInv[t] = (SAVE.coinInv[t] || 0) + 1;
+    persist(); updateHUD();
+    this.renderShop();
+  },
+  buyCard() {
+    if (!this._shopCard || G.runCandy < SHOP_CARD_PRICE) return;
+    G.runCandy -= SHOP_CARD_PRICE;
+    G.runCards.push(this._shopCard);
+    if (G.activeCards.length < 3) G.activeCards.push(this._shopCard); // auto-equip if a slot is free
+    this._shopCard = null;
+    updateHUD();
+    this.renderShop();
+  },
+  buyItem() {
+    const price = ITEM_BASE_PRICE + G.shopItemsBought * 10;
+    if (!this._shopItem || G.runCandy < price || G.pocket.length >= 2) return;
+    G.runCandy -= price;
+    G.pocket.push({ id: this._shopItem });
+    G.shopItemsBought++;
+    this._shopItem = null;
+    updateHUD(); updatePocket();
+    this.renderShop();
+  },
+
+  /* --- the traveling BIKE KID's shop (map only): exclusive special cards --- */
+  bikeShop() {
+    let html = "<div class='shopScene'>🧒🚲</div>";
+    const pool = SPECIAL_CARD_POOL.filter(id => !SAVE.cards.includes(id));
+    if (!pool.length) {
+      html += "<p style='text-align:center'>“You bought me clean out! Come back when I've restocked.”</p>";
+    } else {
+      html += "<div class='shopSection'>SPECIAL CARDS — only on my bike</div><div class='shopCardRow'>";
+      for (const id of pool) {
+        const c = CARDS[id];
+        const price = SPECIAL_CARD_PRICE[id];
+        const afford = SAVE.bank >= price;
+        html += "<div class='cardTile shopCardTile'><div class='cName'>" + c.name + " " + c.suit + "</div>" +
+          "<div class='cIcon'>" + c.icon + "</div><div class='cDesc'>" + c.desc + "</div>" +
+          "<div class='cTag'>PERMANENT · " + price + " 🍬</div>" +
+          "<button class='cardBuy' " + (afford ? "" : "disabled ") + "onclick='MENU.buySpecial(\"" + id + "\")'>BUY</button></div>";
+      }
+      html += "</div>";
+    }
+    this.open("🚲 THE BIKE KID'S STASH",
+      "“Only-on-my-bike specials — pay from your bank: <b>" + SAVE.bank + " 🍬</b>”",
+      html, "SEND HIM OFF ➜", () => { G.shopEvent = false; });
+  },
+  buySpecial(id) {
+    const price = SPECIAL_CARD_PRICE[id];
+    if (SAVE.bank < price || SAVE.cards.includes(id)) return;
+    SAVE.bank -= price;
+    SAVE.cards.push(id);
+    persist(); updateEcon(); updateHUD();
+    this.bikeShop();
+  },
+
+  /* --- loadout picker (board stays visible behind) --- */
+  loadout(next) {
+    this._loNext = next;
+    this._lo = {};
+    const cur = G.loadout || defaultLoadout();
+    for (const t of discoveredTypes()) this._lo[t] = Math.min(cur[t] || 0, SAVE.coinInv[t] || 0);
+    this.trimLoadout();
+    this.renderLoadout();
+  },
+  trimLoadout() {
+    let total = Object.values(this._lo).reduce((a, b) => a + b, 0);
+    for (const t in this._lo) while (total > CFG.loadoutSlots && this._lo[t] > 0) { this._lo[t]--; total--; }
+  },
+  loUsed() { return Object.values(this._lo).reduce((a, b) => a + b, 0); },
+  renderLoadout() {
+    // shop access only comes BETWEEN floors — never before the first floor
+    const canShop = (G.mode === "floor" && G.floor > 0);
+    let html = canShop
+      ? "<div style='text-align:center; margin-bottom:8px'><button class='chip' style='flex:none; padding:6px 14px' onclick='MENU.shopFromLoadout()'>🤓 visit the nerd's stash first</button></div>"
+      : "";
+    html += "<div class='mrow'><div class='micon'>🪙</div><div class='mmain'><div class='mname'>Basic Coin ×4</div>" +
+      "<div class='mdesc'>Always in your pocket. Never breaks.</div></div><div class='mside'>auto</div></div>";
+    for (const t of discoveredTypes()) {
+      const own = SAVE.coinInv[t] || 0;
+      const n = this._lo[t] || 0;
+      html += "<div class='mrow'><div class='micon'>" + TYPES[t].icon + "</div><div class='mmain'>" +
+        "<div class='mname'>" + TYPES[t].name + " Coin</div><div class='mdesc'>" + TYPES[t].desc + "</div></div>" +
+        "<div class='mside'>" +
+        "<button " + (n <= 0 ? "disabled " : "") + "onclick='MENU.dec(\"" + t + "\")'>−</button> " + n + "/" + own +
+        " <button " + (n >= own || this.loUsed() >= CFG.loadoutSlots ? "disabled " : "") + "onclick='MENU.inc(\"" + t + "\")'>+</button>" +
+        "</div></div>";
+    }
+    this.open("🎒 PICK YOUR COINS — <span style='font-size:16px'>" + (G.boardTitle || "") + "</span>",
+      "Scope the board behind this menu, then pack: 4 Basics free + up to <b>" + CFG.loadoutSlots + "</b> specials — used <b>" + this.loUsed() + "/" + CFG.loadoutSlots + "</b><br><span style='font-size:11px; opacity:.75'>⚠ packed specials are SPENT for this floor — survivors don't come home</span>",
+      html, "LET'S FLIP ➜", () => { G.loadout = { ...this._lo }; this._loNext && this._loNext(); });
+  },
+  shopFromLoadout() {
+    const next = this._loNext;
+    this.shop(() => this.loadout(next));
+  },
+  inc(t) { if ((this._lo[t] || 0) < (SAVE.coinInv[t] || 0) && this.loUsed() < CFG.loadoutSlots) { this._lo[t] = (this._lo[t] || 0) + 1; this.renderLoadout(); } },
+  dec(t) { if ((this._lo[t] || 0) > 0) { this._lo[t]--; this.renderLoadout(); } },
+};
+
+/* ---------------- Dev toolbox ---------------- */
+const DEV = {
+  toggle() { document.getElementById("devPanel").classList.toggle("open"); },
+  preview() {
+    G.preview = !G.preview;
+    document.getElementById("pvState").textContent = G.preview ? "ON" : "OFF";
+    log("Dev: trajectory preview " + (G.preview ? "ON (debug)" : "OFF") + ".");
+  },
+  skipFloor() {
+    if (G.mode === "floor") { G.floorCandy = houseFloors()[G.floor].threshold; floorCleared(); }
+    else log("Dev: not on a floor right now.");
+  },
+  conquer() {
+    if (G.mode === "duel") { duelWon(); }
+    else if (G.mode === "floor") { const b = HOUSES[G.house].boss; G.duel = { key: b, opp: OPPS[b] }; duelWon(); }
+    else log("Dev: enter a place first, then conquer it.");
+  },
+  pocketItem() {
+    if (G.pocket.length >= 2) { log("Dev: pocket already full."); return; }
+    const id = ITEM_POOL[Math.floor(Math.random() * ITEM_POOL.length)];
+    G.pocket.push({ id });
+    updatePocket();
+    log("Dev: +1 " + ITEMS[id].name + " " + ITEMS[id].icon + (G.mode === "map" ? " (pockets empty out on the map, though)" : ""));
+  },
+  candy() {
+    if (G.mode === "map") { SAVE.bank += 100; persist(); updateEcon(); }
+    else { G.floorCandy += 100; G.runCandy += 100; updateHUD(); }
+    log("Dev: +100 candy.");
+  },
+  coins() {
+    for (const t of Object.keys(SAVE.coinInv)) SAVE.coinInv[t] += 3;
+    persist();
+    log("Dev: +3 of every coin type.");
+  },
+  turns() { if (G.mode === "floor") { G.turnsLeft += 10; updateHUD(); log("Dev: +10 turns."); } },
+  maxChain() { G.chain = CFG.chainCap; updateHUD(); log("Dev: chain maxed."); },
+  unlockAll() { SAVE.pg1 = SAVE.pg2 = SAVE.pgBoss = SAVE.grandma = SAVE.cat = SAVE.jock = true;
+    SAVE.coinInv.slide += 2; SAVE.coinInv.cookie += 2; SAVE.coinInv.yarn += 2; SAVE.coinInv.plate += 2;
+    if (!SAVE.cards.includes("luckyStreak")) SAVE.cards.push("luckyStreak");
+    if (!SAVE.cards.includes("trickShot")) SAVE.cards.push("trickShot");
+    persist(); updateEcon(); log("Dev: everything unlocked."); },
+  summonShop() {
+    if (G.mode !== "map") { log("Dev: head to the map first — the bike kid only rolls up there."); return; }
+    G.shopEvent = true;
+    log("Dev: the bike kid is rolling up. Look on the map!");
+  },
+  toMap() { goMap(); },
+  reset() { try { localStorage.removeItem("coinflipper_save"); } catch(e){} location.reload(); },
+};
+
+/* ---------------- Economy panel ---------------- */
+function econFloat(propKey, text) {
+  const row = document.querySelector('[data-prop="' + propKey + '"]');
+  if (!row) return;
+  const f = document.createElement("span");
+  f.className = "floater"; f.textContent = text;
+  row.appendChild(f);
+  setTimeout(() => f.remove(), 1300);
+}
+function updateEcon() {
+  document.getElementById("bankBig").textContent = SAVE.bank + " 🍬";
+  let rate = 0;
+  const list = document.getElementById("propList");
+  list.innerHTML = "";
+  const all = [
+    { key:"playground", name:"The Playground 🛝", owned: SAVE.pgBoss, p: CFG.production.playground },
+    { key:"grandma",    name:"Grandma's House 🏠", owned: SAVE.grandma, p: CFG.production.grandma },
+    { key:"cat",        name:"The Cat's House 🐱", owned: SAVE.cat, p: CFG.production.cat },
+    { key:"jock",       name:"Gym Bro's House 💪", owned: SAVE.jock, p: CFG.production.jock },
+  ];
+  for (const a of all) {
+    const div = document.createElement("div");
+    div.className = "prop" + (a.owned ? "" : " off");
+    div.dataset.prop = a.key;
+    div.innerHTML = "<div class='pname'>" + a.name + (a.owned ? " 🚩" : " 🔒") + "</div>" +
+      "<div class='prate'>" + (a.owned
+        ? "+" + a.p.candy + " 🍬 / " + a.p.every + "s" + (a.p.coin ? " · +1 " + TYPES[a.p.coin].icon + " / " + a.p.coinEvery + "s" : "")
+        : "not yours yet") + "</div>";
+    list.appendChild(div);
+    if (a.owned) rate += a.p.candy / a.p.every;
+  }
+  document.getElementById("bankRate").textContent = rate > 0 ? "+" + rate.toFixed(1) + " candy/sec-ish" : "conquer places to earn";
+}
+
+/* ---------------- Sidebar: equipped cards + coin durability ---------------- */
+function updateSidebarCards() {
+  const el = document.getElementById("equipCards");
+  if (!el) return;
+  let html = "";
+  for (let i = 0; i < 3; i++) {
+    const id = G.activeCards[i];
+    if (id) {
+      const c = CARDS[id];
+      html += "<div class='eqCard' title='" + c.name + " — " + c.desc.replace(/'/g, "") + "'>" +
+        "<div class='ei'>" + c.icon + "</div>" + c.name + "</div>";
+    } else {
+      html += "<div class='eqCard empty'>+</div>";
+    }
+  }
+  el.innerHTML = html;
+}
+function updateCoinLoadout() {
+  const el = document.getElementById("coinLoadout");
+  if (!el) return;
+  let html = "";
+  for (const c of G.coins) {
+    if (c.owner !== "player" || c.gone) continue;
+    if (c.type === "basic" || !isFinite(c.bp)) continue;   // basics & crumbs never wear — skip
+    const T = TYPES[c.type];
+    const tip = (T.name + " Coin — " + T.desc).replace(/"/g, "");
+    if (c.broken) {
+      html += "<div class='ldCoin' title=\"" + tip + " (broken)\"><div class='lc broke'>" + T.icon + "</div>" +
+        "<div class='lp'><span style='font-size:8px;color:#b8452f'>broke</span></div></div>";
+      continue;
+    }
+    let pips = "";
+    const rem = c.bp - c.wear;
+    for (let k = 0; k < c.bp; k++) pips += "<i class='" + (k < rem ? "on" : "") + "'></i>";
+    html += "<div class='ldCoin' title=\"" + tip + " (" + rem + "/" + c.bp + " durability)\"><div class='lc' style='background:radial-gradient(circle at 35% 30%,#fff9," + T.color + ")'>" + T.icon + "</div>" +
+      "<div class='lp'>" + pips + "</div></div>";
+  }
+  if (!html) html = "<div style='font-size:10px;opacity:.6'>just basic coins 🪙</div>";
+  el.innerHTML = html;
+}
+/* ---------------- Pocket tricks: UI + play/aim/consume ---------------- */
+function updatePocket() {
+  const el = document.getElementById("pocketSlots");
+  if (!el) return;
+  let html = "";
+  for (let i = 0; i < 2; i++) {
+    const it = G.pocket[i];
+    if (it) {
+      const d = ITEMS[it.id];
+      const armed = (G.armedItem === it) || (G.doOverArmed === it);
+      html += "<div class='pkSlot" + (armed ? " armed" : "") + "' title=\"" + d.name + " — " + d.desc.replace(/"/g, "") + "\" onclick='playPocket(" + i + ")'>" +
+        "<div class='pi'>" + d.icon + "</div>" + d.name + "</div>";
+    } else {
+      html += "<div class='pkSlot empty'>+</div>";
+    }
+  }
+  el.innerHTML = html;
+}
+function consumePocket(it) {
+  const i = G.pocket.indexOf(it);
+  if (i >= 0) G.pocket.splice(i, 1);
+  if (G.armedItem === it) G.armedItem = null;
+  updatePocket();
+}
+function playPocket(i) {
+  if (G.mode !== "floor" && G.mode !== "duel") return;
+  if (G.busy || (G.mode === "duel" && G.bossTurnNext)) return;
+  const it = G.pocket[i];
+  if (!it) return;
+  // clicking an armed trick puts it back in the pocket
+  if (G.armedItem === it) { G.armedItem = null; updatePocket(); log("Trick pocketed again."); return; }
+  if (G.doOverArmed === it) { G.doOverArmed = null; updatePocket(); log("The army man stands down."); return; }
+  if (G.itemPlayedThisTurn) { log("One trick per turn — flip first."); return; }
+  if (it.id === "armyman") {
+    G.armedItem = null;
+    G.doOverArmed = it;
+    log("<b>Army Man 🪖</b> on duty: after your next flip you may take the WHOLE turn back. (Click him again to stand down.)");
+  } else {
+    G.doOverArmed = null;
+    G.armedItem = it;
+    log(it.id === "marble"
+      ? "<b>Shooter Marble 🔮</b>: RIGHT-CLICK a marked zone to call your shot — the next flip pays DOUBLE there, NOTHING anywhere else. (Esc to pocket it.)"
+      : "<b>Thumbtack 📌</b>: RIGHT-CLICK any coin to pin it down for a turn. (Esc to pocket it.)");
+  }
+  updatePocket();
+}
+function handleRightClick() {
+  if (G.mode !== "floor" && G.mode !== "duel") return;
+  if (anyOverlayOpen() || G.busy) return;
+  if (G.mode === "duel" && G.bossTurnNext) return;
+  const it = G.armedItem;
+  if (!it) return;
+  const p = { x: G.mouse.x, y: G.mouse.y };
+  if (it.id === "marble") {
+    let target = null;
+    for (const z of G.zones) if (pointInZone(z, p, 0)) { target = z; break; }
+    if (!target) { log("Call a MARKED zone — right-click inside one."); return; }
+    G.callShot = target;
+    G.itemPlayedThisTurn = true;
+    consumePocket(it);
+    popup(target.x, target.y, "CALLED!", "#c9911a", true);
+    log("Shot called: the <b>" + VAL_NAME[target.val] + "</b> zone. Land this flip there — or eat nothing.");
+  } else if (it.id === "tack") {
+    let best = null, bd = 1e9;
+    for (const c of G.coins) {
+      if (c.broken || c.gone || inFlight(c)) continue;
+      const d = dist(p, c);
+      if (d < c.r + 10 && d < bd) { best = c; bd = d; }
+    }
+    if (!best) { log("Right-click ON a coin to tack it down."); return; }
+    best.pinned = G.mode === "duel" ? 2 : 1;
+    G.itemPlayedThisTurn = true;
+    consumePocket(it);
+    popup(best.x, best.y - 18, "TACKED! 📌", "#b8452f", true);
+    log("Tacked. That coin isn't going anywhere for a turn.");
+  }
+}
+
+/* ---------------- HUD ---------------- */
+function updateHUD() {
+  const fi = document.getElementById("floorinfo");
+  const turns = document.getElementById("turns");
+  if (G.mode === "map") {
+    fi.textContent = G.mapPage === 0 ? "The Playground" : "The Neighborhood";
+    turns.textContent = "";
+    document.getElementById("candyline").innerHTML = "Bank: " + SAVE.bank + " 🍬";
+    document.getElementById("candybar").style.width = "100%";
+  } else if (G.mode === "duel") {
+    fi.textContent = "VS " + (G.duel ? G.duel.opp.name : "") + " — " + G.boardTitle;
+    turns.textContent = "Push the bar to win!";
+    document.getElementById("candyline").innerHTML = "Run candy at stake: " + G.runCandy + " 🍬";
+    document.getElementById("candybar").style.width = "100%";
+  } else {
+    fi.textContent = "Floor " + (G.floor + 1) + "/" + houseFloors().length + " — " + G.boardTitle;
+    turns.textContent = "Turns left: " + G.turnsLeft;
+    const th = houseFloors()[G.floor].threshold;
+    document.getElementById("candyline").innerHTML = G.floorCandy + " / " + th + " 🍬 &nbsp; <span style='font-size:11px;opacity:.6'>(run: " + G.runCandy + ")</span>";
+    document.getElementById("candybar").style.width = clamp(G.floorCandy / th * 100, 0, 100) + "%";
+  }
+  document.getElementById("chain").textContent = "×" + G.chain;
+  const pips = document.getElementById("pips");
+  pips.innerHTML = "";
+  for (let i = 0; i < CFG.streakNeed; i++) {
+    const s = document.createElement("div");
+    s.className = "pip" + ((G.streakArmed || i < G.streak) ? " on" : "");
+    pips.appendChild(s);
+  }
+  document.getElementById("streakmsg").textContent = G.streakArmed ? "BONUS READY!" : "";
+  if (G.mode === "floor" || G.mode === "duel") { updateSidebarCards(); updateCoinLoadout(); updatePocket(); }
+}
+function updateTug() { document.getElementById("tugfill").style.width = (G.bossBar * 100) + "%"; }
+
+/* ---------------- Input ---------------- */
+function anyOverlayOpen() {
+  return !document.getElementById("msgOverlay").classList.contains("hidden") ||
+         !document.getElementById("menuOverlay").classList.contains("hidden");
+}
+// is the mouse over the actual play surface (not the canvas margin)?
+function mouseOnBoard() {
+  return G.mouse.x >= B.x && G.mouse.x <= B.x + B.w &&
+         G.mouse.y >= B.y && G.mouse.y <= B.y + B.h;
+}
+cv.addEventListener("mousemove", e => {
+  const r = cv.getBoundingClientRect();
+  G.mouse.x = (e.clientX - r.left) * (cv.width / r.width);
+  G.mouse.y = (e.clientY - r.top) * (cv.height / r.height);
+  if (G.mode === "map") {
+    const h = hotspotAt(G.mouse);
+    cv.style.cursor = h ? "pointer" : "default";
+  } else {
+    // the striker IS the cursor — but only over the board itself;
+    // off the board the hand comes back
+    cv.style.cursor = mouseOnBoard() ? "none" : "pointer";
+  }
+});
+cv.addEventListener("mouseenter", () => { G.mouseOnCanvas = true; });
+cv.addEventListener("mouseleave", () => { G.mouseOnCanvas = false; });
+cv.addEventListener("contextmenu", e => {
+  e.preventDefault();
+  const r = cv.getBoundingClientRect();
+  G.mouse.x = (e.clientX - r.left) * (cv.width / r.width);
+  G.mouse.y = (e.clientY - r.top) * (cv.height / r.height);
+  handleRightClick(); // right-click aims pocket tricks (call a zone / tack a coin)
+});
+cv.addEventListener("click", () => {
+  if (anyOverlayOpen()) return;
+  if (G.mode === "map") {
+    if (G.pageFlipT >= 0) return;
+    const h = hotspotAt(G.mouse);
+    if (h) h.action();
+    return;
+  }
+  if (G.busy) return;
+  if (G.mode === "duel" && G.bossTurnNext) return;
+  const c = hoverCoin();
+  if (c) {
+    const a = aimInfo(c, G.mouse);
+    beginAction();
+    enqueueLaunch(c, a.dir, a.distTotal, a.arc, 0, true);
+    processQueue();
+  }
+});
+window.addEventListener("keydown", e => {
+  if (e.key === "p" || e.key === "P") { DEV.preview(); return; }
+  if (G.mode === "map" || anyOverlayOpen()) return;
+  // Esc pockets an aimed trick (right-click is reserved for USING tricks)
+  if (e.key === "Escape") {
+    if (G.armedItem) { G.armedItem = null; updatePocket(); log("Trick pocketed."); }
+    return;
+  }
+  // A/D (or arrow keys) pick which coin the striker flips when it covers several
+  if (e.key === "a" || e.key === "A" || e.key === "ArrowLeft") cycleArmed(-1);
+  else if (e.key === "d" || e.key === "D" || e.key === "ArrowRight") cycleArmed(1);
+});
+// Every valid coin the circular tool currently overlaps, nearest first. The
+// tool's edge grabs the rim of ANY coin (no interior dead zone). On house floors
+// a coin already resting in a point zone can't be picked.
+function overlapList() {
+  const out = [];
+  for (const c of G.coins) {
+    if (c.broken || c.gone || c.pinned || inFlight(c)) continue;
+    if (c.owner !== "player" && c.owner !== "floor") continue;
+    // a coin resting in a point zone is INACTIVE until another coin knocks it out
+    if (coinInScoringZone({ x: c.x, y: c.y }, 0)) continue;
+    const d = dist(G.mouse, c);
+    if (d > 1 && d < CFG.toolRadius + c.r) out.push({ c, d });
+  }
+  out.sort((a, b) => a.d - b.d);
+  return out.map(o => o.c);
+}
+// The coin the tool will flip. Defaults to the nearest under the tool, but keeps
+// whatever the player armed with A/D as long as it's still under the tool.
+function hoverCoin() {
+  const list = overlapList();
+  if (!list.length) { return null; }
+  if (!G.armedCoin || list.indexOf(G.armedCoin) < 0) G.armedCoin = list[0];
+  return G.armedCoin;
+}
+// A / D cycles the armed coin when the tool covers two or more at once.
+function cycleArmed(dir) {
+  if (G.busy) return;
+  const list = overlapList();
+  if (list.length < 2) return;
+  let i = G.armedCoin ? list.indexOf(G.armedCoin) : -1;
+  if (i < 0) i = 0;
+  i = (i + dir + list.length) % list.length;
+  G.armedCoin = list[i];
+}
+function hotspotAt(p) {
+  for (const h of G.hotspots) {
+    if (p.x >= h.x && p.x <= h.x + h.w && p.y >= h.y && p.y <= h.y + h.h) return h;
+  }
+  return null;
+}
+
+/* ---------------- Map rendering ---------------- */
+function drawMap() {
+  G.hotspots = [];
+  ctx.save();
+  if (G.pageFlipT >= 0) {
+    const t = G.pageFlipT;
+    const s = Math.abs(Math.cos(t * Math.PI));
+    ctx.translate(cv.width / 2, 0); ctx.scale(Math.max(s, 0.02), 1); ctx.translate(-cv.width / 2, 0);
+  }
+  const showPage = (G.pageFlipT >= 0 && G.pageFlipT >= 0.5) ? G.pageFlipTarget : G.mapPage;
+  if (showPage === 0) drawPlayground(); else drawNeighborhood();
+  ctx.restore();
+
+  if (G.pageFlipT < 0) {
+    if (showPage === 0) {
+      drawPageCorner("right", "NEXT ➤");
+      G.hotspots.push({ x: cv.width - 90, y: cv.height - 90, w: 80, h: 80, action: () => flipPage(1) });
+    } else {
+      drawPageCorner("left", "◀ BACK");
+      G.hotspots.push({ x: 10, y: cv.height - 90, w: 80, h: 80, action: () => flipPage(0) });
+    }
+    if (G.shopEvent) drawBikeEvent();
+  }
+}
+/* the traveling bike kid — a special event on the side of the map */
+function drawBikeEvent() {
+  const x = 110, y = 185;
+  const bob = Math.sin(G.time * 2) * 3;
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.font = "34px serif";
+  ctx.fillText("🧒", x, y - 8 + bob);
+  ctx.font = "30px serif";
+  ctx.fillText("🚲", x, y + 22 + bob);
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 14px 'Comic Sans MS'";
+  ctx.fillText("BIKE KID!", x, y + 44);
+  ctx.font = "11px 'Comic Sans MS'";
+  ctx.fillText("special cards ➜", x, y + 60);
+  ctx.restore();
+  G.hotspots.push({ x: x - 46, y: y - 40, w: 92, h: 108, action: () => MENU.bikeShop() });
+}
+function flipPage(target) {
+  if (target === G.mapPage) return;
+  G.pageFlipTarget = target;
+  G.pageFlipT = 0;
+}
+function drawPageCorner(side, label) {
+  ctx.save();
+  ctx.fillStyle = "#d8c9a0";
+  ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  if (side === "right") {
+    ctx.moveTo(cv.width - 12, cv.height - 86);
+    ctx.lineTo(cv.width - 12, cv.height - 12);
+    ctx.lineTo(cv.width - 86, cv.height - 12);
+  } else {
+    ctx.moveTo(12, cv.height - 86);
+    ctx.lineTo(12, cv.height - 12);
+    ctx.lineTo(86, cv.height - 12);
+  }
+  ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 11px 'Comic Sans MS'"; ctx.textAlign = "center";
+  ctx.fillText(label, side === "right" ? cv.width - 40 : 40, cv.height - 34);
+  ctx.restore();
+}
+
+function drawPlayground() {
+  ctx.fillStyle = "#a9c98a"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = "#b8d49a";
+  for (let i = 0; i < 30; i++) { const x = (i * 173) % cv.width, y = (i * 97) % cv.height; ctx.fillRect(x, y, 26, 8); }
+  ctx.font = "40px serif"; ctx.textAlign = "left"; ctx.fillText("☀️", 26, 60);
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 30px 'Comic Sans MS'"; ctx.textAlign = "center";
+  ctx.fillText("THE PLAYGROUND", cv.width / 2, 52);
+  ctx.font = "13px 'Comic Sans MS'";
+  ctx.fillText(SAVE.pgBoss ? "conquered! it works for YOU now" : "chapter 1 — the tutorial turf", cv.width / 2, 74);
+
+  const sx = 235, sy = 330;
+  ctx.strokeStyle = "#7a5a3a"; ctx.lineWidth = 7;
+  ctx.beginPath();
+  ctx.moveTo(sx - 110, sy + 90); ctx.lineTo(sx - 70, sy - 70); ctx.lineTo(sx - 30, sy + 90);
+  ctx.moveTo(sx + 110, sy + 90); ctx.lineTo(sx + 70, sy - 70); ctx.lineTo(sx + 30, sy + 90);
+  ctx.moveTo(sx - 70, sy - 70); ctx.lineTo(sx + 70, sy - 70);
+  ctx.stroke();
+  ctx.lineWidth = 3;
+  const sway = Math.sin(G.time * 1.5) * 8;
+  for (const off of [-30, 28]) {
+    ctx.beginPath(); ctx.moveTo(sx + off, sy - 68); ctx.lineTo(sx + off + sway, sy + 30); ctx.stroke();
+    ctx.fillStyle = "#8a4a2a"; ctx.fillRect(sx + off + sway - 14, sy + 30, 28, 8);
+  }
+  ctx.font = "26px serif"; ctx.textAlign = "center";
+  if (!SAVE.pg1) ctx.fillText("👦", sx - 32 + sway, sy + 24);
+  if (!SAVE.pg2) ctx.fillText("😤", sx + 26 + sway, sy + 24);
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 15px 'Comic Sans MS'";
+  ctx.fillText("THE SWINGS", sx, sy + 122);
+  ctx.font = "12px 'Comic Sans MS'";
+  ctx.fillText(!SAVE.pg1 ? "❗ a kid wants to teach you a lesson" : !SAVE.pg2 ? "❗ Rex is waiting" : "✓ rematches welcome", sx, sy + 140);
+  G.hotspots.push({ x: sx - 120, y: sy - 80, w: 240, h: 230, action: clickSwing });
+
+  const lx = 640, ly = 320;
+  ctx.fillStyle = SAVE.pgBoss ? "#7ac74f" : "#f0924a";
+  ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(lx - 20, ly - 80); ctx.lineTo(lx + 20, ly - 80); ctx.lineTo(lx + 130, ly + 80);
+  ctx.lineTo(lx + 90, ly + 80); ctx.lineTo(lx, ly - 40); ctx.closePath(); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(lx - 15, ly - 78); ctx.lineTo(lx - 15, ly + 80); ctx.stroke();
+  for (let i = 1; i < 6; i++) { ctx.beginPath(); ctx.moveTo(lx - 24, ly - 78 + i * 26); ctx.lineTo(lx - 6, ly - 78 + i * 26); ctx.stroke(); }
+  ctx.font = "26px serif"; ctx.textAlign = "center";
+  ctx.fillText(SAVE.pgBoss ? "🚩" : "👑", lx, ly - 92);
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 15px 'Comic Sans MS'";
+  ctx.fillText("THE SLIDE", lx + 40, ly + 112);
+  ctx.font = "12px 'Comic Sans MS'";
+  ctx.fillText(SAVE.pgBoss ? "✓ minting candy + slide coins" : SAVE.pg2 ? "❗ BOSS: the Slide King" : "🔒 beat the swings first", lx + 40, ly + 130);
+  G.hotspots.push({ x: lx - 40, y: ly - 110, w: 200, h: 250, action: clickSlide });
+
+  ctx.fillStyle = "#e8d9a0"; ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.ellipse(450, 520, 90, 34, 0, 0, 7); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "11px 'Comic Sans MS'"; ctx.textAlign = "center";
+  ctx.fillText("sandbox (no points, ever)", 450, 524);
+
+  // smooth candy drift when producing (no flashing)
+  if (SAVE.pgBoss) {
+    const cy2 = (G.time * 24) % 90;
+    ctx.save();
+    ctx.globalAlpha = clamp(1 - cy2 / 90, 0, 1) * 0.9;
+    ctx.font = "16px serif";
+    ctx.fillText("🍬", lx + Math.sin(G.time * 1.3) * 8, ly - 46 - cy2);
+    ctx.restore();
+  }
+}
+
+function drawNeighborhood() {
+  ctx.fillStyle = "#b5cf96"; ctx.fillRect(0, 0, cv.width, cv.height);
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 30px 'Comic Sans MS'"; ctx.textAlign = "center";
+  ctx.fillText("THE NEIGHBORHOOD", cv.width / 2, 52);
+  ctx.font = "13px 'Comic Sans MS'";
+  ctx.fillText("chapter 2 — the cul-de-sac · porch kids charge entry until you win", cv.width / 2, 74);
+
+  const cx = cv.width / 2, cy = 370;
+  ctx.fillStyle = "#9a958c";
+  ctx.fillRect(cx - 40, cy + 80, 80, 210);
+  ctx.beginPath(); ctx.arc(cx, cy, 120, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#fff8"; ctx.lineWidth = 3; ctx.setLineDash([14, 12]);
+  ctx.beginPath(); ctx.arc(cx, cy, 78, 0, 7); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx, cy + 120); ctx.lineTo(cx, cv.height); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "#7ea86a"; ctx.beginPath(); ctx.arc(cx, cy, 42, 0, 7); ctx.fill();
+  ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 2; ctx.stroke();
+  ctx.font = "20px serif"; ctx.fillText("🌳", cx, cy + 8);
+
+  drawHouse(cx, cy - 195, "#e8a8c8", "GRANDMA", SAVE.pgBoss, SAVE.grandma, "👵", clickGrandma,
+    SAVE.grandma ? "✓ candy + cookie coins" : SAVE.pgBoss ? "❗ entry " + CFG.fees.grandma + " 🍬" : "🔒 conquer the playground");
+  drawHouse(cx - 250, cy + 40, "#c8c8d8", "THE CAT", SAVE.grandma, SAVE.cat, "🐱", clickCat,
+    SAVE.cat ? "✓ candy + yarn coins" : SAVE.grandma ? "❗ entry " + CFG.fees.cat + " 🍬" : "🔒 beat Grandma");
+  drawHouse(cx + 250, cy + 40, "#d88a7a", "GYM BRO", SAVE.cat, SAVE.jock, "💪", clickJock,
+    SAVE.jock ? "✓ candy + plate coins" : SAVE.cat ? "❗ entry " + CFG.fees.jock + " 🍬" : "🔒 beat the Cat");
+}
+
+function drawHouse(x, y, color, label, unlocked, conquered, face, action, sub) {
+  ctx.save();
+  if (!unlocked) ctx.globalAlpha = 0.55;
+  ctx.fillStyle = conquered ? "#8fd08f" : color;
+  ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 3;
+  ctx.fillRect(x - 55, y - 30, 110, 75); ctx.strokeRect(x - 55, y - 30, 110, 75);
+  ctx.beginPath(); ctx.moveTo(x - 65, y - 30); ctx.lineTo(x, y - 75); ctx.lineTo(x + 65, y - 30); ctx.closePath();
+  ctx.fillStyle = "#8a5a3a"; ctx.fill(); ctx.stroke();
+  ctx.fillStyle = "#6a4a2a"; ctx.fillRect(x - 12, y + 10, 24, 35); ctx.strokeRect(x - 12, y + 10, 24, 35);
+  ctx.font = "22px serif"; ctx.textAlign = "center";
+  ctx.fillText(unlocked ? face : "🔒", x, y - 38);
+  if (conquered) ctx.fillText("🚩", x + 44, y - 48);
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 14px 'Comic Sans MS'";
+  ctx.fillText(label, x, y + 66);
+  ctx.font = "11px 'Comic Sans MS'";
+  ctx.fillText(sub, x, y + 82);
+  ctx.restore();
+  G.hotspots.push({ x: x - 70, y: y - 80, w: 140, h: 170, action });
+}
+
+/* ---------------- Fight rendering ---------------- */
+function wob(i) { return Math.sin(G.wobbleSeed + i * 7.13) * 1.6; }
+
+function drawBoard() {
+  const pg = G.venue === "playground", jock = G.venue === "jock";
+  const V = VENUES[G.venue];
+  // base surface: asphalt / grandma's rug / the Cat's carpet / gym floor
+  ctx.fillStyle = V.base;
+  ctx.fillRect(B.x, B.y, B.w, B.h);
+  if (!pg) {
+    ctx.strokeStyle = jock ? "#8a7658" : "#a08a6a"; ctx.lineWidth = 2; ctx.setLineDash([10, 8]);
+    ctx.strokeRect(B.x + 12, B.y + 12, B.w - 24, B.h - 24); ctx.setLineDash([]);
+  }
+  if (jock) {
+    // floorboards
+    ctx.strokeStyle = "#9a825e"; ctx.lineWidth = 1;
+    for (let x = B.x + 60; x < B.x + B.w; x += 60) {
+      ctx.beginPath(); ctx.moveTo(x, B.y); ctx.lineTo(x, B.y + B.h); ctx.stroke();
+    }
+  }
+
+  // scoring zones — chalk on asphalt / stitching on rugs / tape on the gym floor
+  for (const z of G.zones) {
+    ctx.save();
+    ctx.fillStyle = VAL_COLOR[z.val];
+    ctx.globalAlpha = 0.85;
+    ctx.strokeStyle = (pg || jock) ? "#f5f2ea" : "#3a2d1f";
+    ctx.lineWidth = pg ? 4 : jock ? 4 : 3;
+    if (pg) ctx.setLineDash([10, 7]); // chalk (the gym gets solid tape lines)
+    if (z.shape === "circle") {
+      ctx.beginPath(); ctx.arc(z.x, z.y, z.r, 0, 7); ctx.fill(); ctx.stroke();
+    } else {
+      ctx.fillRect(z.x - z.w/2, z.y - z.h/2, z.w, z.h);
+      ctx.strokeRect(z.x - z.w/2, z.y - z.h/2, z.w, z.h);
+    }
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = "#3a2d1fB0"; ctx.font = "bold 15px 'Comic Sans MS'"; ctx.textAlign = "center";
+    ctx.fillText(String(z.val), z.x, z.y + 5);
+    ctx.restore();
+  }
+
+  // Called Shot telegraph — crayon ring around the marble's zone
+  if (G.callShot) {
+    const z = G.callShot;
+    ctx.save();
+    ctx.strokeStyle = "#c9911a"; ctx.lineWidth = 4; ctx.setLineDash([10, 7]);
+    if (z.shape === "circle") { ctx.beginPath(); ctx.arc(z.x, z.y, z.r + 8, 0, 7); ctx.stroke(); }
+    else ctx.strokeRect(z.x - z.w/2 - 8, z.y - z.h/2 - 8, z.w + 16, z.h + 16);
+    ctx.setLineDash([]);
+    ctx.fillStyle = "#c9911a"; ctx.font = "bold 12px 'Comic Sans MS'"; ctx.textAlign = "center";
+    ctx.fillText("CALLED! 🔮", z.x, z.shape === "circle" ? z.y - z.r - 14 : z.y - z.h/2 - 14);
+    ctx.restore();
+  }
+
+  // dead zones: sandboxes / yarn tangles / sweat towels
+  for (const dz of G.sand) {
+    ctx.beginPath(); ctx.arc(dz.x, dz.y, dz.r, 0, 7);
+    ctx.fillStyle = V.missFill; ctx.fill();
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = V.missEdge; ctx.lineWidth = 2.5; ctx.stroke(); ctx.setLineDash([]);
+    if (G.venue === "cat") {
+      // a scribble of tangled yarn
+      ctx.strokeStyle = V.missEdge; ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      for (let a = 0; a < 14; a++) {
+        const ang = a * 2.4, rr = dz.r * 0.16 + (a / 14) * dz.r * 0.5;
+        const x = dz.x + Math.cos(ang) * rr, y = dz.y + Math.sin(ang) * rr * 0.8 - 6;
+        a === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    }
+    ctx.fillStyle = "#8a7a4a"; ctx.font = "bold 10px 'Comic Sans MS'"; ctx.textAlign = "center";
+    ctx.fillText(V.missName, dz.x, dz.y + (G.venue === "cat" ? dz.r * 0.6 : 4));
+  }
+
+  // the confiscation zone — Grandma's dining table / the Cat's litter box
+  if (G.gTable) {
+    const t = G.gTable;
+    ctx.save();
+    ctx.translate(t.x, t.y);
+    if (G.venue === "cat") {
+      ctx.fillStyle = "#9a9a92";
+      ctx.fillRect(-t.w/2, -t.h/2, t.w, t.h);
+      ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 3;
+      ctx.strokeRect(-t.w/2, -t.h/2, t.w, t.h);
+      ctx.fillStyle = "#d8cba8";
+      ctx.fillRect(-t.w/2 + 8, -t.h/2 + 8, t.w - 16, t.h - 16);
+      ctx.font = "15px serif"; ctx.textAlign = "center";
+      ctx.fillText("🐾", -t.w/4, 0); ctx.fillText("🐾", t.w/4, -10);
+      ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 10px 'Comic Sans MS'";
+      ctx.fillText(V.loseSign, 0, t.h/2 - 7);
+    } else {
+      ctx.fillStyle = "#a06a3a";
+      ctx.fillRect(-t.w/2, -t.h/2, t.w, t.h);
+      ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 3;
+      ctx.strokeRect(-t.w/2, -t.h/2, t.w, t.h);
+      // lace runner + plates
+      ctx.fillStyle = "#f5ecd7";
+      ctx.fillRect(-t.w/2 + 10, -14, t.w - 20, 28);
+      ctx.font = "16px serif"; ctx.textAlign = "center";
+      ctx.fillText("🍽️", -t.w/4, 6); ctx.fillText("☕", t.w/4, 6);
+      ctx.fillStyle = "#f5ecd7"; ctx.font = "bold 10px 'Comic Sans MS'";
+      ctx.fillText(V.loseSign, 0, t.h/2 - 7);
+    }
+    ctx.restore();
+  }
+
+  ctx.lineWidth = 5; ctx.strokeStyle = "#3a2d1f";
+  ctx.strokeRect(B.x, B.y, B.w, B.h);
+
+  // board name doodle
+  ctx.fillStyle = "#3a2d1f88"; ctx.font = "bold 13px 'Comic Sans MS'"; ctx.textAlign = "left";
+  ctx.fillText("~ " + G.boardTitle + " ~", B.x + 10, B.y + 20);
+}
+/* a schoolyard treasure lying on the board — land a coin on it to pocket it */
+function drawPickup() {
+  if (!G.pickup) return;
+  const p = G.pickup, bob = Math.sin(G.time * 2.4) * 2;
+  ctx.save();
+  ctx.translate(p.x, p.y + bob);
+  ctx.rotate(-0.08);
+  ctx.fillStyle = "#fff8e8"; ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 2;
+  ctx.fillRect(-16, -14, 32, 28); ctx.strokeRect(-16, -14, 32, 28);
+  ctx.font = "16px serif"; ctx.textAlign = "center";
+  ctx.fillText(ITEMS[p.id].icon, 0, 6);
+  ctx.restore();
+  ctx.fillStyle = "#3a2d1f99"; ctx.font = "bold 10px 'Comic Sans MS'"; ctx.textAlign = "center";
+  ctx.fillText("land a coin on it!", p.x, p.y + 28 + bob);
+}
+
+function drawCoin(c, i, hov) {
+  let x = c.x, y = c.y, sx = 1, sy = 1;
+  const f = G.flights.find(fl => fl.coin === c);
+  if (f) {
+    const p = flightPos(f);
+    x = p.x; y = p.y;                                   // ground position
+    const tt = clamp(f.t, 0, 1);
+    const z = Math.sin(tt * Math.PI) * f.arc;           // fake 3D height
+    if (f.arc > 0) {
+      // THE FLIP: x-axis tumble squash driven by real flight-seconds * rate.
+      const flipTime = f.t * f.dur;
+      sx = Math.abs(Math.sin(flipTime * CFG.tumbleRate)) * 0.5 + 0.5;
+      // drop shadow on the ground, shrinking as the coin rises
+      let ss = 1 - z / 200; if (ss < 0.3) ss = 0.3;
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.beginPath(); ctx.ellipse(x, y + 6, c.r * ss, c.r * 0.42 * ss, 0, 0, 7);
+      ctx.fillStyle = "#000"; ctx.fill();
+      ctx.restore();
+      // motion trail: 4 faded after-images of the coin behind it
+      for (let g = 4; g >= 1; g--) {
+        const tg = f.t - g * 0.05;
+        if (tg > 0) {
+          const gp = flightPosAt(f, tg);
+          const gz = Math.sin(clamp(tg, 0, 1) * Math.PI) * f.arc;
+          const gsx = Math.abs(Math.sin(tg * f.dur * CFG.tumbleRate)) * 0.5 + 0.5;
+          const ga = 0.25 - (g - 1) * (0.20 / 3);
+          ctx.save();
+          ctx.globalAlpha = ga;
+          ctx.translate(gp.x + wob(i) * 0.4, gp.y - gz);
+          ctx.scale(gsx, 1);
+          ctx.beginPath(); ctx.arc(0, 0, c.r, 0, 7);
+          ctx.fillStyle = c.golden ? "#ffd700" : TYPES[c.type].color; ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+    y = y - z;                                          // lift the coin body
+  }
+  if (c.gone) return;
+  const T = TYPES[c.type];
+  ctx.save();
+  ctx.translate(x + wob(i) * 0.4, y);
+  ctx.scale(sx, sy);
+  if (c.broken) {
+    // snapped clean in half along the crack line — a darkened, dead coin
+    ctx.rotate(c.crackAngle);
+    ctx.globalAlpha = 0.6;
+    ctx.fillStyle = "#5a544c"; ctx.strokeStyle = "#2a241c"; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.arc(0, -3, c.r, Math.PI, 2 * Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.beginPath(); ctx.arc(0,  3, c.r, 0, Math.PI); ctx.closePath(); ctx.fill(); ctx.stroke();
+    ctx.restore(); return;
+  }
+  if (c.owner === "boss") { ctx.beginPath(); ctx.arc(0, 0, c.r + 4, 0, 7); ctx.strokeStyle = "#b8452f"; ctx.lineWidth = 2.5; ctx.stroke(); }
+  if (c.owner === "player") { ctx.beginPath(); ctx.arc(0, 0, c.r + 4, 0, 7); ctx.strokeStyle = "#4a7fb5"; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]); }
+  ctx.beginPath(); ctx.arc(0, 0, c.r, 0, 7);
+  ctx.fillStyle = c.golden ? "#ffd700" : T.color; ctx.fill();
+  // ring shows the coin's current point value: High (ink), Med (purple), Low (red)
+  const valColors = ["#3a2d1f", "#8756b8", "#b8452f"];
+  ctx.lineWidth = 3; ctx.strokeStyle = valColors[c.valTier]; ctx.stroke();
+  if (c.golden) { ctx.beginPath(); ctx.arc(0, 0, c.r + 7, 0, 7); ctx.strokeStyle = "#ffd70088"; ctx.lineWidth = 3; ctx.stroke(); }
+  // contact-split ring: press INSIDE it = short pop, OUTSIDE = long drive.
+  // The icon fills the inner disc exactly, so the marker doubles as the art —
+  // and it moves per coin (the rock's pop centre is bigger, 0.8 vs 0.65).
+  const th = T.threshold || CFG.shot.threshold;
+  ctx.beginPath(); ctx.arc(0, 0, c.r * th, 0, 7);
+  ctx.strokeStyle = "#3a2d1f40"; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.font = Math.round(c.r * th * 1.8) + "px serif"; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.fillText(T.icon, 0, 1);
+  ctx.textBaseline = "alphabetic";
+  if (c.valTier > 0) {
+    ctx.font = "bold 9px 'Comic Sans MS'"; ctx.fillStyle = valColors[c.valTier];
+    ctx.fillText(c.valTier === 1 ? "M" : "L", c.r + 7, -c.r + 4);
+  }
+  // about to break → a little jagged crack runs through the middle
+  const remaining = isFinite(c.bp) ? c.bp - c.wear : Infinity;
+  const nextTick = (TYPES[c.type].ticks || 1);
+  if (c.type !== "basic" && isFinite(c.bp) && remaining <= nextTick) {
+    ctx.save();
+    ctx.rotate(c.crackAngle);
+    ctx.strokeStyle = "#2a241c"; ctx.lineWidth = 2; ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(-c.r, 0);
+    ctx.lineTo(-c.r * 0.45, -c.r * 0.28);
+    ctx.lineTo(0, c.r * 0.16);
+    ctx.lineTo(c.r * 0.45, -c.r * 0.22);
+    ctx.lineTo(c.r, 0);
+    ctx.stroke();
+    ctx.restore();
+  }
+  ctx.restore();
+  // leading-edge dot: bright point on the rim in the direction of travel, so you
+  // can read where a chain contact will land (real game's flip indicator)
+  if (f && f.arc > 0) {
+    const a = f.angle || 0;
+    const ex = x + wob(i) * 0.4 + Math.cos(a) * c.r;
+    const ey = y + Math.sin(a) * c.r;
+    ctx.beginPath(); ctx.arc(ex, ey, 4, 0, 7);
+    ctx.fillStyle = "#fff"; ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 1;
+    ctx.fill(); ctx.stroke();
+  }
+  // tacked down → the pushpin sits on the coin
+  if (c.pinned) {
+    ctx.font = "15px serif"; ctx.textAlign = "center";
+    ctx.fillText("📌", x + c.r * 0.7, y - c.r * 0.5);
+  }
+  // hover → durability pips pop up above the coin (screen space, unaffected by flip)
+  if (hov === c && c.type !== "basic" && isFinite(c.bp)) {
+    const total = c.bp, lit = Math.max(0, c.bp - c.wear);
+    const pr = 3.4, gap = 3.5, tw = total * pr * 2 + (total - 1) * gap;
+    const py = c.y - c.r - 13;
+    let px = c.x - tw / 2 + pr;
+    for (let k = 0; k < total; k++) {
+      ctx.beginPath(); ctx.arc(px + k * (pr * 2 + gap), py, pr, 0, 7);
+      ctx.fillStyle = k < lit ? "#f2a33c" : "#4a453d";
+      ctx.fill(); ctx.strokeStyle = "#2a241c"; ctx.lineWidth = 1; ctx.stroke();
+    }
+  }
+}
+
+/* the circular tool — a solid, single-colour disc (like a large coin) sitting on
+   the cursor. Its edge activates any coin it overlaps. No hand, no reticle;
+   aiming lives behind the dev preview toggle. */
+function drawTool() {
+  if (G.mode === "map") return;
+  if (!G.mouseOnCanvas || !mouseOnBoard()) return; // hand cursor rules off-board
+  const active = (!G.busy && !(G.mode === "duel" && G.bossTurnNext));
+  const list = active ? overlapList() : [];
+  const arm = active ? hoverCoin() : null;
+  // striker covering 2+ coins → calm dashed ring on the pick + [A][D] keycaps
+  if (arm && list.length >= 2) drawArmedMarks(arm);
+  // the striker itself: one solid colour, dark outline — reads as a large coin
+  const r = CFG.toolRadius;
+  ctx.beginPath(); ctx.arc(G.mouse.x, G.mouse.y, r, 0, 7);
+  ctx.fillStyle = "#5b6f9c"; ctx.fill();
+  ctx.lineWidth = 3; ctx.strokeStyle = "#2a2f3f"; ctx.stroke();
+  // chalk shot-glyph ON the striker: a steep hop arc when the press is inside
+  // the coin's ring (pop) — a flat arrow when it's outside (drive)
+  if (arm) {
+    const a = aimInfo(arm, G.mouse);
+    const mx = G.mouse.x, my = G.mouse.y;
+    ctx.strokeStyle = "#f5f2ea"; ctx.lineWidth = 2.4; ctx.lineCap = "round";
+    if (a.zone === "inner") {
+      ctx.beginPath(); ctx.moveTo(mx - 9, my + 6); ctx.quadraticCurveTo(mx, my - 12, mx + 9, my + 6); ctx.stroke();
+    } else {
+      ctx.beginPath(); ctx.moveTo(mx - 10, my); ctx.lineTo(mx + 8, my);
+      ctx.moveTo(mx + 3, my - 4); ctx.lineTo(mx + 9, my); ctx.lineTo(mx + 3, my + 4); ctx.stroke();
+    }
+  }
+}
+// A/D pick marks: a calm dashed ring on the coin that will flip (no cyan, no
+// oscillation) plus [A] [D] keycaps drawn exactly like the game's real buttons.
+function drawArmedMarks(arm) {
+  const ink = G.venue === "playground" ? "#f5f2ea" : "#3a2d1f";
+  ctx.beginPath(); ctx.arc(arm.x, arm.y, arm.r + 6, 0, 7);
+  ctx.strokeStyle = ink; ctx.lineWidth = 2.5; ctx.setLineDash([6, 5]); ctx.stroke(); ctx.setLineDash([]);
+  drawKeycap(arm.x - 13, arm.y + arm.r + 22, "A");
+  drawKeycap(arm.x + 13, arm.y + arm.r + 22, "D");
+}
+function drawKeycap(x, y, letter) {
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.fillStyle = "#3a2d1f"; ctx.fillRect(-7, -7, 18, 18);            // button drop shadow
+  ctx.fillStyle = "#fff8e8"; ctx.strokeStyle = "#3a2d1f"; ctx.lineWidth = 2;
+  ctx.fillRect(-9, -9, 18, 18); ctx.strokeRect(-9, -9, 18, 18);
+  ctx.fillStyle = "#3a2d1f"; ctx.font = "bold 12px 'Comic Sans MS'"; ctx.textAlign = "center";
+  ctx.fillText(letter, 0, 4);
+  ctx.restore();
+}
+
+function drawAim() {
+  if (G.busy || G.mode === "map") return;
+  if (G.mode === "duel" && G.bossTurnNext) return;
+  if (!G.preview) return;   // aiming ONLY shows when toggled on from the dev toolbox
+  const c = hoverCoin();
+  if (!c) return;
+  const a = aimInfo(c, G.mouse);
+  ctx.beginPath(); ctx.arc(c.x, c.y, c.r + 8, 0, 7);
+  ctx.strokeStyle = "#f2a33c"; ctx.lineWidth = 3; ctx.setLineDash([5, 5]); ctx.stroke(); ctx.setLineDash([]);
+  ctx.beginPath(); ctx.arc(c.x, c.y, c.r * (TYPES[c.type].threshold || CFG.shot.threshold), 0, 7);
+  ctx.strokeStyle = "#3a2d1f55"; ctx.lineWidth = 1.5; ctx.stroke();
+
+  { // debug radar — hidden unless the dev preview toggle is on
+    const path = computePath(c, a.dir, a.distTotal);
+    ctx.setLineDash([7, 6]); ctx.lineWidth = 2.5; ctx.strokeStyle = "#3a2d1f99";
+    ctx.beginPath(); ctx.moveTo(c.x, c.y);
+    for (const p of path.points) ctx.lineTo(p.x, p.y);
+    ctx.stroke(); ctx.setLineDash([]);
+    const z = zoneAt(path.end, c.r);
+    ctx.beginPath(); ctx.arc(path.end.x, path.end.y, c.r, 0, 7);
+    ctx.strokeStyle = z.color; ctx.lineWidth = 3; ctx.stroke();
+    ctx.font = "bold 12px 'Comic Sans MS'"; ctx.textAlign = "center";
+    ctx.fillStyle = z.color;
+    ctx.fillText((a.zone === "inner" ? "pop" : "drive") + " → " + z.name, path.end.x, path.end.y - c.r - 8);
+  }
+}
+
+function drawBursts(dt) {
+  for (const b of G.bursts) {
+    b.t += dt;
+    const w = b.w || 1;
+    const p = clamp(b.t / 0.45, 0, 1);
+    const r = 32 * w * easeOut(p);
+    ctx.globalAlpha = (1 - p) * 0.8;
+    ctx.beginPath(); ctx.arc(b.x, b.y, r, 0, 7);
+    ctx.strokeStyle = b.color; ctx.lineWidth = 2.5 + w * 1.6; ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+  G.bursts = G.bursts.filter(b => b.t < 0.45);
+}
+function drawPopups(dt) {
+  ctx.textAlign = "center";
+  for (const p of G.popups) {
+    p.t += dt;
+    if (p.score) {
+      // scale up fast, hold, then float away and fade
+      const grow = clamp(p.t / 0.14, 0, 1);
+      const scl = 0.5 + easeOut(grow) * 0.85;
+      const rise = Math.max(0, p.t - 0.14) * 58;
+      const fs = Math.round(24 * scl);
+      ctx.globalAlpha = clamp((1.5 - p.t) / 0.5, 0, 1);
+      ctx.font = "bold " + fs + "px 'Comic Sans MS'";
+      ctx.lineWidth = 3.5; ctx.strokeStyle = "#fff8e8";
+      ctx.strokeText(p.text, p.x, p.y - rise);
+      ctx.fillStyle = p.color;
+      ctx.fillText(p.text, p.x, p.y - rise);
+    } else {
+      ctx.globalAlpha = clamp(1.4 - p.t, 0, 1);
+      ctx.fillStyle = p.color;
+      ctx.font = "bold " + (p.big ? 22 : 16) + "px 'Comic Sans MS'";
+      ctx.fillText(p.text, p.x, p.y - p.t * 42);
+    }
+    ctx.globalAlpha = 1;
+  }
+  G.popups = G.popups.filter(p => p.t < (p.score ? 1.5 : 1.4));
+}
+
+/* ---------------- Floor vignette — a tiny hand-drawn idle scene ----------------
+   Lives in the right column under MY SETUP; the subject matches the CURRENT
+   board (Doily Parlor gets a steaming teacup on a doily, the Hallway Rug gets
+   the patrolling cat, and so on). Pure decoration — swaps when the floor does. */
+const vcv = document.getElementById("vcv"), vg = vcv.getContext("2d");
+function drawVignette() {
+  const w = vcv.width, h = vcv.height, t = G.time;
+  vg.clearRect(0, 0, w, h);
+  vg.textAlign = "center"; vg.textBaseline = "alphabetic"; vg.lineCap = "round";
+  const key = G.boardKey;
+  if (key === "kid1") {
+    // hopscotch: a pebble hops up the chalk court
+    vg.fillStyle = "#8f8a84"; vg.fillRect(10, 10, w - 20, h - 20);
+    vg.strokeStyle = "#f5f2ea"; vg.lineWidth = 2.5; vg.setLineDash([7, 5]);
+    const bx = w / 2;
+    vg.strokeRect(bx - 22, h - 56, 44, 34);
+    vg.strokeRect(bx - 22, h - 92, 44, 34);
+    vg.strokeRect(bx - 22, h - 128, 44, 34);
+    vg.beginPath(); vg.arc(bx, h - 148, 20, 0, 7); vg.stroke();
+    vg.setLineDash([]);
+    const spots = [{ y: h - 39 }, { y: h - 75 }, { y: h - 111 }, { y: h - 148 }];
+    const p = (t * 1.4) % 4, i = Math.floor(p), fr = p - i;
+    const a = spots[i], b = spots[Math.min(i + 1, 3)];
+    const py = a.y + (b.y - a.y) * fr - Math.sin(fr * Math.PI) * 14;
+    vg.fillStyle = "#5a544c"; vg.beginPath(); vg.arc(bx, py, 5, 0, 7); vg.fill();
+  } else if (key === "kid2") {
+    // four square: the red ball does its rounds
+    vg.fillStyle = "#8f8a84"; vg.fillRect(10, 12, w - 20, 166);
+    vg.strokeStyle = "#f5f2ea"; vg.lineWidth = 2.5; vg.setLineDash([7, 5]);
+    vg.strokeRect(20, 22, w - 40, 146);
+    vg.beginPath(); vg.moveTo(w / 2, 22); vg.lineTo(w / 2, 168);
+    vg.moveTo(20, 95); vg.lineTo(w - 20, 95); vg.stroke();
+    vg.setLineDash([]);
+    const cs = [{ x: 60, y: 58 }, { x: w - 60, y: 58 }, { x: w - 60, y: 132 }, { x: 60, y: 132 }];
+    const p = (t * 1.5) % 4, i = Math.floor(p), fr = p - i;
+    const a = cs[i], b = cs[(i + 1) % 4];
+    const bx2 = a.x + (b.x - a.x) * fr, by2 = a.y + (b.y - a.y) * fr - Math.sin(fr * Math.PI) * 24;
+    const sq = 1 - Math.sin(fr * Math.PI) * 0.15;
+    vg.fillStyle = "#e06a5a"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 1.5;
+    vg.beginPath(); vg.ellipse(bx2, by2, 9, 9 * sq, 0, 0, 7); vg.fill(); vg.stroke();
+  } else if (key === "slide") {
+    // the slide: a kid climbs, slides, repeats
+    vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 4;
+    vg.beginPath(); vg.moveTo(40, 42); vg.lineTo(40, 155); vg.stroke();
+    vg.lineWidth = 2;
+    for (let k = 0; k < 5; k++) { vg.beginPath(); vg.moveTo(31, 62 + k * 20); vg.lineTo(49, 62 + k * 20); vg.stroke(); }
+    vg.strokeStyle = "#f0924a"; vg.lineWidth = 7;
+    vg.beginPath(); vg.moveTo(48, 48); vg.lineTo(168, 158); vg.stroke();
+    vg.font = "22px serif";
+    const p = (t * 0.55) % 1.3;
+    if (p < 1) vg.fillText("🧒", 52 + 112 * p, 40 + 108 * p);
+    else vg.fillText("🧒", 40, 38);
+  } else if (key === "gf1") {
+    // Doily Parlor: teacup steaming on grandma's lace doily
+    const cx = w / 2, cy = 105;
+    vg.fillStyle = "#fffdf4"; vg.strokeStyle = "#c9b98f"; vg.lineWidth = 2;
+    for (let k = 0; k < 12; k++) {
+      const ang = k / 12 * Math.PI * 2;
+      vg.beginPath(); vg.arc(cx + Math.cos(ang) * 54, cy + Math.sin(ang) * 54, 11, 0, 7); vg.fill(); vg.stroke();
+    }
+    vg.beginPath(); vg.arc(cx, cy, 56, 0, 7); vg.fill();
+    vg.setLineDash([4, 4]); vg.beginPath(); vg.arc(cx, cy, 38, 0, 7); vg.stroke(); vg.setLineDash([]);
+    vg.font = "30px serif"; vg.fillText("☕", cx, cy + 12);
+    vg.strokeStyle = "#8a8175"; vg.lineWidth = 2;
+    for (let k = 0; k < 2; k++) {
+      const rise = (t * 22 + k * 30) % 55;
+      vg.globalAlpha = clamp(1 - rise / 55, 0, 1) * 0.8;
+      const sx = cx - 6 + k * 12, sy = cy - 20 - rise;
+      vg.beginPath(); vg.moveTo(sx - 4, sy + 8);
+      vg.quadraticCurveTo(sx + 5, sy + 3, sx - 2, sy - 4);
+      vg.stroke();
+    }
+    vg.globalAlpha = 1;
+  } else if (key === "gf2") {
+    // Hallway Rug: the house cat patrols the runner
+    vg.fillStyle = "#b8524a"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.fillRect(16, 118, w - 32, 44); vg.strokeRect(16, 118, w - 32, 44);
+    vg.strokeStyle = "#f2d15c"; vg.lineWidth = 2; vg.strokeRect(24, 124, w - 48, 32);
+    vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 1.5;
+    for (let k = 0; k < 6; k++) {
+      vg.beginPath(); vg.moveTo(16, 122 + k * 7); vg.lineTo(9, 124 + k * 7); vg.stroke();
+      vg.beginPath(); vg.moveTo(w - 16, 122 + k * 7); vg.lineTo(w - 9, 124 + k * 7); vg.stroke();
+    }
+    const span = w - 74;
+    const p = (t * 28) % (span * 2), fwd = p < span;
+    vg.font = "26px serif";
+    vg.save();
+    vg.translate(37 + (fwd ? p : span * 2 - p), 116 + Math.sin(t * 9) * 1.5);
+    if (!fwd) vg.scale(-1, 1);
+    vg.fillText("🐈", 0, 0);
+    vg.restore();
+  } else if (key === "gf3") {
+    // Dinner Is Served: the lid lifts, a pea makes a break for it
+    const cx = w / 2, py = 142;
+    vg.fillStyle = "#fffdf4"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.beginPath(); vg.ellipse(cx, py, 62, 15, 0, 0, 7); vg.fill(); vg.stroke();
+    const ph = t % 3, lift = ph < 0.6 ? Math.sin(ph / 0.6 * Math.PI) * 16 : 0;
+    if (lift > 2) {
+      const pp = ph / 0.6;
+      vg.fillStyle = "#7ac74f";
+      vg.beginPath(); vg.arc(cx + 46 * pp + 6, py - 24 - Math.sin(pp * Math.PI) * 32, 4, 0, 7); vg.fill();
+      vg.strokeStyle = "#8a8175"; vg.lineWidth = 2; vg.globalAlpha = 0.7;
+      vg.beginPath(); vg.moveTo(cx - 10, py - 34 - lift);
+      vg.quadraticCurveTo(cx - 4, py - 44 - lift, cx - 12, py - 52 - lift); vg.stroke();
+      vg.globalAlpha = 1;
+    }
+    vg.fillStyle = "#d8d0c0"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.beginPath(); vg.arc(cx, py - 8 - lift, 46, Math.PI, 2 * Math.PI); vg.closePath(); vg.fill(); vg.stroke();
+    vg.beginPath(); vg.arc(cx, py - 56 - lift, 5, 0, 7); vg.fill(); vg.stroke();
+  } else if (key === "gduel") {
+    // the boss: grandma knitting in a proper rocking chair
+    const cx = w / 2, rock = Math.sin(t * 1.6) * 0.07;
+    vg.save();
+    vg.translate(cx - 6, 152); vg.rotate(rock);
+    vg.strokeStyle = "#7a5a3a"; vg.lineWidth = 5; vg.lineCap = "round";
+    vg.beginPath(); vg.moveTo(-46, -6); vg.quadraticCurveTo(0, 14, 46, -6); vg.stroke(); // rocker rail
+    vg.lineWidth = 4;
+    vg.beginPath(); vg.moveTo(-22, -34); vg.lineTo(-30, -9); vg.moveTo(22, -34); vg.lineTo(30, -9); vg.stroke(); // legs
+    vg.beginPath(); vg.moveTo(-28, -36); vg.lineTo(30, -36); vg.stroke();               // seat
+    vg.beginPath(); vg.moveTo(-28, -36); vg.lineTo(-38, -98); vg.stroke();              // tall back
+    vg.lineWidth = 3;
+    vg.beginPath(); vg.moveTo(-35, -80); vg.lineTo(-32, -80); vg.stroke();
+    vg.beginPath(); vg.moveTo(-33, -60); vg.lineTo(26, -56); vg.stroke();               // armrest
+    vg.font = "36px serif"; vg.fillText("👵", 4, -48);                                  // grandma, seated
+    // knitting needles crossed over her lap
+    vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2;
+    vg.beginPath(); vg.moveTo(-8, -38); vg.quadraticCurveTo(4, -46, 18, -50);
+    vg.moveTo(16, -38); vg.quadraticCurveTo(4, -46, -10, -50); vg.stroke();
+    vg.restore();
+    // the yarn ball rolls with each rock, thread running up to her lap
+    const yx = cx + 52 + Math.sin(t * 1.6 + 0.7) * 6;
+    vg.strokeStyle = "#c86a9a"; vg.lineWidth = 1.5;
+    vg.beginPath(); vg.moveTo(yx, 158); vg.quadraticCurveTo(cx + 28, 130, cx + 2, 104); vg.stroke();
+    vg.fillStyle = "#e88bc4"; vg.beginPath(); vg.arc(yx, 160, 8, 0, 7); vg.fill();
+    vg.strokeStyle = "#b8568a"; vg.beginPath(); vg.arc(yx, 160, 8, 0.4, 2.2); vg.stroke();
+    vg.beginPath(); vg.arc(yx, 160, 5, 2.8, 5.0); vg.stroke();
+  } else if (key === "cf1") {
+    // a yarn ball unravels while a paw takes swipes at it
+    const bx = w / 2 - 10 + Math.sin(t * 1.8) * 10;
+    vg.strokeStyle = "#c86a9a"; vg.lineWidth = 2;
+    vg.beginPath(); vg.moveTo(20, 162); vg.quadraticCurveTo(70, 152, bx - 14, 132); vg.stroke();
+    vg.fillStyle = "#e88bc4"; vg.beginPath(); vg.arc(bx, 128, 22, 0, 7); vg.fill();
+    vg.strokeStyle = "#b8568a";
+    vg.beginPath(); vg.arc(bx, 128, 22, 0.3, 2.0); vg.stroke();
+    vg.beginPath(); vg.arc(bx, 128, 15, 2.5, 4.6); vg.stroke();
+    const swipe = Math.max(0, Math.sin(t * 1.8)) * 16;
+    vg.font = "30px serif"; vg.fillText("🐾", bx + 42 - swipe, 90 + swipe * 0.8);
+  } else if (key === "cf2") {
+    // dinner time: bowl, kibble, one very committed cat
+    vg.fillStyle = "#7fb3d9"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.beginPath(); vg.ellipse(w / 2, 152, 40, 13, 0, 0, 7); vg.fill(); vg.stroke();
+    vg.fillStyle = "#c9873a";
+    vg.beginPath(); vg.ellipse(w / 2, 146, 29, 7, 0, 0, 7); vg.fill(); vg.stroke();
+    const dip = Math.max(0, Math.sin(t * 2.2)) * 14;
+    vg.font = "34px serif"; vg.fillText("🐱", w / 2, 120 + dip);
+  } else if (key === "cf3") {
+    // the scratching post takes another beating
+    vg.fillStyle = "#c9a86a"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.fillRect(w / 2 - 24, 48, 24, 114); vg.strokeRect(w / 2 - 24, 48, 24, 114);
+    vg.fillStyle = "#8a6f4d"; vg.fillRect(w / 2 - 44, 162, 68, 12); vg.strokeRect(w / 2 - 44, 162, 68, 12);
+    vg.strokeStyle = "#8a6f4d"; vg.lineWidth = 1.5;
+    for (let k = 0; k < 8; k++) { vg.beginPath(); vg.moveTo(w / 2 - 24, 56 + k * 13); vg.lineTo(w / 2, 60 + k * 13); vg.stroke(); }
+    const sw = Math.sin(t * 6) * 6;
+    vg.font = "26px serif"; vg.fillText("🐈", w / 2 + 28, 120);
+    vg.strokeStyle = "#5a3d20"; vg.lineWidth = 2; vg.lineCap = "round";
+    vg.beginPath(); vg.moveTo(w / 2 - 18 + sw * 0.4, 84); vg.lineTo(w / 2 - 14 + sw * 0.4, 104);
+    vg.moveTo(w / 2 - 10 + sw * 0.4, 82); vg.lineTo(w / 2 - 6 + sw * 0.4, 102); vg.stroke();
+  } else if (key === "cduel") {
+    // the throne: a cushion, a cat, a tail that owns the room
+    vg.fillStyle = "#b8524a"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.beginPath(); vg.ellipse(w / 2, 142, 55, 20, 0, 0, 7); vg.fill(); vg.stroke();
+    vg.font = "40px serif"; vg.fillText("🐱", w / 2, 126);
+    const flick = Math.sin(t * 3);
+    vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 3; vg.lineCap = "round";
+    vg.beginPath(); vg.moveTo(w / 2 + 26, 130);
+    vg.quadraticCurveTo(w / 2 + 48, 120, w / 2 + 52, 102 + flick * 10); vg.stroke();
+    vg.font = "16px serif"; vg.fillText("👑", w / 2, 82);
+  } else if (key === "jf1") {
+    // rep count: infinity
+    const lift = Math.abs(Math.sin(t * 2.2)) * 32;
+    const dy = 128 - lift;
+    vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 4; vg.lineCap = "round";
+    vg.beginPath(); vg.moveTo(w / 2 - 26, dy); vg.lineTo(w / 2 + 26, dy); vg.stroke();
+    vg.fillStyle = "#8a8f98"; vg.lineWidth = 2;
+    vg.beginPath(); vg.arc(w / 2 - 30, dy, 13, 0, 7); vg.fill(); vg.stroke();
+    vg.beginPath(); vg.arc(w / 2 + 30, dy, 13, 0, 7); vg.fill(); vg.stroke();
+    vg.font = "30px serif"; vg.fillText("💪", w / 2, 172);
+  } else if (key === "jf2") {
+    // bench press: up… and down… and up…
+    vg.fillStyle = "#8a6f4d"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.fillRect(w / 2 - 45, 132, 90, 16); vg.strokeRect(w / 2 - 45, 132, 90, 16);
+    vg.fillRect(w / 2 - 36, 148, 10, 22); vg.fillRect(w / 2 + 26, 148, 10, 22);
+    const press = Math.abs(Math.sin(t * 2)) * 26;
+    const by = 114 - press;
+    vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 4; vg.lineCap = "round";
+    vg.beginPath(); vg.moveTo(w / 2 - 55, by); vg.lineTo(w / 2 + 55, by); vg.stroke();
+    vg.fillStyle = "#5a544c";
+    vg.fillRect(w / 2 - 68, by - 14, 12, 28); vg.fillRect(w / 2 + 56, by - 14, 12, 28);
+  } else if (key === "jf3") {
+    // shake shake shake
+    const sh = Math.sin(t * 10) * (0.5 + Math.sin(t * 1.1) * 0.5) * 6;
+    vg.save();
+    vg.translate(w / 2 + sh, 120); vg.rotate(sh * 0.02);
+    vg.fillStyle = "#7fb3d9"; vg.strokeStyle = "#3a2d1f"; vg.lineWidth = 2.5;
+    vg.fillRect(-22, -34, 44, 70); vg.strokeRect(-22, -34, 44, 70);
+    vg.fillStyle = "#3a2d1f"; vg.fillRect(-14, -46, 28, 12); vg.strokeRect(-14, -46, 28, 12);
+    vg.fillStyle = "#fff8e8"; vg.font = "bold 11px 'Comic Sans MS'";
+    vg.fillText("GAINZ", 0, 8);
+    vg.restore();
+    if (Math.abs(sh) > 4) { vg.fillStyle = "#7fb3d9"; vg.beginPath(); vg.arc(w / 2 + sh * 4, 68, 3, 0, 7); vg.fill(); }
+  } else if (key === "jduel") {
+    // the flex-off
+    const pump = 1 + Math.abs(Math.sin(t * 2.4)) * 0.25;
+    vg.save();
+    vg.translate(w / 2, 118); vg.scale(pump, pump);
+    vg.font = "44px serif"; vg.fillText("💪", 0, 14);
+    vg.restore();
+    vg.font = "14px serif";
+    vg.fillText("✨", w / 2 - 46 + Math.sin(t * 3) * 4, 84);
+    vg.fillText("✨", w / 2 + 46, 152 - Math.abs(Math.sin(t * 2.6)) * 10);
+  } else {
+    // fallback: a candy bobs around
+    vg.font = "30px serif";
+    vg.fillText("🍬", w / 2 + Math.sin(t * 1.2) * 20, 112 - Math.abs(Math.sin(t * 3)) * 32);
+  }
+}
+
+/* ---------------- Main loop ---------------- */
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(0.05, (now - last) / 1000);
+  last = now; G.time += dt;
+  G.wobbleSeed += dt * 0.7;
+
+  G.prodTimer += dt;
+  if (G.prodTimer >= 1) { G.prodTimer = 0; catchUp(); if (G.mode === "map") { updateEcon(); updateHUD(); } persist(); }
+
+  if (G.pageFlipT >= 0) {
+    G.pageFlipT += dt * 2.2;
+    if (G.pageFlipT >= 1) { G.mapPage = G.pageFlipTarget; G.pageFlipT = -1; updateHUD(); }
+  }
+
+  if (G.flights.length) updateFlights(dt);
+
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (G.mode === "map") {
+    drawMap();
+    drawPopups(dt);
+  } else {
+    ctx.save();
+    if (G.shake > 0) {
+      ctx.translate((Math.random() * 2 - 1) * G.shake, (Math.random() * 2 - 1) * G.shake);
+      G.shake = Math.max(0, G.shake - dt * 40);
+    }
+    drawBoard();
+    drawPickup();
+    drawVignette();
+    const hov = (G.mouseOnCanvas && !G.busy && !(G.mode === "duel" && G.bossTurnNext)) ? hoverCoin() : null;
+    G.coins.forEach((c, i) => { if (c.broken) drawCoin(c, i, hov); });
+    G.coins.forEach((c, i) => { if (!c.broken) drawCoin(c, i, hov); });
+    drawBursts(dt);
+    drawAim();
+    drawTool();
+    drawPopups(dt);
+    ctx.restore();
+  }
+  requestAnimationFrame(frame);
+}
+
+/* ---------------- Boot ---------------- */
+catchUp();
+goMap();
+requestAnimationFrame(frame);
+/* v5 edits: nerd shop, bike-kid map event, real flips, sizes, degradation */
+</script>
+</body>
+</html>

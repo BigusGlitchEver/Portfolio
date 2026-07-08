@@ -1,0 +1,2700 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="robots" content="noindex, nofollow">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Beaver Necromancer - Phase 7.0</title>
+    <style>
+        html, body { margin: 0; padding: 0; overflow: hidden; background-color: #0a0a0a; font-family: 'Courier New', Courier, monospace; width: 100%; height: 100%; }
+        canvas { display: block; touch-action: none; }
+        * { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
+        #rotate { display: none; position: fixed; inset: 0; z-index: 10; background: #0a0a0a; color: #ce93d8; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 24px; }
+        #rotate .icon { font-size: 64px; animation: spin 2.4s ease-in-out infinite; }
+        #rotate p { font-size: 18px; color: #fff; margin-top: 18px; }
+        #rotate small { color: #8a8a8a; margin-top: 6px; }
+        @keyframes spin { 0%,40% { transform: rotate(0deg); } 60%,100% { transform: rotate(90deg); } }
+        @media (orientation: portrait) and (max-width: 900px) { #rotate { display: flex; } }
+    </style>
+</head>
+<body>
+    <div id="rotate">
+        <div class="icon">📱</div>
+        <p>Please rotate your device</p>
+        <small>This game plays in landscape</small>
+    </div>
+    <canvas id="gameCanvas"></canvas>
+    <script>
+    'use strict';
+    // ================================================================
+    //  BEAVER NECROMANCER — PHASE 7.0
+    //  Architecture map (single file, labeled sections, in order):
+    //    BOOT · CONFIG · DATA · AUDIO · STATE · FLOW · INPUT · WORLD
+    //    SPAWN · SYSTEMS · FRENZY · MISSION · RENDER · SCENES · LOOP
+    //  Endless mode reproduces the Phase 6.1 build (see GDD v7).
+    // ================================================================
+
+    // ============================== BOOT ==============================
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    function resize() {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const w = window.innerWidth, h = window.innerHeight;
+        canvas.style.width = w + 'px';
+        canvas.style.height = h + 'px';
+        canvas.setAttribute('width', Math.round(w * dpr));
+        canvas.setAttribute('height', Math.round(h * dpr));
+        Object.defineProperty(canvas, 'width', { configurable:true, get(){ return w; } });
+        Object.defineProperty(canvas, 'height', { configurable:true, get(){ return h; } });
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        initWorld();
+    }
+    window.addEventListener('resize', resize);
+    window.addEventListener('orientationchange', () => setTimeout(resize, 150));
+
+    // ============================= CONFIG =============================
+    // All tuning constants. Raw per-frame values; effective speed is
+    // halved by the global frame-skip in LOOP (see GDD §5).
+    const FISH_COUNTERS = 2;
+    const FISH_SPEED = 1.4;
+    const MAX_SALMON = 40;
+    const MAX_WORKERS = 600;   // collect a real horde — crowd physics keeps it cheap
+    const MAX_ENEMIES = 80;
+    const MAX_PROJECTILES = 120;
+    const TREE_RESPAWN_TIME = 600;
+    const ATTACK_INTERVAL = 18;
+    const GUARD_DURATION = 900;
+    const WORKER_FIRE_RANGE = 210;
+    const WORKER_FIRE_INTERVAL = 50;
+    const BIRD_UNLOCK_LEVEL = 6;
+    const BIRD_SPEED = 2.6;
+    const BIRD_ALTITUDE = 95;
+    const BIRD_SPAWN_MIN = 540;
+    const BIRD_SPAWN_VAR = 720;
+    const EGG_GRAVITY = 0.30;
+    const EGG_RADIUS = 64;
+    const EGG_DMG = 25;
+    const EXPLO_LIFE = 18;
+    const MAX_BIRDS = 4;
+    const MAX_EGGS = 12;
+    const MAX_EXPLOSIONS = 12;
+    const ENEMY_ATTACK_INTERVAL = 30;
+    const DAM_REGEN = 0.03;
+    const ENEMY_SPAWN_MIN = 420;
+    const ENEMY_SPAWN_VAR = 480;
+    const BEAVER_MAX_HP = 100;
+    const SALMON_HEAL = 5;
+    const BEAVER_STUN = 120;
+    const PROJ_SPEED = 4.2;
+    const FLASH_FRAMES = 6;
+    const SLOWMO_FACTOR = 0.15;
+    const BOSS_FIRST_LEVEL = 8;
+    // --- Phase 7 additions ---
+    const FRENZY_MAX = 100;
+    const FRENZY_DURATION = 360;
+    const FRENZY_SPEED_MULT = 1.8;
+    const FRENZY_DMG_BONUS = 1;
+    const FRENZY_GAIN_SALMON = 2;
+    const FRENZY_GAIN_ZOMBIFY = 6;
+    const FRENZY_GAIN_BERSERK = 10;
+    const FRENZY_HUNT_RADIUS = 260;
+    const FRENZY_RING_START = 42;      // first orbit ring radius around the beaver
+    const FRENZY_RING_GAP = 27;        // spacing between rings
+    const FLOOD_WAVE_SPEED = 6;
+    const BASE_SPAWN_MIN = 380;
+    const BASE_SPAWN_VAR = 420;
+    const BIRD_COUNTERS = 2;           // birds can be shot down by ranged defenders
+    const BIRD_SNIPE_RANGE_FRAC = 1/3; // ...within a third of the screen
+    const SPEEDS = [1, 1.5, 2];        // world-speed toggle
+
+    // ============================== DATA ==============================
+    const STATE = { GATHERING:'Gathering', HAULING:'Hauling', DEFENDING:'Defending', IDLE:'Idle', SWINGING:'Chopping...', BERSERK:'Berserk', BUILDING:'Building', DIGGING:'Digging' };
+    // Data-driven creature table. Adding an enemy = one row here + one
+    // branch in drawShape(). counters = hits to kill = trips as a zombie.
+    const KIND = {
+        developer:   { shape:'dev',    counters:2, speed:0.85, damDamage:5,  touchDmg:3, zombieDur:3, lane:'land',  target:'dam',    unlock:2, weight:10, workerSpeed:0.95 },
+        bear:        { shape:'bear',   counters:7, speed:0.70, damDamage:10, touchDmg:6, zombieDur:8, lane:'land',  target:'dam',    unlock:3, weight:6,  workerSpeed:0.80 },
+        kayak:       { shape:'kayak',  counters:3, speed:1.30, damDamage:5,  touchDmg:3, zombieDur:4, lane:'river', target:'dam',    unlock:4, weight:7,  workerSpeed:1.45 },
+        hunter:      { shape:'hunter', counters:3, speed:1.00, damDamage:0,  touchDmg:2, zombieDur:4, lane:'river', target:'beaver', unlock:5, weight:6,  workerSpeed:1.00, ranged:true, fireRange:260, fireInterval:90, projDmg:8 },
+        doublekayak: { shape:'kayak2', counters:6, speed:1.00, damDamage:8,  touchDmg:4, zombieDur:3, lane:'river', target:'dam',    unlock:6, weight:4,  workerSpeed:1.35, splitOnDeath:2, zombieShape:'kayak', zombieCounters:3 },
+        drone:       { shape:'drone',  counters:4, speed:1.10, damDamage:0,  touchDmg:0, zombieDur:5, lane:'land',  target:'dam',    unlock:7, weight:4,  workerSpeed:1.10, ranged:true, fireRange:240, fireInterval:110, projDmg:6 },
+        piranha:     { shape:'piranha',counters:3, speed:1.15, damDamage:0,  touchDmg:3, zombieDur:6, lane:'river', target:'worker', unlock:3, weight:5,  workerSpeed:1.25, huntsWorkers:true, becomesBerserker:true }
+    };
+    const UPGRADES = [
+        { name:'Sharper Teeth',     desc:'+1 damage on every undead hit', apply:()=>{ UP.dmgPerHit += 1; } },
+        { name:'Thick Bones',       desc:'All fish gain +1 counter (now and future)', apply:()=>{ UP.fishCounters += 1; for (let w of workerPool) if (w.active && w.shape==='fish') { w.counters++; w.maxCounters++; } floatText(beaver.x, beaver.y-40, '+1 FISH COUNTER', '#80d8ff'); } },
+        { name:'Dark Vigor',        desc:'All undead move 18% faster',    apply:()=>{ UP.workerSpeedMult *= 1.18; } },
+        { name:'Wider Dread',       desc:'Necrotic aura +25% radius',     apply:()=>{ UP.auraMult *= 1.25; floatText(beaver.x, beaver.y-40, 'AURA +25%', '#ce93d8'); } },
+        { name:'Frenzy',            desc:'Undead attack 20% faster',      apply:()=>{ UP.attackInterval = Math.max(5, Math.round(UP.attackInterval*0.8)); } },
+        { name:'Spawning Run',      desc:'Salmon arrive more often',      apply:()=>{ UP.salmonEvery = Math.max(15, Math.round(UP.salmonEvery*0.6)); } },
+        { name:'Necrotic Vitality', desc:'+30 max HP, heal to full',      apply:()=>{ beaver.maxHp += 30; beaver.hp = beaver.maxHp; } },
+        { name:'Grave Bounty',      desc:'Zombies rise with +1 counter',  apply:()=>{ UP.zombieBonus += 1; } },
+        { name:'Glutton',           desc:'Salmon heal +4 more',           apply:()=>{ UP.heal += 4; } }
+    ];
+    // ---- DAM PERMITS: dam upgrades. All perfectly normal municipal
+    //      improvements. Do not read the fine print. ----
+    const DAM_UP = { regenMult:1, resist:1, soulXp:0 };
+    const DAM_UPGRADES = [
+        { isDam:true, name:'Cozy Moss Insulation',    desc:'The dam takes 25% less damage (the moss whispers)',          apply:()=>{ DAM_UP.resist *= 0.75; } },
+        { isDam:true, name:'Artisanal Bone Mortar',   desc:'Dam regenerates 3x faster (locally sourced skeletons)',      apply:()=>{ DAM_UP.regenMult *= 3; } },
+        { isDam:true, name:'Soul-Powered Turbine',    desc:'Each salmon soul also grants +1 dam XP (100% clean energy)', apply:()=>{ DAM_UP.soulXp += 1; } },
+        { isDam:true, name:'Community Fish Ladder',   desc:'Salmon arrive 30% more often (one-way trip)',                apply:()=>{ UP.salmonEvery = Math.max(10, Math.round(UP.salmonEvery*0.7)); } },
+        { isDam:true, name:'Rustic Curb Appeal',      desc:'+50 dam max HP (the reviews are glowing. literally)',        apply:()=>{ dam.maxHp += 50; dam.hp += 50; } },
+        { isDam:true, name:'Grand Reopening Sale',    desc:'Instantly gain half a level of dam XP (everything must go)', apply:()=>{ dam.xp += Math.ceil(dam.xpToNext/2); } }
+    ];
+    // Game modes. Systems read MODE instead of branching on strings.
+    const MODES = {
+        endless: { id:'endless', boss:true,  base:false, floodTarget:null, winState:false,
+                   title:'ENDLESS', desc:'One river. One dam. Survive and grow.' },
+        flood:   { id:'delta',   boss:false, base:false, delta:true, floodTarget:5, winState:true,
+                   title:'REROUTE THE RIVER', desc:'The river forks around two enemy camps. Dam one branch, then release the reservoir — the whole river takes the other path.' },
+        lodge:   { id:'lodge',   boss:true,  base:false, delta:false, floodTarget:null, winState:true, surviveFrames: 10800,
+                   title:'THE LAST LODGE', desc:'Six minutes. Every developer in the county. Hold the dam until the permits expire.' },
+        hunt:    { id:'hunt',    boss:true,  base:false, delta:false, floodTarget:null, winState:true, bossHunt:3,
+                   title:'SINK THE FLEET', desc:'Three trawlers are coming upriver, one after another. Send every one of them to the bottom.' }
+    };
+    const MISSION_LIST = [MODES.flood, MODES.lodge, MODES.hunt];
+    let missionIdx = 0;
+    let bossKills = 0;
+
+    // ============================= AUDIO ==============================
+    let audioCtx = null;
+    function audioResume() { try { if (!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)(); if (audioCtx.state==='suspended') audioCtx.resume(); startMusic(); } catch(e){} }
+    function tone(freq, dur, type, vol, slideTo) {
+        if (!audioCtx) return;
+        let o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = type||'square'; o.frequency.value = freq;
+        if (slideTo) o.frequency.exponentialRampToValueAtTime(Math.max(1,slideTo), audioCtx.currentTime+dur);
+        g.gain.value = vol||0.08; g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime+dur);
+        o.connect(g); g.connect(audioCtx.destination); o.start(); o.stop(audioCtx.currentTime+dur+0.02);
+    }
+    function noise(dur, vol) {
+        if (!audioCtx) return;
+        let n = Math.floor(audioCtx.sampleRate*dur), buf = audioCtx.createBuffer(1,n,audioCtx.sampleRate), d = buf.getChannelData(0);
+        for (let i=0;i<n;i++) d[i] = (Math.random()*2-1)*(1-i/n);
+        let s = audioCtx.createBufferSource(); s.buffer=buf; let g = audioCtx.createGain(); g.gain.value=vol||0.12;
+        s.connect(g); g.connect(audioCtx.destination); s.start();
+    }
+    const SFX = {
+        zap:  ()=> tone(680,0.08,'sawtooth',0.05,1300),
+        chop: ()=> tone(190,0.04,'square',0.04,120),
+        thunk:()=> tone(150,0.10,'triangle',0.07,80),
+        level:()=>{ tone(440,0.12,'square',0.07,660); setTimeout(()=>tone(700,0.14,'square',0.07,920),90); },
+        hit:  ()=> noise(0.05,0.10),
+        raise:()=> tone(180,0.22,'sawtooth',0.07,520),
+        pew:  ()=> tone(950,0.07,'square',0.04,320),
+        hurt: ()=>{ noise(0.08,0.16); tone(150,0.12,'square',0.09,70); },
+        stun: ()=> tone(240,0.40,'sine',0.11,60),
+        chirp:()=> tone(1300,0.06,'square',0.04,1900),
+        boom: ()=>{ noise(0.25,0.22); tone(90,0.30,'sine',0.14,40); },
+        over: ()=>{ tone(330,0.5,'sawtooth',0.12,70); setTimeout(()=>tone(160,0.6,'sawtooth',0.12,50),140); },
+        horn: ()=>{ tone(110,0.7,'sawtooth',0.14,90); setTimeout(()=>tone(90,0.8,'sawtooth',0.14,70),200); },
+        fanfare: ()=>{ tone(523,0.18,'square',0.1,660); setTimeout(()=>tone(660,0.18,'square',0.1,784),140); setTimeout(()=>tone(784,0.3,'square',0.1,1046),300); },
+        frenzy: ()=>{ tone(70,0.6,'sawtooth',0.16,240); noise(0.3,0.14); },
+        flood: ()=>{ noise(0.8,0.2); tone(60,1.2,'sine',0.16,30); }
+    };
+    // ---- Procedural music: a sweet woodland tune that collapses into a
+    //      slow, dark ritual while the horde is frenzied. No files. ----
+    const MUSIC = { on:true, next:0, step:0, timer:null };
+    function noteAt(t, freq, dur, type, vol) {
+        if (!audioCtx) return;
+        let o = audioCtx.createOscillator(), g = audioCtx.createGain();
+        o.type = type; o.frequency.value = freq;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(vol, t+0.03);
+        g.gain.exponentialRampToValueAtTime(0.0001, t+dur);
+        o.connect(g); g.connect(audioCtx.destination);
+        o.start(t); o.stop(t+dur+0.05);
+    }
+    const SWEET_MELODY = [523,0,659,0, 784,0,659,523, 587,0,659,587, 523,0,440,0, 523,0,659,784, 880,0,784,659, 587,659,587,523, 440,0,0,0];
+    const SWEET_BASS   = [131,165,175,131];
+    const DARK_BASS    = [55,0,0,0, 77.8,0,0,0, 55,0,0,0, 58.3,0,73.4,0];
+    function musicTick() {
+        if (!audioCtx || !MUSIC.on) return;
+        let ok = (gameState==='playing' || gameState==='paused' || gameState==='menu' || gameState==='briefing' || gameState==='missionSelect');
+        while (MUSIC.next < audioCtx.currentTime + 0.3) {
+            let dark = frenzyTimer > 0 && gameState==='playing';   // the pause menu stays cute
+            let spb = dark ? 0.42 : 0.17;
+            if (ok) {
+                if (dark) {
+                    let b = DARK_BASS[MUSIC.step % DARK_BASS.length];
+                    if (b) { noteAt(MUSIC.next, b, spb*3.2, 'sawtooth', 0.05); noteAt(MUSIC.next, b*1.5, spb*3.2, 'sine', 0.02); }
+                    if (MUSIC.step % 16 === 8) noteAt(MUSIC.next, 622, 1.2, 'sine', 0.02);
+                    if (MUSIC.step % 8 === 4)  noteAt(MUSIC.next, 92.5, spb*2, 'triangle', 0.035);
+                } else {
+                    let m = SWEET_MELODY[MUSIC.step % SWEET_MELODY.length];
+                    if (m) noteAt(MUSIC.next, m, 0.22, 'triangle', 0.03);
+                    if (MUSIC.step % 4 === 0) noteAt(MUSIC.next, SWEET_BASS[Math.floor(MUSIC.step/4) % SWEET_BASS.length], 0.4, 'sine', 0.028);
+                    if (MUSIC.step % 8 === 6) noteAt(MUSIC.next, 1046, 0.12, 'sine', 0.012);
+                }
+            }
+            MUSIC.next += spb; MUSIC.step++;
+        }
+    }
+    function startMusic() {
+        if (MUSIC.timer || !audioCtx) return;
+        MUSIC.next = audioCtx.currentTime + 0.1;
+        MUSIC.timer = setInterval(musicTick, 80);
+    }
+    // Throttle every SFX: mass melee used to fire dozens of sounds per frame,
+    // which tanked the framerate (felt like slow motion during Frenzy).
+    const __sfxLast = {};
+    for (const __k of Object.keys(SFX)) {
+        const __fn = SFX[__k];
+        SFX[__k] = () => { if (frameCount - (__sfxLast[__k]||-99) < 4) return; __sfxLast[__k] = frameCount; __fn(); };
+    }
+
+    // ============================= STATE ==============================
+    // Every mutable global lives here.
+    let gameState = 'intro';   // 'intro'|'menu'|'missionSelect'|'playing'|'paused'|'over'|'won'
+    let MODE = MODES.endless;
+    let keys = {};
+    let mouse = { x: 0, y: 0 };
+    let frameCount = 0;
+    let runFrames = 0;
+    let lastChopSfx = 0;
+    let riverLeft, riverRight, riverWidth;
+    let currentAura = 40;
+    let enemySpawnTimer = 600;
+    let salmonTimer = 60;
+    let birdSpawnTimer = 720;
+    let trees = [];
+    let structures = [];              // flood mission: the developers' base
+    let salmonPool = [], workerPool = [], enemyPool = [], projPool = [];
+    let birdPool = [], eggPool = [], exploPool = [];
+    let poolsInitialized = false;
+    let raised = {};                  // skeleton roster tally, keyed by shape
+    let maxLevelReached = 1;
+    let choosingUpgrade = false;
+    let currentChoices = [], upgradeButtons = [], pendingBoons = 0;
+    let jobMenu = { open:false, worker:null, buttons:[] };
+    let slowmoAccum = 0;
+    let menuButtons = [];             // hit targets for menu / mission select
+    let introPanel = 0, introShownAt = 0;
+    const INTRO_PANELS = 4;
+    // Frenzy ability
+    let frenzyCharge = 0, frenzyTimer = 0, frenzyBtn = null;
+    // Flood mission script
+    let flood = { active:false, y:0, raised:0, shake:0, split:false };
+    // Delta mission: river branches (each with an enemy outpost)
+    let branches = [];
+    let junctionY = 0;
+    // Drag-box: time stops while dragging; box selects fish or places a branch dam
+    let drag = { possible:false, active:false, sx:0, sy:0, x:0, y:0 };
+    let groupMenu = { open:false, workers:[], x:0, y:0, buttons:[] };
+    // World speed toggle + HUD buttons
+    let speedIdx = 0, speedBtn = null, quitBtn = null, resumeBtn = null;
+    let floatTexts = [];
+    let birdSkipNext = false;
+    // Water Burst: charges 3x faster than Frenzy; double-tap to detonate
+    let burstCharge = 0, burstFX = [];
+    let lastTap = { t:-9999, x:0, y:0 };
+    // Channels: player-drawn dig lines; dug trenches fill with overflow water
+    let channels = [];
+    let digDraw = { active:false, drawing:false, workers:[], pts:[] };
+    let pickingDam = { active:false, workers:[] };
+    // Dev toolkit knobs
+    let devAuraMult = 1, devWaveBonus = 0, devSpawnScale = 1, godMode = false, damGod = false;
+    let devRates = {};       // 'kind' / 'giant_kind' -> spawns per minute (dev toolkit)
+    let devRateAcc = {};
+    let decor = [], fireflies = [];
+    let bossNextLevel = BOSS_FIRST_LEVEL;
+
+    const beaver = { x:0, y:0, w:30, h:30, speed:2, tapSpeed:1.2, baseKillRadius:95, hp:BEAVER_MAX_HP, maxHp:BEAVER_MAX_HP, stun:0, hitFlash:0, tx:null, ty:null };
+    const dam = { x:0, y:0, w:0, h:30, level:1, xp:0, xpToNext:10, maxHp:100, hp:100, hitFlash:0 };
+    const boss = { active:false, x:0, y:0, w:180, h:96, counters:0, maxCounters:0, hitFlash:0, state:'approach', tier:0, damTimer:0, gunTimer:0, summonTimer:0, shoveTimer:0 };
+    // Live, stackable tuning the systems read instead of the raw constants.
+    const UP = { fishCounters:FISH_COUNTERS, dmgPerHit:1, auraMult:1, workerSpeedMult:1, attackInterval:ATTACK_INTERVAL, salmonEvery:60, heal:SALMON_HEAL, chopTime:40, zombieBonus:0 };
+
+    // ============================== FLOW ==============================
+    function advanceIntro() { introPanel++; if (introPanel >= INTRO_PANELS) { gameState='menu'; introPanel=0; } }
+    function startMode(mode) { resetGame(mode); gameState = 'playing'; }
+    function gameOver() { gameState = 'over'; SFX.over(); }
+    function winGame() { gameState = 'won'; SFX.fanfare(); }
+    function resetGame(mode) {
+        MODE = mode || MODE;
+        dam.level=1; dam.xp=0; dam.xpToNext=10; dam.maxHp=100; dam.hp=dam.maxHp; dam.h=30; dam.hitFlash=0;
+        beaver.maxHp=BEAVER_MAX_HP; beaver.hp=BEAVER_MAX_HP; beaver.stun=0; beaver.hitFlash=0; beaver.tx=null; beaver.ty=null;
+        jobMenu.open=false; jobMenu.worker=null; jobMenu.buttons=[]; slowmoAccum=0;
+        UP.fishCounters=FISH_COUNTERS; UP.dmgPerHit=1; UP.auraMult=1; UP.workerSpeedMult=1; UP.attackInterval=ATTACK_INTERVAL; UP.salmonEvery=60; UP.heal=SALMON_HEAL; UP.chopTime=40; UP.zombieBonus=0;
+        maxLevelReached=1; choosingUpgrade=false; currentChoices=[]; upgradeButtons=[]; pendingBoons=0;
+        DAM_UP.regenMult=1; DAM_UP.resist=1; DAM_UP.soulXp=0;
+        runFrames=0; raised={};
+        boss.active=false; boss.tier=0; bossNextLevel = MODE.bossHunt ? 4 : BOSS_FIRST_LEVEL; bossKills=0;
+        frenzyCharge=0; frenzyTimer=0;
+        flood.active=false; flood.y=0; flood.raised=0; flood.shake=0; flood.split=false;
+        drag.possible=false; drag.active=false;
+        groupMenu.open=false; groupMenu.workers=[]; groupMenu.buttons=[];
+        speedIdx=0; floatTexts=[]; branches=[]; birdSkipNext=false;
+        burstCharge=0; burstFX=[]; channels=[]; digDraw.active=false; digDraw.drawing=false; digDraw.workers=[]; digDraw.pts=[]; pickingDam.active=false; pickingDam.workers=[];
+        salmonTimer=60; enemySpawnTimer=600; birdSpawnTimer=720;
+        for (let s of salmonPool) s.active=false;
+        for (let w of workerPool) w.active=false;
+        for (let e of enemyPool) e.active=false;
+        for (let p of projPool) p.active=false;
+        for (let b of birdPool) b.active=false;
+        for (let e of eggPool) e.active=false;
+        for (let e of exploPool) e.active=false;
+        initWorld();
+    }
+    function offerUpgrades() {
+        // 2 beaver boons : 1 dam permit
+        let pool = UPGRADES.slice(); currentChoices = [];
+        for (let i=0;i<2 && pool.length;i++) currentChoices.push(pool.splice(Math.floor(Math.random()*pool.length),1)[0]);
+        currentChoices.push(DAM_UPGRADES[Math.floor(Math.random()*DAM_UPGRADES.length)]);
+        choosingUpgrade = true;
+    }
+    function applyUpgrade(u) { if (!u) return; u.apply(); choosingUpgrade=false; currentChoices=[]; upgradeButtons=[]; SFX.level(); if (pendingBoons>0) { pendingBoons--; offerUpgrades(); } }
+
+    // ============================== INPUT =============================
+    window.addEventListener('keydown', e => {
+        audioResume();
+        if (gameState==='intro') { gameState='menu'; return; }   // any key skips the comic
+        if (gameState==='menu') { if (e.key==='1') startMode(MODES.endless); else if (e.key==='2') { missionIdx = Math.floor(Math.random()*MISSION_LIST.length); gameState='missionSelect'; } return; }
+        if (gameState==='missionSelect') { if (e.key==='1'||e.key==='Enter') { resetGame(MISSION_LIST[missionIdx]); gameState='briefing'; } else if (e.key==='ArrowLeft') missionIdx=(missionIdx+MISSION_LIST.length-1)%MISSION_LIST.length; else if (e.key==='ArrowRight') missionIdx=(missionIdx+1)%MISSION_LIST.length; else if (e.key==='Escape') gameState='menu'; return; }
+        if (gameState==='briefing') { gameState='playing'; return; }
+        if (gameState==='over' || gameState==='won') { gameState='menu'; return; }
+        if (gameState==='paused') { if (e.key==='q'||e.key==='Q') { gameState='menu'; return; } if (e.key==='p'||e.key==='P'||e.key==='Escape') gameState='playing'; return; }
+        if (choosingUpgrade) { if (e.key==='1'||e.key==='2'||e.key==='3') applyUpgrade(currentChoices[+e.key-1]); return; }
+        if (e.key==='p'||e.key==='P'||e.key==='Escape') { gameState='paused'; return; }
+        if (e.key===' ') { tryFrenzy(); return; }
+        if (e.key==='f'||e.key==='F') { tryFlood(true); return; }
+        keys[e.key.toLowerCase()] = true;
+    });
+    window.addEventListener('keyup', e => keys[e.key.toLowerCase()] = false);
+
+    function openJobMenu(w) {
+        if (!w || w.shape==='berserker') return false;   // berserkers are committed
+        jobMenu.open = true; jobMenu.worker = w; jobMenu.buttons = [];
+        slowmoAccum = 0;
+        return true;
+    }
+    function closeJobMenu() { jobMenu.open=false; jobMenu.worker=null; jobMenu.buttons=[]; }
+    function assignJob(w, job, silent) {
+        if (!w) return;
+        w.targetTree=null; w.attackTimer=0; w.guardX=null; w.guardTimer=0;
+        if (job==='gather')      { w.buildBranch=null; w.digChannel=null; w.state = w.carryingLog ? STATE.HAULING : STATE.GATHERING; }
+        else if (job==='defend') { w.buildBranch=null; w.digChannel=null; w.state = STATE.DEFENDING; }
+        if (!silent) SFX.level();
+    }
+    // One option list for BOTH command wheels (tap-a-skeleton and box-select)
+    function commandOptions() {
+        let opts = [
+            { job:'gather', label:'GATHER', sub:'wood',    col:'#66bb6a', ang:-Math.PI*0.85 },
+            { job:'defend', label:'DEFEND', sub:'fight',   col:'#e53935', ang:-Math.PI*0.55 },
+            { job:'dig',    label:'DIG',    sub:'channel', col:'#8d6e63', ang:-Math.PI*0.25 }
+        ];
+        if (branches.some(b=>b.blueprint && !b.blocked)) opts.push({ job:'build', label:'BUILD', sub:'dam', col:'#4fc3f7', ang:Math.PI*0.05 });
+        return opts;
+    }
+    function startDigDraw(ws) {
+        digDraw.active = true; digDraw.drawing = false; digDraw.workers = ws; digDraw.pts = [];
+        floatText(beaver.x, beaver.y-50, 'DRAW THE CHANNEL — press and drag', '#8d6e63');
+    }
+    function assignBuild(ws, b) {
+        for (let w of ws) if (w.active) { w.buildBranch = b; w.digChannel=null; w.targetTree=null; w.state = w.carryingLog ? STATE.HAULING : STATE.GATHERING; }
+        floatText(b.cx, b.blueprint.y-40, ws.length + ' undead sent to build', '#4fc3f7');
+        SFX.level();
+    }
+    function startBuildPick(ws) {
+        let bps = branches.filter(b=>b.blueprint && !b.blocked);
+        if (!bps.length) { floatText(beaver.x, beaver.y-50, 'No dam site — drag a box on a branch first', '#ffd54f'); return; }
+        if (bps.length === 1) { assignBuild(ws, bps[0]); return; }
+        pickingDam.active = true; pickingDam.workers = ws;   // two sites: the player must pick one
+    }
+    function resolveDamPick(px, py) {
+        for (let b of branches) {
+            if (!b.blueprint || b.blocked) continue;
+            if (Math.abs(px-b.cx) < b.w/2+24 && Math.abs(py-b.blueprint.y) < 46) {
+                assignBuild(pickingDam.workers.filter(w=>w.active), b);
+                pickingDam.active=false; pickingDam.workers=[];
+                return;
+            }
+        }
+        pickingDam.active=false; pickingDam.workers=[];   // tapped elsewhere: cancel
+    }
+    function openGroupMenu(list, x, y) {
+        groupMenu.open = true; groupMenu.workers = list;
+        groupMenu.x = Math.max(110, Math.min(canvas.width-110, x));
+        groupMenu.y = Math.max(120, Math.min(canvas.height-90, y));
+        groupMenu.buttons = []; slowmoAccum = 0;
+    }
+    function closeGroupMenu() { groupMenu.open=false; groupMenu.workers=[]; groupMenu.buttons=[]; }
+    // Tap routing shared by mouse + touch. Returns true if consumed.
+    function handlePointerDown(px, py) {
+        audioResume();
+        if (gameState==='intro') { gameState='menu'; return true; }   // any tap skips the comic
+        if (gameState==='menu' || gameState==='missionSelect') {
+            for (let b of menuButtons) { if (px>b.x && px<b.x+b.w && py>b.y && py<b.y+b.h && !b.disabled) { b.action(); break; } }
+            return true;
+        }
+        if (gameState==='briefing') { gameState='playing'; return true; }
+        if (gameState==='over' || gameState==='won') { gameState='menu'; return true; }
+        if (gameState==='paused') {
+            if (quitBtn && px>quitBtn.x && px<quitBtn.x+quitBtn.w && py>quitBtn.y && py<quitBtn.y+quitBtn.h) { gameState='menu'; return true; }
+            gameState='playing'; return true;
+        }
+        if (choosingUpgrade) { for (let b of upgradeButtons) { if (px>b.x && px<b.x+b.w && py>b.y && py<b.y+b.h) { applyUpgrade(currentChoices[b.idx]); break; } } return true; }
+        if (groupMenu.open) {
+            for (let b of groupMenu.buttons) { if (Math.hypot(px-b.x, py-b.y) < b.r) {
+                let ws = groupMenu.workers.filter(w=>w.active); closeGroupMenu();
+                if (b.job==='dig') startDigDraw(ws);
+                else if (b.job==='build') startBuildPick(ws);
+                else { for (let w of ws) assignJob(w, b.job, true); SFX.level(); }
+                return true; } }
+            closeGroupMenu(); return true;
+        }
+        if (jobMenu.open) {
+            for (let b of jobMenu.buttons) { if (Math.hypot(px-b.x, py-b.y) < b.r) {
+                let w1 = jobMenu.worker; closeJobMenu();
+                if (b.job==='dig') startDigDraw([w1]);
+                else if (b.job==='build') startBuildPick([w1]);
+                else assignJob(w1, b.job);
+                return true; } }
+            closeJobMenu(); return true;
+        }
+        // Speed toggle (top-right)
+        if (speedBtn && px>speedBtn.x && px<speedBtn.x+speedBtn.w && py>speedBtn.y && py<speedBtn.y+speedBtn.h) { speedIdx=(speedIdx+1)%SPEEDS.length; return true; }
+        // Frenzy HUD button (mobile + mouse parity)
+        if (frenzyBtn && Math.hypot(px-frenzyBtn.x, py-frenzyBtn.y) < frenzyBtn.r) { tryFrenzy(); return true; }
+        // Tap the dam to release the flood (when the reservoir is full)
+        if (floodReady() && Math.abs(px-dam.x) < dam.w/2 && Math.abs(py-dam.y) < dam.h/2 + 18) { tryFlood(false); return true; }
+        let w = workerAt(px, py);
+        if (w) { openJobMenu(w); return true; }
+        return false;   // empty ground: caller moves the beaver
+    }
+    // ---- Press/drag routing: a short press is a tap; dragging a box (time
+    //      stops) selects a group of undead or, in the delta mission, places
+    //      a branch-dam blueprint. ----
+    function startPress(px, py) {
+        mouse.x=px; mouse.y=py;
+        if (digDraw.active) { digDraw.drawing = true; digDraw.pts = [{x:px, y:py}]; return; }   // channel drawing (time is stopped)
+        if (pickingDam.active) return;
+        if (gameState==='playing' && !choosingUpgrade && !jobMenu.open && !groupMenu.open && !flood.active) {
+            drag.possible = true; drag.sx = px; drag.sy = py; drag.x = px; drag.y = py;
+        }
+    }
+    function movePress(px, py) {
+        mouse.x=px; mouse.y=py;
+        if (digDraw.drawing) {
+            let last = digDraw.pts[digDraw.pts.length-1];
+            if (Math.hypot(px-last.x, py-last.y) >= 14 && digDraw.pts.length < 90) digDraw.pts.push({x:px, y:py});
+            return;
+        }
+        if (!drag.possible) return;
+        drag.x = px; drag.y = py;
+        if (!drag.active && Math.hypot(px-drag.sx, py-drag.sy) > 14) drag.active = true;   // time stops
+    }
+    function endPress(px, py) {
+        if (digDraw.drawing) { finalizeDig(); return; }
+        if (digDraw.active) { digDraw.active=false; digDraw.workers=[]; floatText(px, py-20, 'dig cancelled', '#8a8a8a'); return; }
+        if (pickingDam.active) { resolveDamPick(px, py); return; }
+        let wasDrag = drag.active;
+        drag.possible = false; drag.active = false;
+        if (wasDrag) { finishDrag(); return; }
+        // double-tap on open ground = WATER BURST (when charged)
+        let now = Date.now();
+        if (gameState==='playing' && !choosingUpgrade && !jobMenu.open && !groupMenu.open &&
+            now - lastTap.t < 350 && Math.hypot(px-lastTap.x, py-lastTap.y) < 34 && burstCharge >= FRENZY_MAX && !workerAt(px,py)) {
+            lastTap.t = -9999;
+            waterBurst(px, py);
+            return;
+        }
+        lastTap.t = now; lastTap.x = px; lastTap.y = py;
+        if (handlePointerDown(px, py)) return;
+        if (gameState==='playing') { beaver.tx=Math.max(15,Math.min(canvas.width-15,px)); beaver.ty=Math.max(15,Math.min(canvas.height-15,py)); }
+    }
+    function finalizeDig() {
+        let ws = digDraw.workers.filter(w=>w.active);
+        if (digDraw.pts.length >= 2 && ws.length) {
+            let ch = { pts: digDraw.pts.map(p=>({x:p.x, y:p.y, dug:false})), filled:false, done:false };
+            if (channels.length >= 8) channels.shift();
+            channels.push(ch);
+            for (let w of ws) { w.digChannel = ch; w.buildBranch=null; w.targetTree=null; w.state = STATE.DIGGING; }
+            floatText(digDraw.pts[0].x, digDraw.pts[0].y-20, ws.length + ' undead digging', '#8d6e63');
+            SFX.thunk();
+        }
+        digDraw.active=false; digDraw.drawing=false; digDraw.workers=[]; digDraw.pts=[];
+    }
+    function finishDrag() {
+        let x1=Math.min(drag.sx,drag.x), x2=Math.max(drag.sx,drag.x), y1=Math.min(drag.sy,drag.y), y2=Math.max(drag.sy,drag.y);
+        let group = workerPool.filter(w => w.active && w.shape!=='berserker' && w.x>x1 && w.x<x2 && w.y>y1 && w.y<y2);
+        if (group.length) { openGroupMenu(group, (x1+x2)/2, (y1+y2)/2); return; }
+        if (MODE.delta) {
+            let cyy = (y1+y2)/2;
+            for (let b of branches) {
+                if (b.blocked || b.blueprint) continue;
+                if (cyy > b.topY+10 && cyy < b.botY-80 && x2 > b.cx-b.w/2 && x1 < b.cx+b.w/2) {
+                    b.blueprint = { y: cyy, need: Math.max(6, Math.round(b.w/9)), have: 0 };
+                    floatText(b.cx, cyy-24, 'DAM SITE — send fish to BUILD', '#4fc3f7');
+                    SFX.thunk();
+                    return;
+                }
+            }
+        }
+    }
+    canvas.addEventListener('mousedown', e => { audioResume(); startPress(e.clientX, e.clientY); });
+    canvas.addEventListener('mousemove', e => { movePress(e.clientX, e.clientY); });
+    window.addEventListener('mouseup', e => { endPress(e.clientX, e.clientY); });
+    canvas.addEventListener('contextmenu', e => { e.preventDefault(); });
+    function workerAt(px, py) {
+        let best = null, bestDist = 28;
+        for (let w of workerPool) { if (!w.active) continue; let d = Math.hypot(px - w.x, py - w.y); if (d < bestDist) { bestDist = d; best = w; } }
+        return best;
+    }
+    function touchPoint(t) { let r = canvas.getBoundingClientRect(); return { x: t.clientX - r.left, y: t.clientY - r.top }; }
+    canvas.addEventListener('touchstart', e => { e.preventDefault(); audioResume(); let p = touchPoint(e.changedTouches[0]); startPress(p.x, p.y); }, { passive:false });
+    canvas.addEventListener('touchmove',  e => { e.preventDefault(); let p = touchPoint(e.changedTouches[0]); movePress(p.x, p.y); }, { passive:false });
+    canvas.addEventListener('touchend',   e => { e.preventDefault(); let p = touchPoint(e.changedTouches[0]); endPress(p.x, p.y); }, { passive:false });
+    canvas.addEventListener('touchcancel', e => { drag.possible=false; drag.active=false; }, { passive:false });
+    window.addEventListener('blur', () => { drag.possible=false; drag.active=false; keys={}; });
+
+    // ============================== WORLD =============================
+    function initWorld() {
+        riverLeft = canvas.width / 3; riverRight = (canvas.width / 3) * 2; riverWidth = riverRight - riverLeft;
+        dam.w = riverWidth; dam.x = riverLeft + (riverWidth / 2); dam.y = canvas.height * 0.25;
+        beaver.x = canvas.width / 2; beaver.y = canvas.height * 0.75;
+        if (MODE.delta) buildDelta(); else { branches = []; junctionY = canvas.height; }
+        generateForest();
+        generateDecor();
+        structures = [];
+        if (MODE.base) buildBase();
+        if (!poolsInitialized) {
+            for (let i=0;i<MAX_SALMON;i++) salmonPool.push(createSalmon());
+            for (let i=0;i<MAX_WORKERS;i++) workerPool.push(createWorker());
+            for (let i=0;i<MAX_ENEMIES;i++) enemyPool.push(createEnemy());
+            for (let i=0;i<MAX_PROJECTILES;i++) projPool.push({ active:false, x:0, y:0, vx:0, vy:0, dmg:0, kind:'enemyBeaver' });
+            for (let i=0;i<MAX_BIRDS;i++) birdPool.push({ active:false, x:0, y:0, vx:0, dropX:0, dropped:false });
+            for (let i=0;i<MAX_EGGS;i++) eggPool.push({ active:false, x:0, y:0, y0:0, vy:0, landY:0 });
+            for (let i=0;i<MAX_EXPLOSIONS;i++) exploPool.push({ active:false, x:0, y:0, r:0, life:0 });
+            poolsInitialized = true;
+        }
+    }
+    function generateForest() {
+        trees = [];
+        const rows = 6, cols = 3;
+        for (let side=0; side<2; side++) {
+            let bankLeft, bankRight;
+            if (side===0) { bankLeft = 30; bankRight = riverLeft - 40; }
+            else { bankLeft = riverRight + 40; bankRight = canvas.width - 30; }
+            let bankWidth = bankRight - bankLeft;
+            if (bankWidth <= 0) continue;
+            let forestBottom = MODE.base ? canvas.height*0.72 : canvas.height - 120;
+            let colWidth = bankWidth / cols, rowHeight = (forestBottom - 100) / rows;
+            for (let r=0;r<rows;r++) for (let c=0;c<cols;c++) {
+                let baseX = bankLeft + colWidth*c + colWidth/2, baseY = 100 + rowHeight*r + rowHeight/2;
+                let jx = (Math.random()-0.5)*colWidth*0.6, jy = (Math.random()-0.5)*rowHeight*0.6;
+                trees.push({ x:baseX+jx, y:baseY+jy, active:true, hp:3, respawnTimer:0 });
+            }
+        }
+        // Delta: no trees in the water or on the outposts
+        if (MODE.delta) trees = trees.filter(t => !inWater(t.x, t.y) && t.y < canvas.height*0.78);
+    }
+    // ---- Delta world: the river forks below a junction into two branches,
+    //      each ending at an enemy outpost. The wide branch is a slower dam
+    //      build; the narrow one is quick. ----
+    // Woodland dressing: flowers, mushrooms, rocks, grass, stumps on the land.
+    function generateDecor() {
+        decor = []; fireflies = [];
+        const types = ['grass','grass','grass','flower','flower','mushroom','rock','fern','stump'];
+        let tries = 0;
+        while (decor.length < 80 && tries++ < 600) {
+            let x = 20 + Math.random()*(canvas.width-40), y = 70 + Math.random()*(canvas.height-100);
+            if (inWater(x, y)) continue;
+            if (MODE.delta && y > canvas.height*0.78) continue;
+            decor.push({ x, y, type: types[Math.floor(Math.random()*types.length)], seed: Math.random()*10 });
+        }
+        for (let i=0;i<14;i++) fireflies.push({ x: Math.random()*canvas.width, y: Math.random()*canvas.height, ph: Math.random()*Math.PI*2 });
+    }
+    function buildDelta() {
+        junctionY = canvas.height * 0.52;
+        let topY = junctionY + 70;
+        branches = [
+            { cx: canvas.width*0.20, w: riverWidth*0.95, topY, botY: canvas.height, blocked:false, blueprint:null,
+              outpost: { x: canvas.width*0.20, y: canvas.height-48, destroyed:false }, spawnTimer: 420 },
+            { cx: canvas.width*0.80, w: riverWidth*0.55, topY, botY: canvas.height, blocked:false, blueprint:null,
+              outpost: { x: canvas.width*0.80, y: canvas.height-48, destroyed:false }, spawnTimer: 660 }
+        ];
+    }
+    // Is this point in water? (endless: the river strip; delta: stem + fork channels + branches)
+    function inWater(x, y) {
+        for (let ch of channels) if (ch.filled) { for (let i=0;i<ch.pts.length;i+=2) { let p=ch.pts[i]; if (p.dug && Math.hypot(p.x-x, p.y-y) < 15) return true; } }
+        if (!MODE.delta) return x > riverLeft && x < riverRight;
+        if (y < junctionY) return x > riverLeft && x < riverRight;
+        for (let b of branches) {
+            if (y <= b.topY) {
+                let t = (y - junctionY) / (b.topY - junctionY);
+                let cx = dam.x + (b.cx - dam.x)*t, cw = riverWidth + (b.w - riverWidth)*t;
+                if (Math.abs(x - cx) < cw/2) return true;
+            } else if (Math.abs(x - b.cx) < b.w/2) return true;
+        }
+        return false;
+    }
+    // Pull a river creature back into the nearest channel at its y
+    function clampToWater(e) {
+        if (inWater(e.x, e.y)) return;
+        if (!MODE.delta) { e.x = Math.max(riverLeft+8, Math.min(riverRight-8, e.x)); return; }
+        if (e.y < junctionY) { e.x = Math.max(riverLeft+8, Math.min(riverRight-8, e.x)); return; }
+        let best=null, bd=Infinity;
+        for (let b of branches) {
+            let t = Math.min(1, (e.y - junctionY) / (b.topY - junctionY));
+            let cx = dam.x + (b.cx - dam.x)*t, cw = riverWidth + (b.w - riverWidth)*t;
+            let d = Math.abs(e.x - cx);
+            if (d < bd) { bd=d; best={cx, cw}; }
+        }
+        if (best) e.x = Math.max(best.cx-best.cw/2+8, Math.min(best.cx+best.cw/2-8, e.x));
+    }
+    // The developers' base: a construction compound across the bottom of the map.
+    function buildBase() {
+        let W = canvas.width, H = canvas.height;
+        structures = [
+            { type:'trailer', x: riverLeft*0.42,                       y: H*0.86, w:96,  h:46, ruined:false },
+            { type:'trailer', x: riverRight + (W-riverRight)*0.58,     y: H*0.88, w:96,  h:46, ruined:false },
+            { type:'crane',   x: riverRight + (W-riverRight)*0.22,     y: H*0.90, w:26,  h:110, ruined:false },
+            { type:'lumber',  x: riverLeft*0.75,                       y: H*0.94, w:74,  h:26, ruined:false },
+            { type:'lumber',  x: riverLeft + riverWidth*0.5,           y: H*0.955,w:80,  h:26, ruined:false },
+            { type:'fence',   x: W*0.5,                                y: H*0.80, w:W,   h:8,  ruined:false }
+        ];
+    }
+
+    // ============================== SPAWN =============================
+    function createSalmon() { return { active:false, x:0, y:0, wpX:null, wpY:null, speed:1+Math.random()*1.5, wiggleOffset:Math.random()*Math.PI*2, wiggleSpeed:0.05+Math.random()*0.05, size:20 }; }
+    function createWorker() { return { active:false, x:0, y:0, speed:FISH_SPEED, shape:'fish', ranged:false, scale:1, dmgMult:1, counters:1, maxCounters:1, state:STATE.GATHERING, carryingLog:false, harvestTimer:0, targetTree:null, attackTimer:0, fireTimer:0, hitFlash:0, guardX:null, guardY:0, guardTimer:0, depositX:0, wanderX:null, wanderY:0, wanderT:0, bob:0, spd:1 }; }
+    function createEnemy() { return { active:false, x:0, y:0, kind:'developer', counters:4, maxCounters:4, attackTimer:0, state:'approach', hitFlash:0, attackX:0, fromTop:false, scale:1 }; }
+    function spawnSalmon() {
+        for (let s of salmonPool) if (!s.active) {
+            s.active = true; s.wpX = null; s.wpY = null;
+            if (MODE.delta) {
+                // salmon run up an OPEN branch to the junction, then up the stem
+                let open = branches.filter(b=>!b.blocked);
+                let b = open.length ? open[Math.floor(Math.random()*open.length)] : null;
+                if (b) { s.x = b.cx + (Math.random()-0.5)*b.w*0.7; s.y = canvas.height + 20; s.wpX = dam.x + (Math.random()-0.5)*riverWidth*0.6; s.wpY = junctionY - 20; }
+                else { s.x = riverLeft + 20 + Math.random()*(riverWidth-40); s.y = junctionY - 20; }
+            } else { s.x = riverLeft + Math.random()*riverWidth; s.y = canvas.height + 20; }
+            break;
+        }
+    }
+    function spawnWorker(shape, x, y, counters, speed, ranged, scale, dmgMult) {
+        for (let w of workerPool) if (!w.active) {
+            w.active=true; w.x=x; w.y=y; w.shape=shape; w.scale=scale||1; w.dmgMult=dmgMult||1;
+            w.counters=counters; w.maxCounters=counters; w.speed=speed; w.ranged=!!ranged;
+            w.state=STATE.GATHERING; w.carryingLog=false; w.harvestTimer=0; w.targetTree=null;
+            w.attackTimer=0; w.fireTimer=0; w.hitFlash=0; w.guardX=null; w.guardTimer=0; w.depositX=0; w.wanderX=null; w.wanderT=0; w.buildBranch=null; w.digChannel=null;
+            w.bob = Math.random()*Math.PI*2; w.spd = 0.8 + Math.random()*0.3;
+            raised[shape] = (raised[shape]||0) + 1;
+            break;
+        }
+    }
+    function spawnEnemy(kind, branch) {
+        let k = KIND[kind];
+        for (let e of enemyPool) if (!e.active) {
+            e.active=true; e.kind=kind; e.counters=k.counters; e.maxCounters=k.counters; e.attackTimer=0; e.state='approach'; e.hitFlash=0; e.wpX=null; e.wpY=null; e.scale=1;
+            if (branch) {
+                // Delta: enemies pour out of the branch outposts and travel up the branch
+                e.x = branch.cx + (Math.random()-0.5)*branch.w*0.6;
+                e.y = canvas.height - 70 - Math.random()*30;
+                e.fromTop = false;
+                e.wpX = dam.x + (Math.random()-0.5)*riverWidth*0.5;
+                e.wpY = junctionY - 30;
+            } else {
+                // Developers ONLY come by land (sides); bears from any direction;
+                // everyone else from the sides or up the river.
+                let sides;
+                if (kind==='developer')  sides = ['left','right'];
+                else if (kind==='bear')  sides = ['top','bottom','left','right'];
+                else                     sides = ['bottom','left','right'];
+                let side = sides[Math.floor(Math.random()*sides.length)];
+                if (side==='top')         { e.x = dam.x + (Math.random()-0.5)*riverWidth*0.8; e.y = -20; e.fromTop = true; }
+                else if (side==='bottom') { e.x = riverLeft + 20 + Math.random()*(riverWidth-40); e.y = canvas.height + 20; e.fromTop = false; }
+                else if (side==='left')   { e.x = -20; e.y = dam.y + dam.h/2 + 40 + Math.random()*Math.max(40, canvas.height - dam.y - 100); e.fromTop = false; }
+                else                      { e.x = canvas.width + 20; e.y = dam.y + dam.h/2 + 40 + Math.random()*Math.max(40, canvas.height - dam.y - 100); e.fromTop = false; }
+            }
+            e.attackX = Math.max(dam.x - dam.w/2 + 12, Math.min(dam.x + dam.w/2 - 12, dam.x + (Math.random()-0.5)*(dam.w-24)));
+            return e;
+        }
+        return null;
+    }
+    // ---- GIANTS: every other dam level, a 2-3x sized elite marches in.
+    //      Kill it and its giant skeleton serves you (stronger, permanent). ----
+    function spawnGiant(forcedKind) {
+        let pool = ['developer','bear','kayak','hunter'].filter(k2 => dam.level >= KIND[k2].unlock - 1);
+        let kind = forcedKind || (pool.length ? pool[Math.floor(Math.random()*pool.length)] : 'developer');
+        let br = MODE.delta ? branches.filter(b=>!b.outpost.destroyed)[0] : undefined;
+        let e = spawnEnemy(kind, br);
+        if (!e) return;
+        e.scale = 2 + Math.random();               // 2x–3x
+        e.counters = KIND[kind].counters * 4; e.maxCounters = e.counters;
+        floatText(Math.max(60, Math.min(canvas.width-60, e.x)), Math.max(40, Math.min(canvas.height-40, e.y)), 'A GIANT ' + kind.toUpperCase() + ' APPROACHES', '#ff7043');
+        SFX.horn();
+    }
+    // Later-tier enemies grow more common as the dam grows: a real mixed army,
+    // not a wall of developers.
+    function pickEnemyKind() {
+        let pool = [];
+        for (let name in KIND) {
+            let k = KIND[name];
+            if (dam.level < k.unlock) continue;
+            let wgt = k.weight + Math.min(10, (dam.level - k.unlock) * 2);
+            for (let i=0;i<wgt;i++) pool.push(name);
+        }
+        return pool.length ? pool[Math.floor(Math.random()*pool.length)] : null;
+    }
+    function spawnProjectile(x, y, tx, ty, dmg, kind) {
+        let dx = tx-x, dy = ty-y, d = Math.hypot(dx,dy) || 1;
+        for (let p of projPool) if (!p.active) { p.active=true; p.x=x; p.y=y; p.vx=(dx/d)*PROJ_SPEED; p.vy=(dy/d)*PROJ_SPEED; p.dmg=dmg; p.kind=kind||'enemyBeaver'; break; }
+    }
+    // Corpse rises white, same (or split) shape, counters refilled, roaming free.
+    function zombify(e, silent) {
+        let k = KIND[e.kind];
+        let n = k.splitOnDeath || 1;
+        let zs = k.zombieShape || k.shape;
+        let zc = k.zombieCounters || k.zombieDur || k.counters;
+        let zr = (!k.zombieShape) && !!k.ranged;
+        let giant = (e.scale||1) > 1;
+        for (let i=0;i<n;i++) spawnWorker(zs, e.x + (i ? (Math.random()-0.5)*24 : 0), e.y, zc*(giant?3:1) + UP.zombieBonus, k.workerSpeed*UP.workerSpeedMult*(giant?0.9:1), zr, e.scale||1, giant?2:1);
+        gainFrenzy(FRENZY_GAIN_ZOMBIFY);
+        if (!silent) SFX.raise();
+    }
+    function spawnBerserker(x, y, k) {
+        for (let w of workerPool) if (!w.active) {
+            w.active=true; w.x=x; w.y=y; w.shape='berserker';
+            w.counters=k.zombieDur||6; w.maxCounters=w.counters; w.speed=k.workerSpeed*UP.workerSpeedMult*1.25; w.ranged=false;
+            w.state=STATE.BERSERK; w.carryingLog=false; w.harvestTimer=0; w.targetTree=null;
+            w.attackTimer=0; w.fireTimer=0; w.hitFlash=0; w.guardX=null; w.guardTimer=0;
+            w.depositX=0; w.wanderX=null; w.wanderT=0; w.bob=Math.random()*Math.PI*2; w.spd=0.9+Math.random()*0.2;
+            raised['berserker'] = (raised['berserker']||0) + 1;
+            gainFrenzy(FRENZY_GAIN_BERSERK);
+            break;
+        }
+    }
+    function spawnBird() {
+        for (let b of birdPool) if (!b.active) {
+            b.active = true;
+            let fromLeft = Math.random() < 0.5;
+            b.y = 60 + Math.random()*(canvas.height*0.42);
+            b.vx = BIRD_SPEED * (fromLeft ? 1 : -1);
+            b.x = fromLeft ? -30 : canvas.width + 30;
+            b.dropX = canvas.width*0.2 + Math.random()*canvas.width*0.6;
+            b.dropped = false;
+            b.counters = BIRD_COUNTERS;
+            break;
+        }
+    }
+    function spawnEgg(x, y) {
+        for (let e of eggPool) if (!e.active) { e.active = true; e.x = x; e.y = y; e.y0 = y; e.vy = 0; e.landY = y + BIRD_ALTITUDE; break; }
+    }
+    function spawnExplosion(x, y) {
+        for (let ex of exploPool) if (!ex.active) { ex.active=true; ex.x=x; ex.y=y; ex.r=0; ex.life=EXPLO_LIFE; break; }
+    }
+
+    // ============================= SYSTEMS ============================
+    function update() {
+        frameCount++;
+        if (gameState === 'intro') {   // the comic reads itself; any input skips it
+            if (frameCount - introShownAt > 100) { introShownAt = frameCount; advanceIntro(); }
+            return;
+        }
+        if (godMode) beaver.hp = beaver.maxHp;
+        if (damGod) dam.hp = dam.maxHp;
+        if (gameState !== 'playing' || choosingUpgrade) return;
+        if (drag.active || digDraw.active || pickingDam.active) return;   // time stops while commanding
+        if (jobMenu.open || groupMenu.open) {   // slow-mo while a command wheel is open
+            slowmoAccum += SLOWMO_FACTOR;
+            if (slowmoAccum < 1) return;
+            slowmoAccum -= 1;
+            if (jobMenu.open && (!jobMenu.worker || !jobMenu.worker.active)) closeJobMenu();
+        }
+        runFrames++;
+        if (MODE.surviveFrames && runFrames >= MODE.surviveFrames) { winGame(); return; }
+        currentAura = beaver.stun > 0 ? 0 : beaver.baseKillRadius * UP.auraMult * devAuraMult;
+        if (--salmonTimer <= 0) { spawnSalmon(); salmonTimer = UP.salmonEvery; }
+        if (frenzyTimer > 0) frenzyTimer--;
+        updateBeaver(); updateTrees(); updateSalmon(); updateWorkers(); workerPhysics(); updateEnemies(); updateBoss(); updateProjectiles(); updateBirds(); updateEggs(); updateExplosions(); updateDam(); updateFlood(); updateBurstFX(); updateFloatTexts();
+    }
+    function updateBeaver() {
+        if (beaver.hitFlash > 0) beaver.hitFlash--;
+        if (beaver.stun > 0) { beaver.stun--; if (beaver.stun === 0) beaver.hp = beaver.maxHp * 0.5; return; }
+        let dx=0, dy=0;
+        if (keys['w']||keys['arrowup']) dy=-1;
+        if (keys['s']||keys['arrowdown']) dy=1;
+        if (keys['a']||keys['arrowleft']) dx=-1;
+        if (keys['d']||keys['arrowright']) dx=1;
+        if (dx!==0||dy!==0) {
+            beaver.tx = null; beaver.ty = null;
+            if (dx!==0&&dy!==0) { dx*=0.707; dy*=0.707; }
+            beaver.x += dx*beaver.speed; beaver.y += dy*beaver.speed;
+        } else if (beaver.tx !== null) {
+            let ddx = beaver.tx - beaver.x, ddy = beaver.ty - beaver.y, d = Math.hypot(ddx, ddy);
+            if (d <= beaver.tapSpeed) { beaver.x = beaver.tx; beaver.y = beaver.ty; beaver.tx = null; beaver.ty = null; }
+            else { beaver.x += (ddx/d)*beaver.tapSpeed; beaver.y += (ddy/d)*beaver.tapSpeed; }
+        }
+        beaver.x = Math.max(15, Math.min(canvas.width-15, beaver.x));
+        beaver.y = Math.max(15, Math.min(canvas.height-15, beaver.y));
+    }
+    function updateTrees() { for (let t of trees) if (!t.active && !t.dead) { t.respawnTimer--; if (t.respawnTimer<=0) { t.active=true; t.hp=3; } } }
+    function updateSalmon() {
+        for (let s of salmonPool) {
+            if (!s.active) continue;
+            if (s.wpY !== null && s.wpY !== undefined) {
+                let dxw = s.wpX - s.x, dyw = s.wpY - s.y, dw = Math.hypot(dxw,dyw)||1;
+                s.x += (dxw/dw)*s.speed; s.y += (dyw/dw)*s.speed;
+                if (dw < 14) s.wpY = null;
+            } else s.y -= s.speed;
+            s.wiggleOffset += s.wiggleSpeed;
+            let drawX = s.x + Math.sin(s.wiggleOffset)*20;
+            if (currentAura > 0 && Math.hypot(drawX-beaver.x, s.y-beaver.y) < currentAura) {
+                s.active=false;
+                spawnWorker('fish', drawX, s.y, UP.fishCounters, FISH_SPEED*UP.workerSpeedMult);  // rises free
+                beaver.hp = Math.min(beaver.maxHp, beaver.hp + UP.heal);
+                if (DAM_UP.soulXp > 0) dam.xp += DAM_UP.soulXp;   // the turbine hums
+                gainFrenzy(FRENZY_GAIN_SALMON);
+                SFX.zap();
+                continue;
+            }
+            if (s.y < -30) s.active=false;
+        }
+    }
+    // ---- Crowd machinery: a uniform grid + a push-apart pass, so the horde
+    //      jostles and bounces off each other instead of stacking into one
+    //      pixel. Bodies may overlap a little on either side — no more. ----
+    const __grid = new Map();
+    function buildWorkerGrid() {
+        __grid.clear();
+        for (let w of workerPool) {
+            if (!w.active) continue;
+            let k2 = (Math.floor(w.x/36)*10000 + Math.floor(w.y/36));
+            let arr = __grid.get(k2); if (!arr) { arr=[]; __grid.set(k2, arr); }
+            arr.push(w);
+        }
+    }
+    function neighborsOf(w) {
+        let cx2 = Math.floor(w.x/36), cy2 = Math.floor(w.y/36), out=[];
+        for (let gx=cx2-1; gx<=cx2+1; gx++) for (let gy=cy2-1; gy<=cy2+1; gy++) {
+            let arr = __grid.get(gx*10000+gy); if (arr) for (let o of arr) out.push(o);
+        }
+        return out;
+    }
+    function workerPhysics() {
+        buildWorkerGrid();
+        for (let w of workerPool) {
+            if (!w.active) continue;
+            for (let o of neighborsOf(w)) {
+                if (o === w || !o.active) continue;
+                let minD = 13 * ((w.scale||1) + (o.scale||1)) / 2;
+                let dx = w.x-o.x, dy = w.y-o.y, d = Math.hypot(dx,dy);
+                if (d === 0) { w.x += Math.random()-0.5; w.y += Math.random()-0.5; continue; }
+                if (d < minD) { let push = (minD-d)/2; w.x += (dx/d)*push; w.y += (dy/d)*push; o.x -= (dx/d)*push; o.y -= (dy/d)*push; }
+            }
+        }
+    }
+    // Boids-style move: seek the goal, shove off neighbours, per-unit sway.
+    // (6.1's herd code, resurrected as the Frenzy swarm engine.)
+    function herdMove(w, gx, gy, spd) {
+        let dx = gx - w.x, dy = gy - w.y, gd = Math.hypot(dx,dy) || 1;
+        let vx = dx/gd, vy = dy/gd;
+        let sx = 0, sy = 0;
+        for (let o of neighborsOf(w)) {
+            if (o===w || !o.active) continue;
+            let ox = w.x-o.x, oy = w.y-o.y, od = Math.hypot(ox,oy);
+            if (od > 0 && od < 16) { sx += (ox/od)*(16-od)/16; sy += (oy/od)*(16-od)/16; }
+        }
+        let sway = Math.sin(frameCount*0.12 + w.bob) * 0.35;
+        let mx = vx + sx*1.3 + (-vy)*sway;
+        let my = vy + sy*1.3 + ( vx)*sway;
+        let md = Math.hypot(mx,my) || 1;
+        let s = (spd || w.speed) * w.spd;
+        w.x += (mx/md)*s; w.y += (my/md)*s;
+    }
+    function updateWorkers() {
+        buildWorkerGrid();
+        let frenzyIdx = 0;
+        for (let w of workerPool) {
+            if (!w.active) continue;
+            if (w.hitFlash > 0) w.hitFlash--;
+            if (frenzyTimer > 0) { updateFrenzied(w, frenzyIdx++); continue; }
+            // ---- BERSERKER: charges the nearest enemy anywhere, never gathers ----
+            if (w.state === STATE.BERSERK) {
+                if (boss.active && bossInReach()) { if (!workerHitBoss(w)) moveTowards2(w, boss.x, boss.y+boss.h/2, w.speed); continue; }
+                let e = findNearestEnemy(w.x, w.y, true);   // melee: can't reach flying drones
+                if (e) {
+                    let d = Math.hypot(e.x-w.x, e.y-w.y);
+                    if (d < 22 + (e.scale-1)*14) { w.attackTimer++; if (w.attackTimer >= UP.attackInterval) { w.attackTimer=0; e.counters-=UP.dmgPerHit*2*(w.dmgMult||1); e.hitFlash=FLASH_FRAMES; w.hitFlash=FLASH_FRAMES; SFX.hit(); } }
+                    else moveTowards2(w, e.x, e.y, w.speed);
+                } else {
+                    let px = dam.x + (Math.random()-0.5)*8;
+                    if (Math.hypot(px-w.x, (dam.y+40)-w.y) > 30) moveTowards2(w, px, dam.y+40, w.speed*0.6);
+                }
+                continue;
+            }
+            if (w.state === STATE.DEFENDING) {
+                if (boss.active) {
+                    w.guardTimer = GUARD_DURATION;
+                    let bx2=boss.x, by2=boss.y+boss.h/2, bd=Math.hypot(bx2-w.x, by2-w.y);
+                    if (w.ranged) { if (bd < WORKER_FIRE_RANGE) { w.fireTimer++; if (w.fireTimer>=WORKER_FIRE_INTERVAL){ w.fireTimer=0; spawnProjectile(w.x,w.y,bx2,by2,UP.dmgPerHit,'friendly'); SFX.pew(); } } else moveTowards(w, bx2, by2); }
+                    else { if (!workerHitBoss(w)) moveTowards(w, bx2, by2); }
+                    continue;
+                }
+                let e = findNearestEnemy(w.x, w.y, !w.ranged);   // melee defenders can't reach flying drones
+                if (e) {
+                    w.guardTimer = GUARD_DURATION;
+                    let d = Math.hypot(e.x-w.x, e.y-w.y);
+                    if (w.ranged) {
+                        if (d < WORKER_FIRE_RANGE) {
+                            w.fireTimer++;
+                            if (w.fireTimer >= WORKER_FIRE_INTERVAL) { w.fireTimer=0; spawnProjectile(w.x, w.y, e.x, e.y, UP.dmgPerHit, 'friendly'); SFX.pew(); }
+                            if (d < 22 + (e.scale-1)*14) { w.attackTimer++; if (w.attackTimer >= UP.attackInterval) { w.attackTimer=0; e.counters-=workerDmg(w); if (w.shape==='fish') w.counters--; e.hitFlash=FLASH_FRAMES; w.hitFlash=FLASH_FRAMES; if (w.counters<=0){ w.active=false; break; } } }
+                        } else { moveTowards(w, e.x, e.y); }
+                    } else {
+                        if (d < 24 + (e.scale-1)*14) {
+                            w.attackTimer++;
+                            if (w.attackTimer >= UP.attackInterval) { w.attackTimer=0; e.counters-=workerDmg(w); if (w.shape==='fish') w.counters--; e.hitFlash=FLASH_FRAMES; w.hitFlash=FLASH_FRAMES; SFX.hit(); if (w.counters<=0){ w.active=false; break; } }
+                        } else { moveTowards(w, e.x, e.y); }
+                    }
+                } else {
+                    // No ground threat: ranged defenders snipe bombing birds
+                    // within a third of the screen.
+                    if (w.ranged) {
+                        let bird=null, bm=canvas.width*BIRD_SNIPE_RANGE_FRAC;
+                        for (let b of birdPool) { if (!b.active) continue; let d2=Math.hypot(b.x-w.x, b.y-w.y); if (d2<bm) { bm=d2; bird=b; } }
+                        if (bird) { w.fireTimer++; if (w.fireTimer>=WORKER_FIRE_INTERVAL) { w.fireTimer=0; spawnProjectile(w.x, w.y, bird.x+bird.vx*12, bird.y, UP.dmgPerHit, 'friendly'); SFX.pew(); } }
+                    }
+                    // Guard duty: hold a random post on the dam, then back to work.
+                    if (w.guardX === null) { w.guardX = dam.x - dam.w/2 + 14 + Math.random()*(dam.w-28); w.guardY = dam.y + (Math.random()-0.5)*Math.max(10, dam.h); w.guardTimer = GUARD_DURATION; }
+                    if (Math.hypot(w.guardX-w.x, w.guardY-w.y) > 6) { moveTowards(w, w.guardX, w.guardY); }
+                    else { w.guardTimer--; if (w.guardTimer <= 0) { w.guardX = null; w.state = w.carryingLog ? STATE.HAULING : STATE.GATHERING; } }
+                }
+                continue;
+            }
+            // ---- DIGGING: excavate the drawn channel point by point ----
+            if (w.state === STATE.DIGGING) {
+                let ch = w.digChannel;
+                if (!ch || ch.done) { w.digChannel=null; w.state=STATE.GATHERING; continue; }
+                let pt = null;
+                for (let p2 of ch.pts) if (!p2.dug) { pt = p2; break; }
+                if (!pt) {
+                    ch.done = true; w.digChannel=null; w.state=STATE.GATHERING;
+                    floatText(ch.pts[0].x, ch.pts[0].y-18, 'CHANNEL DUG — waiting for water', '#8d6e63');
+                    continue;
+                }
+                let d = Math.hypot(pt.x-w.x, pt.y-w.y);
+                if (d < 12) {
+                    w.harvestTimer++;
+                    if (w.harvestTimer > 16) {
+                        w.harvestTimer = 0; pt.dug = true;
+                        if (frameCount - lastChopSfx > 4) { SFX.chop(); lastChopSfx = frameCount; }
+                        for (let t of trees) if (Math.hypot(t.x-pt.x, t.y-pt.y) < 28) { t.active=false; t.dead=true; }   // nothing grows over a trench
+                    }
+                } else moveTowards(w, pt.x, pt.y);
+                continue;
+            }
+            // ---- free undead worker: autonomous gather, haul to the dam ----
+            if (w.state===STATE.GATHERING || w.state===STATE.SWINGING || w.state===STATE.IDLE) {
+                if (!w.carryingLog) {
+                    if (!w.targetTree || !w.targetTree.active) { w.targetTree = findNearestTree(w.x, w.y); w.state=STATE.GATHERING; }
+                    if (w.targetTree) {
+                        let dist = Math.hypot(w.targetTree.x-w.x, w.targetTree.y-w.y);
+                        if (dist < 15) {
+                            w.state=STATE.SWINGING; w.harvestTimer++;
+                            if (w.harvestTimer > UP.chopTime) {
+                                w.harvestTimer=0; w.targetTree.hp--;
+                                if (frameCount - lastChopSfx > 4) { SFX.chop(); lastChopSfx = frameCount; }
+                                if (w.targetTree.hp <= 0) {
+                                    let treeX = w.targetTree.x, half = dam.w/2;
+                                    w.depositX = (treeX < dam.x) ? (dam.x - half + 12 + Math.random()*(half-24)) : (dam.x + 12 + Math.random()*(half-24));
+                                    w.targetTree.active=false; w.targetTree.respawnTimer=TREE_RESPAWN_TIME; w.carryingLog=true; w.state=STATE.HAULING; w.targetTree=null;
+                                }
+                            }
+                        } else { w.state=STATE.GATHERING; moveTowards(w, w.targetTree.x, w.targetTree.y); }
+                    } else { w.state=STATE.IDLE; }
+                }
+            } else if (w.state===STATE.HAULING) {
+                // Deliver to a branch-dam blueprint if assigned to BUILD, else to the main dam.
+                let bb = (w.buildBranch && w.buildBranch.blueprint && !w.buildBranch.blocked) ? w.buildBranch : null;
+                if (w.buildBranch && !bb) w.buildBranch = null;   // blueprint finished or washed out
+                let depositX, targetY;
+                if (bb) { depositX = bb.cx + (Math.random()-0.5)*4; targetY = bb.blueprint.y; }
+                else { depositX = Math.max(dam.x - dam.w/2 + 10, Math.min(dam.x + dam.w/2 - 10, w.depositX || dam.x)); targetY = dam.y + dam.h/2 + 14; }
+                if (Math.hypot(depositX-w.x, targetY-w.y) < 20) {
+                    w.carryingLog=false; SFX.thunk();
+                    if (bb) {
+                        bb.blueprint.have++;
+                        if (bb.blueprint.have >= bb.blueprint.need) { bb.blocked = true; floatText(bb.cx, bb.blueprint.y-26, 'BRANCH DAMMED — the water shifts', '#4fc3f7'); SFX.level(); }
+                    } else dam.xp++;
+                    if (w.shape==='fish') w.counters--;   // only fish wear out; raised zombies serve until destroyed
+                    if (w.counters <= 0) { w.active=false; } else { w.state=STATE.GATHERING; }
+                } else { moveTowards(w, depositX, targetY); }
+            }
+        }
+    }
+    function updateEnemies() {
+        if (dam.level >= 2 && !boss.active && !flood.active && !MODE.delta) {
+            enemySpawnTimer--;
+            if (enemySpawnTimer <= 0) {
+                // Waves scale with the dam: more enemies, more often, better mixed.
+                let count = 3 + Math.floor(dam.level/2) + devWaveBonus;
+                for (let i=0;i<count;i++) { let k = pickEnemyKind(); if (k) spawnEnemy(k); }
+                enemySpawnTimer = (Math.max(150, 360 - dam.level*15) + Math.random()*ENEMY_SPAWN_VAR*0.7) * devSpawnScale;
+            }
+        }
+        if (MODE.delta && dam.level >= 2 && !flood.active) {
+            for (let b of branches) {
+                if (b.outpost.destroyed) continue;
+                b.spawnTimer--;
+                if (b.spawnTimer <= 0) {
+                    let count = 3 + Math.floor(dam.level/2) + devWaveBonus;
+                    for (let i=0;i<count;i++) {
+                        let kk = pickEnemyKind(); if (!kk) continue;
+                        if (b.blocked && KIND[kk].lane === 'river') kk = 'developer';   // no water below your dam — boats can't come up
+                        spawnEnemy(kk, b);
+                    }
+                    let solo = branches.some(o => o!==b && o.outpost.destroyed) ? 0.55 : 1;   // the last camp fights harder
+                    b.spawnTimer = (BASE_SPAWN_MIN + Math.random()*BASE_SPAWN_VAR) * solo * devSpawnScale;
+                }
+            }
+        }
+        // Dev toolkit: exact per-minute spawn rates (1 minute = 1800 world ticks)
+        if (gameState === 'playing' && !flood.active) {
+            for (const key in devRates) {
+                let rate = devRates[key];
+                if (!rate || rate <= 0) continue;
+                devRateAcc[key] = (devRateAcc[key]||0) + rate/1800;
+                while (devRateAcc[key] >= 1) {
+                    devRateAcc[key] -= 1;
+                    if (key.startsWith('giant_')) spawnGiant(key.slice(6));
+                    else spawnEnemy(key, MODE.delta ? branches.filter(b=>!b.outpost.destroyed)[0] : undefined);
+                }
+            }
+        }
+        for (let e of enemyPool) {
+            if (!e.active) continue;
+            if (e.hitFlash > 0) e.hitFlash--;
+            let k = KIND[e.kind];
+            // Any dead enemy rises: piranhas as berserkers, the rest as zombies.
+            if (e.counters <= 0) {
+                e.active = false;
+                if (k.huntsWorkers) { spawnBerserker(e.x, e.y, k); SFX.raise(); }
+                else zombify(e);
+                continue;
+            }
+            // Waypoint travel (delta: up the branch to the junction first)
+            if (e.wpY !== null && e.wpY !== undefined) {
+                if (Math.hypot(e.wpX-e.x, e.wpY-e.y) > 12) {
+                    e.state='approach'; moveEnemy(e, e.wpX, e.wpY, k.speed);
+                    if (k.lane==='river') clampToWater(e);
+                    continue;
+                }
+                e.wpY = null;
+            }
+            // ---- PIRANHA: a river creature. Stays in the water, hunts your
+            //      skeletons near the banks; netted in the aura -> berserker ----
+            if (k.huntsWorkers) {
+                if (beaver.stun === 0 && Math.hypot(e.x-beaver.x, e.y-beaver.y) < 24) {
+                    e.touchTimer = (e.touchTimer||0) + 1;
+                    if (e.touchTimer >= ENEMY_ATTACK_INTERVAL) { e.touchTimer=0; beaver.hp -= k.touchDmg; beaver.hitFlash=FLASH_FRAMES; SFX.hurt(); if (beaver.hp<=0){ beaver.hp=0; beaver.stun=BEAVER_STUN; SFX.stun(); } }
+                }
+                if (currentAura > 0 && Math.hypot(e.x-beaver.x, e.y-beaver.y) < currentAura) {
+                    spawnBerserker(e.x, e.y, k);
+                    e.active=false; SFX.raise();
+                    continue;
+                }
+                let prey=null, pm=Infinity;
+                for (let w of workerPool) { if (!w.active) continue; if (!inWater(w.x, w.y)) continue; let d2=Math.hypot(w.x-e.x, w.y-e.y); if (d2<pm) { pm=d2; prey=w; } }
+                if (prey) {
+                    let d = Math.hypot(prey.x-e.x, prey.y-e.y);
+                    if (d < 22) { e.attackTimer++; if (e.attackTimer >= ENEMY_ATTACK_INTERVAL) { e.attackTimer=0; prey.counters--; prey.hitFlash=FLASH_FRAMES; e.hitFlash=FLASH_FRAMES; SFX.hit(); if (prey.counters<=0) prey.active=false; } }
+                    else { e.state='approach'; moveEnemy(e, prey.x, prey.y, k.speed); clampToWater(e); }
+                } else {
+                    e.state='approach'; e.y -= k.speed*1.4; clampToWater(e);
+                    if (e.y < -30) e.active=false;
+                }
+                continue;
+            }
+            // Contact damage: brush against ANY enemy and it bites/swings at you
+            if (k.touchDmg > 0 && beaver.stun === 0 && Math.hypot(e.x-beaver.x, e.y-beaver.y) < 26*(e.scale||1)) {
+                e.touchTimer = (e.touchTimer||0) + 1;
+                if (e.touchTimer >= ENEMY_ATTACK_INTERVAL) {
+                    e.touchTimer = 0;
+                    beaver.hp -= k.touchDmg * (e.scale>1?2:1); beaver.hitFlash = FLASH_FRAMES; SFX.hurt();
+                    if (beaver.hp <= 0) { beaver.hp = 0; beaver.stun = BEAVER_STUN; SFX.stun(); }
+                }
+            }
+            let tx = (k.target==='beaver') ? beaver.x : dam.x;
+            let ty = (k.target==='beaver') ? beaver.y : dam.y;
+            if (k.ranged) {
+                let d = Math.hypot(tx-e.x, ty-e.y);
+                if (d > k.fireRange) { e.state='approach'; moveEnemy(e, tx, ty, k.speed); if (k.lane==='river' && e.y > dam.y + dam.h) clampToWater(e); }
+                else { e.state='fire'; e.attackTimer++; if (e.attackTimer >= k.fireInterval) { e.attackTimer=0; spawnProjectile(e.x, e.y, tx, ty, k.projDmg, k.target==='beaver'?'enemyBeaver':'enemyDam'); SFX.pew(); } }
+            } else {
+                let edgeY = e.fromTop ? (dam.y - dam.h/2 - 4) : (dam.y + dam.h/2 + 4);
+                if (Math.hypot(e.attackX - e.x, edgeY - e.y) > 6) { e.state='approach'; moveEnemy(e, e.attackX, edgeY, k.speed); }
+                else { e.state='attack'; e.attackTimer++; if (e.attackTimer >= ENEMY_ATTACK_INTERVAL) { e.attackTimer=0; dam.hp -= k.damDamage * (e.scale>1?3:1) * DAM_UP.resist; dam.hitFlash = FLASH_FRAMES; } }
+                for (let o of enemyPool) { if (o!==e && o.active) { let ox=e.x-o.x, oy=e.y-o.y, od=Math.hypot(ox,oy); if (od>0 && od<16) { e.x += (ox/od)*0.6; e.y += (oy/od)*0.6; } } }
+                if (e.x > dam.x-dam.w/2-8 && e.x < dam.x+dam.w/2+8) { if (!e.fromTop && e.y < dam.y+dam.h/2) e.y = dam.y+dam.h/2; else if (e.fromTop && e.y > dam.y-dam.h/2) e.y = dam.y-dam.h/2; }
+            }
+        }
+    }
+    function clampDamBarrier(e, py) {
+        if (e.x < dam.x - dam.w/2 - 6 || e.x > dam.x + dam.w/2 + 6) return;
+        let top = dam.y - dam.h/2, bot = dam.y + dam.h/2;
+        if (py >= bot && e.y < bot) e.y = bot;
+        else if (py <= top && e.y > top) e.y = top;
+    }
+    function moveEnemy(e, tx, ty, spd) { let py=e.y; let dx=tx-e.x, dy=ty-e.y, d=Math.hypot(dx,dy); if (d>0) { e.x+=(dx/d)*spd; e.y+=(dy/d)*spd; } clampDamBarrier(e, py); }
+    function bossInReach() { return boss.active && Math.hypot(boss.x-beaver.x, (boss.y+boss.h/2)-beaver.y) < currentAura + boss.w/2; }
+    function workerHitBoss(w) {
+        if (!boss.active) return false;
+        if (Math.abs(w.x-boss.x) < boss.w/2 + 16 && Math.abs(w.y-boss.y) < boss.h/2 + 16) {
+            w.attackTimer++;
+            if (w.attackTimer >= UP.attackInterval) { w.attackTimer=0; boss.counters-=workerDmg(w); boss.hitFlash=FLASH_FRAMES; if (w.shape==='fish') w.counters--; w.hitFlash=FLASH_FRAMES; SFX.hit(); if (w.counters<=0) w.active=false; }
+            return true;
+        }
+        return false;
+    }
+    function spawnBoss() {
+        boss.active = true;
+        boss.counters = 450 + boss.tier*250; boss.maxCounters = boss.counters;   // a real fight: the horde no longer deletes it in seconds
+        boss.w = Math.min(200, riverWidth*0.72);
+        boss.x = dam.x; boss.y = canvas.height + boss.h;
+        boss.hitFlash=0; boss.state='approach'; boss.damTimer=0; boss.gunTimer=90; boss.summonTimer=170; boss.shoveTimer=140;
+        SFX.horn();
+    }
+    function defeatBoss() {
+        boss.active=false; boss.tier++; bossKills++; bossNextLevel = MODE.bossHunt ? dam.level + 2 : dam.level + 5;
+        if (MODE.bossHunt && bossKills >= MODE.bossHunt) { winGame(); return; }
+        for (let k=0;k<4;k++) spawnExplosion(boss.x+(Math.random()-0.5)*boss.w, boss.y+(Math.random()-0.5)*boss.h);
+        SFX.fanfare();
+        dam.hp = dam.maxHp;
+        dam.level++; dam.xpToNext = Math.floor(dam.xpToNext*1.8); dam.h += 15;
+        maxLevelReached = Math.max(maxLevelReached, dam.level);
+        pendingBoons = 1; offerUpgrades();
+    }
+    function updateBoss() {
+        if (!MODE.boss) return;
+        if (!boss.active) { if (dam.level >= bossNextLevel) spawnBoss(); return; }
+        if (boss.hitFlash>0) boss.hitFlash--;
+        if (boss.counters <= 0) { defeatBoss(); return; }
+        let enr = boss.counters < boss.maxCounters*0.25 ? 2.0 : (boss.counters < boss.maxCounters*0.5 ? 1.5 : 1.0);
+        let stopY = dam.y + dam.h/2 + boss.h/2 + 6;
+        if (boss.y > stopY) { boss.y -= 0.9; boss.state='approach'; } else { boss.y = stopY; boss.state='attack'; }
+        for (let w of workerPool) { if (!w.active) continue; let dx=w.x-boss.x, dy=w.y-boss.y; if (Math.abs(dx) < boss.w/2+12 && Math.abs(dy) < boss.h/2+12) { let d=Math.hypot(dx,dy)||1; w.x += (dx/d)*2.4; w.y += (dy/d)*2.4; } }
+        if (--boss.shoveTimer <= 0) { boss.shoveTimer = Math.round(150/enr); for (let w of workerPool){ if(!w.active)continue; let dx=w.x-boss.x, dy=w.y-boss.y, d=Math.hypot(dx,dy); if (d>0 && d<190){ w.x+=(dx/d)*56; w.y+=(dy/d)*56; } } SFX.boom(); }
+        if (--boss.gunTimer <= 0) { boss.gunTimer = Math.round(64/enr); spawnProjectile(boss.x, boss.y-boss.h*0.4, beaver.x, beaver.y, 13, 'enemyBeaver'); SFX.pew(); }
+        if (--boss.summonTimer <= 0) { boss.summonTimer = Math.round(240/enr); spawnEnemy('developer'); spawnEnemy('developer'); if (enr>1) spawnEnemy('developer'); }
+        if (boss.state==='attack') { if (--boss.damTimer <= 0) { boss.damTimer = Math.round(48/enr); dam.hp -= 16*DAM_UP.resist; dam.hitFlash = FLASH_FRAMES; } }
+    }
+    function updateProjectiles() {
+        for (let p of projPool) {
+            if (!p.active) continue;
+            p.x += p.vx; p.y += p.vy;
+            if (p.kind === 'friendly') {
+                if (boss.active && Math.abs(p.x-boss.x)<boss.w/2 && Math.abs(p.y-boss.y)<boss.h/2) { boss.counters-=p.dmg; boss.hitFlash=FLASH_FRAMES; p.active=false; continue; }
+                let hit = false;
+                for (let e of enemyPool) { if (!e.active) continue; if (Math.hypot(e.x-p.x, e.y-p.y) < 14) { e.counters -= p.dmg; e.hitFlash = FLASH_FRAMES; p.active=false; hit=true; break; } }
+                if (hit) continue;
+                for (let b of birdPool) { if (!b.active) continue; if (Math.hypot(b.x-p.x, b.y-p.y) < 15) { p.active=false; hit=true; if (Math.random() < 0.25) { b.active=false; birdSkipNext=true; spawnExplosion(b.x, b.y); SFX.boom(); floatText(b.x, b.y-20, 'BIRD DOWN — next raid cancelled', '#ffd54f'); } break; } }
+                if (hit) continue;
+            } else if (p.kind === 'enemyDam') {
+                if (beaver.stun === 0 && Math.hypot(beaver.x-p.x, beaver.y-p.y) < 16) {   // eviction notices hurt beavers too
+                    p.active=false; beaver.hp -= p.dmg; beaver.hitFlash = FLASH_FRAMES; SFX.hurt();
+                    if (beaver.hp <= 0) { beaver.hp = 0; beaver.stun = BEAVER_STUN; SFX.stun(); }
+                    continue;
+                }
+                if (Math.hypot(dam.x-p.x, dam.y-p.y) < 30) { p.active=false; dam.hp -= p.dmg*DAM_UP.resist; dam.hitFlash = FLASH_FRAMES; continue; }
+            } else {
+                if (beaver.stun === 0 && Math.hypot(beaver.x-p.x, beaver.y-p.y) < 16) {
+                    p.active=false; beaver.hp -= p.dmg; beaver.hitFlash = FLASH_FRAMES; SFX.hurt();
+                    if (beaver.hp <= 0) { beaver.hp = 0; beaver.stun = BEAVER_STUN; SFX.stun(); }
+                    continue;
+                }
+            }
+            if (p.x < -20 || p.x > canvas.width+20 || p.y < -20 || p.y > canvas.height+20) p.active=false;
+        }
+    }
+    function workerDmg(w) { return (w.shape==='fish' ? UP.dmgPerHit*0.5 : UP.dmgPerHit) * (w.dmgMult||1); }
+    function moveTowards(ent, tx, ty) { let dx=tx-ent.x, dy=ty-ent.y, d=Math.hypot(dx,dy); if (d>0) { ent.x+=(dx/d)*ent.speed; ent.y+=(dy/d)*ent.speed; } }
+    function moveTowards2(ent, tx, ty, spd) { let dx=tx-ent.x, dy=ty-ent.y, d=Math.hypot(dx,dy); if (d>0) { ent.x+=(dx/d)*spd; ent.y+=(dy/d)*spd; } }
+    function findNearestTree(x, y) { let n=null, m=Infinity; for (let t of trees){ if(!t.active)continue; let d=Math.hypot(t.x-x,t.y-y); if(d<m){m=d;n=t;} } return n; }
+    function findNearestEnemy(x, y, excludeFlying) { let n=null, m=Infinity; for (let e of enemyPool){ if(!e.active)continue; if (excludeFlying && e.kind==='drone') continue; let d=Math.hypot(e.x-x,e.y-y); if(d<m){m=d;n=e;} } return n; }
+    function nearestWorker(x, y) { let n=null, m=Infinity; for (let w of workerPool){ if(!w.active)continue; let d=Math.hypot(w.x-x,w.y-y); if(d<m){m=d;n=w;} } return n; }
+    function updateBirds() {
+        if (dam.level >= BIRD_UNLOCK_LEVEL) { birdSpawnTimer--; if (birdSpawnTimer<=0) { if (birdSkipNext) birdSkipNext=false; else spawnBird(); birdSpawnTimer = BIRD_SPAWN_MIN + Math.random()*BIRD_SPAWN_VAR; } }
+        for (let b of birdPool) {
+            if (!b.active) continue;
+            b.x += b.vx;
+            if (!b.dropped && ((b.vx>0 && b.x>=b.dropX) || (b.vx<0 && b.x<=b.dropX))) { spawnEgg(b.x, b.y); b.dropped=true; SFX.chirp(); }
+            if (b.x < -60 || b.x > canvas.width+60) b.active=false;
+        }
+    }
+    function updateEggs() {
+        for (let e of eggPool) {
+            if (!e.active) continue;
+            e.vy += EGG_GRAVITY; e.y += e.vy;
+            if (e.y >= e.landY) { e.active=false; eggExplode(e.x, e.landY); }
+        }
+    }
+    function eggExplode(x, y) {
+        spawnExplosion(x, y);
+        SFX.boom();
+        if (beaver.stun===0 && Math.hypot(beaver.x-x, beaver.y-y) < EGG_RADIUS) {
+            beaver.hp -= EGG_DMG; beaver.hitFlash = FLASH_FRAMES;
+            if (beaver.hp <= 0) { beaver.hp=0; beaver.stun=BEAVER_STUN; SFX.stun(); }
+        }
+        for (let w of workerPool) { if (w.active && Math.hypot(w.x-x, w.y-y) < EGG_RADIUS) w.active=false; }
+    }
+    function updateExplosions() {
+        for (let ex of exploPool) { if (!ex.active) continue; ex.r += (EGG_RADIUS - ex.r)*0.4; ex.life--; if (ex.life<=0) ex.active=false; }
+    }
+    let damGunTimer = 90;
+    function updateDam() {
+        if (dam.hitFlash > 0) dam.hitFlash--;
+        // The dam defends itself: a bone-sprung stick ballista on the crest
+        if (dam.level >= 2) {
+            damGunTimer--;
+            if (damGunTimer <= 0) {
+                damGunTimer = Math.max(40, 130 - dam.level*8);
+                let tgt=null, tm=280;
+                for (let e of enemyPool) { if (!e.active) continue; let d=Math.hypot(e.x-dam.x, e.y-dam.y); if (d<tm) { tm=d; tgt=e; } }
+                if (boss.active && Math.hypot(boss.x-dam.x, boss.y-dam.y) < 300) tgt = { x:boss.x, y:boss.y };
+                if (tgt) { spawnProjectile(dam.x + (Math.random()-0.5)*dam.w*0.6, dam.y, tgt.x, tgt.y, 1, 'friendly'); SFX.pew(); }
+            }
+        }
+        if (dam.hp < dam.maxHp) dam.hp = Math.min(dam.maxHp, dam.hp + DAM_REGEN*DAM_UP.regenMult);
+        if (dam.hp <= 0) {
+            if (dam.level > 1) {
+                dam.level--; dam.h = Math.max(30, dam.h - 15);
+                dam.xpToNext = Math.max(10, Math.round(dam.xpToNext / 1.8));
+                dam.xp = Math.floor(dam.xpToNext * 0.9);
+                dam.hp = dam.maxHp; dam.hitFlash = FLASH_FRAMES;
+            } else {
+                gameOver();
+            }
+        }
+        if (dam.xp >= dam.xpToNext) { dam.xp=0; dam.level++; dam.xpToNext=Math.floor(dam.xpToNext*1.8); dam.h+=15; SFX.level(); if (dam.level % 2 === 0 && dam.level >= 4) spawnGiant(); if (dam.level > maxLevelReached) { maxLevelReached = dam.level; offerUpgrades(); } }
+    }
+
+    // ============================= FRENZY =============================
+    // Kill-charged meter; unleash to pull the whole horde into a swarm
+    // around the beaver with boosted speed/damage for a few seconds.
+    function gainFrenzy(n) { if (frenzyTimer<=0) frenzyCharge = Math.min(FRENZY_MAX, frenzyCharge + n); burstCharge = Math.min(FRENZY_MAX, burstCharge + n*3); }
+    function floatText(x, y, txt, col) { floatTexts.push({ x, y, txt, col: col||'#fff', life: 90 }); if (floatTexts.length > 12) floatTexts.shift(); }
+    function updateFloatTexts() { for (let t of floatTexts) { t.y -= 0.35; t.life--; } floatTexts = floatTexts.filter(t=>t.life>0); }
+    function drawFloatTexts() { for (let t of floatTexts) { ctx.globalAlpha = Math.min(1, t.life/30); ctx.fillStyle=t.col; ctx.font='bold 14px Courier New'; ctx.textAlign='center'; ctx.fillText(t.txt, t.x, t.y); } ctx.globalAlpha=1; }
+    function tryFrenzy() {
+        if (gameState!=='playing' || frenzyTimer>0 || frenzyCharge < FRENZY_MAX) return;
+        frenzyCharge = 0; frenzyTimer = FRENZY_DURATION;
+        SFX.frenzy();
+    }
+    // Each frenzied undead gets a slot on a concentric orbit ring around the
+    // beaver, so the swarm reads as a visible, countable horde instead of a
+    // pile. They attack anything they pass on the way in.
+    // The inner horde traces a slowly rotating PENTAGRAM; overflow forms
+    //      circles around the star. Of course it's a pentagram.
+    function pentagramVerts(rot) {
+        let R = 84, v = [];
+        for (let i=0;i<5;i++) { let a = -Math.PI/2 + i*(Math.PI*2/5) + rot; v.push({ x: Math.cos(a)*R, y: Math.sin(a)*R }); }
+        return v;
+    }
+    const PENT_ORDER = [0,2,4,1,3,0];
+    function frenzySlot(i) {
+        let rot = frameCount*0.012;
+        let verts = pentagramVerts(rot);
+        let edgeLen = Math.hypot(verts[0].x-verts[2].x, verts[0].y-verts[2].y);
+        let starCap = Math.max(10, Math.floor((edgeLen*5)/25));
+        if (i < starCap) {
+            let tt = (i/starCap)*5, seg = Math.floor(tt), frac = tt-seg;
+            let a2 = verts[PENT_ORDER[seg]], b2 = verts[PENT_ORDER[seg+1]];
+            return { x: beaver.x + a2.x + (b2.x-a2.x)*frac, y: beaver.y + a2.y + (b2.y-a2.y)*frac };
+        }
+        let idx = i - starCap, r = 84 + 44, ring = 0;
+        for (;;) {
+            let cap = Math.max(8, Math.floor((Math.PI*2*r) / 25));
+            if (idx < cap) {
+                let a3 = (idx/cap)*Math.PI*2 - rot*(ring%2===0?1:-1) + ring*0.5;
+                return { x: beaver.x + Math.cos(a3)*r, y: beaver.y + Math.sin(a3)*r };
+            }
+            idx -= cap; r += FRENZY_RING_GAP + 6; ring++;
+        }
+    }
+    function updateFrenzied(w, idx) {
+        let spd = w.speed * FRENZY_SPEED_MULT;
+        let cadence = Math.max(5, Math.round(UP.attackInterval*0.5));
+        let dmg = (UP.dmgPerHit + FRENZY_DMG_BONUS) * (w.shape==='berserker' ? 2 : 1) * (w.dmgMult||1);   // fish hit at FULL power in frenzy — that's the point of it
+        // The swarm engulfs the boss if it's near the beaver
+        if (boss.active && Math.hypot(boss.x-beaver.x, (boss.y+boss.h/2)-beaver.y) < FRENZY_HUNT_RADIUS + boss.w/2) {
+            if (Math.abs(w.x-boss.x) < boss.w/2 + 16 && Math.abs(w.y-boss.y) < boss.h/2 + 16) {
+                w.attackTimer++;
+                if (w.attackTimer >= cadence) { w.attackTimer=0; boss.counters-=dmg; boss.hitFlash=FLASH_FRAMES; w.hitFlash=FLASH_FRAMES; SFX.hit(); }  // frenzy costs no counters
+            } else herdMove(w, boss.x, boss.y+boss.h/2, spd);
+            return;
+        }
+        // Attack anything encountered on the way in (melee: not flying drones)
+        let e = findNearestEnemy(w.x, w.y, true);
+        if (e && Math.hypot(e.x-w.x, e.y-w.y) < 130) {
+            let d = Math.hypot(e.x-w.x, e.y-w.y);
+            if (d < 24 + (e.scale-1)*14) {
+                w.attackTimer++;
+                if (w.attackTimer >= cadence) { w.attackTimer=0; e.counters-=dmg; e.hitFlash=FLASH_FRAMES; w.hitFlash=FLASH_FRAMES; SFX.hit(); }  // frenzy costs no counters
+            } else moveTowards2(w, e.x, e.y, spd);
+            return;
+        }
+        // Otherwise take your slot in the orbit and hold formation
+        let slot = frenzySlot(idx);
+        let d = Math.hypot(slot.x-w.x, slot.y-w.y);
+        if (d > 5) moveTowards2(w, slot.x, slot.y, Math.min(spd, d));
+        else { w.x = slot.x; w.y = slot.y; }
+    }
+
+    // ---- WATER BURST: double-tap detonation. Drowns the small, dents the
+    //      large, and floods any dug channel it touches. Charges 3x faster
+    //      than Frenzy. ----
+    function waterBurst(x, y) {
+        burstCharge = 0;
+        burstFX.push({ x, y, r: 0, life: 26 });
+        SFX.boom(); SFX.flood();
+        for (let e of enemyPool) {
+            if (!e.active) continue;
+            if (Math.hypot(e.x-x, e.y-y) > 95) continue;
+            if ((e.scale||1) > 1) { e.counters -= 8; e.hitFlash = FLASH_FRAMES; }
+            else { e.active = false; let k = KIND[e.kind]; if (k.becomesBerserker) spawnBerserker(e.x, e.y, k); else zombify(e, true); }
+        }
+        if (boss.active && Math.hypot(boss.x-x, (boss.y)-y) < 130) { boss.counters -= 10; boss.hitFlash = FLASH_FRAMES; }
+        for (let ch of channels) if (!ch.filled) {
+            if (ch.pts.some(p => p.dug && Math.hypot(p.x-x, p.y-y) < 95)) fillChannel(ch);
+        }
+    }
+    function fillChannel(ch) {
+        ch.filled = true;
+        for (let e of enemyPool) {
+            if (!e.active) continue;
+            if (ch.pts.some(p => p.dug && Math.hypot(p.x-e.x, p.y-e.y) < 22)) {
+                e.active = false; let k = KIND[e.kind];
+                if (k.becomesBerserker) spawnBerserker(e.x, e.y, k); else zombify(e, true);
+                flood.raised++;
+                spawnExplosion(e.x, e.y);
+            }
+        }
+        floatText(ch.pts[Math.floor(ch.pts.length/2)].x, ch.pts[Math.floor(ch.pts.length/2)].y-16, 'THE WATER TAKES THE NEW PATH', '#4fc3f7');
+    }
+    function updateBurstFX() { for (let b of burstFX) { b.r += (95 - b.r)*0.3; b.life--; } burstFX = burstFX.filter(b=>b.life>0); }
+
+    // ============================= MISSION ============================
+    // Delta mission: the release routes through whatever branches are OPEN.
+    // One open branch = a concentrated surge that smashes that branch's
+    // outpost. Two open branches = the surge splits and is too weak — it
+    // drowns enemies but the camps survive. Dam a branch to aim the river.
+    function floodReady() { return gameState==='playing' && MODE.floodTarget && dam.level >= MODE.floodTarget && !flood.active; }
+    function beaverOnDam() { return Math.abs(beaver.x-dam.x) < dam.w/2 && Math.abs(beaver.y-dam.y) < dam.h/2 + 30; }
+    function openBranches() { return branches.filter(b => !b.blocked); }
+    function tryFlood(needOnDam) {
+        if (!floodReady()) return;
+        if (needOnDam && !beaverOnDam()) return;
+        flood.active = true; flood.y = dam.y + dam.h/2; flood.shake = 60;
+        flood.split = MODE.delta ? openBranches().length !== 1 : false;
+        if (flood.split) floatText(dam.x, dam.y+60, 'THE SURGE WILL SPLIT — dam a branch to aim it!', '#ffd54f');
+        SFX.flood();
+    }
+    // Water segments the surge occupies at height y (delta routes into open branches)
+    function floodSegments(y) {
+        if (!MODE.delta || y < junctionY) {
+            let frac = Math.min(1, (y - dam.y) / (canvas.height*0.25));
+            return [{ left: riverLeft - frac*30, right: riverRight + frac*30 }];
+        }
+        let segs = [];
+        for (let b of openBranches()) {
+            if (y <= b.topY) {
+                let t = (y - junctionY) / (b.topY - junctionY);
+                let cx = dam.x + (b.cx - dam.x)*t, cw = riverWidth + (b.w - riverWidth)*t;
+                segs.push({ left: cx-cw/2, right: cx+cw/2 });
+            } else segs.push({ left: b.cx-b.w/2 - 26, right: b.cx+b.w/2 + 26 });   // the surge overtops the banks
+        }
+        return segs;
+    }
+    function updateFlood() {
+        if (!flood.active) return;
+        if (flood.shake > 0) flood.shake--;
+        flood.y += FLOOD_WAVE_SPEED;
+        let segs = floodSegments(flood.y);
+        // Drown everything the water touches: enemies rise as undead
+        for (let e of enemyPool) {
+            if (!e.active) continue;
+            if (e.y > dam.y && e.y < flood.y && segs.some(sg => e.x > sg.left-14 && e.x < sg.right+14)) {
+                e.active = false;
+                let k = KIND[e.kind];
+                if (k.becomesBerserker) spawnBerserker(e.x, e.y, k); else zombify(e, true);
+                flood.raised++;
+                spawnExplosion(e.x, e.y);
+            }
+        }
+        // Overflow finds every dug channel it touches
+        for (let ch of channels) {
+            if (ch.filled) continue;
+            if (ch.pts.some(p => p.dug && p.y > dam.y && p.y < flood.y && segs.some(sg => p.x > sg.left-14 && p.x < sg.right+14))) fillChannel(ch);
+        }
+        // A concentrated surge smashes the outpost at the end of its branch
+        if (MODE.delta && !flood.split) {
+            for (let b of openBranches()) {
+                if (!b.outpost.destroyed && flood.y >= b.outpost.y - 20) {
+                    b.outpost.destroyed = true;
+                    for (let i=0;i<4;i++) spawnExplosion(b.outpost.x+(Math.random()-0.5)*90, b.outpost.y+(Math.random()-0.5)*40);
+                    SFX.boom();
+                    floatText(b.outpost.x, b.outpost.y-60, 'OUTPOST DESTROYED', '#4fc3f7');
+                }
+            }
+        }
+        if (flood.y > canvas.height + 80) {
+            flood.active = false;
+            if (!MODE.delta) { winGame(); return; }
+            // Branch dams wash out with the release — the delta resets
+            for (let b of branches) { b.blocked = false; b.blueprint = null; }
+            for (let w of workerPool) if (w.active) w.buildBranch = null;
+            if (branches.every(b => b.outpost.destroyed)) { winGame(); return; }
+            // The reservoir is spent: the dam drops back and must be raised again
+            dam.level = Math.max(1, dam.level - 3);
+            dam.h = 30 + 15*(dam.level-1);
+            dam.xp = 0; dam.xpToNext = Math.floor(10 * Math.pow(1.8, dam.level-1));
+            dam.hp = dam.maxHp;
+            floatText(dam.x, dam.y+60, flood.split ? 'TOO WEAK — the camps stand. Rebuild!' : 'ONE CAMP LEFT — raise the dam again!', '#ffd54f');
+        }
+    }
+
+    // ============================= RENDER =============================
+    function render() {
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        if (gameState==='intro') { drawIntro(); return; }
+        if (gameState==='menu') { drawMenu(); return; }
+        if (gameState==='missionSelect') { drawMissionSelect(); return; }
+        if (gameState==='briefing') { drawBriefing(); return; }
+        ctx.save();
+        if (flood.shake > 0) ctx.translate((Math.random()-0.5)*6, (Math.random()-0.5)*6);
+        drawBackground(); drawDecor(); drawChannels(); drawDelta(); drawStructures(); drawTrees(); drawDam(); drawBoss(); drawFloodWave(); drawSalmon(); drawWorkers(); drawEnemies(); drawProjectiles(); drawEggs(); drawBirds(); drawBeaver(); drawExplosions(); drawBurstFX(); drawFireflies(); drawFloatTexts();
+        ctx.restore();
+        drawUI(); drawBossBar(); drawObjective();
+        if (frenzyTimer > 0) drawFrenzyVignette();
+        if (drag.active) drawDragBox();
+        if (groupMenu.open) drawGroupMenu();
+        if (jobMenu.open) drawJobMenu();
+        if (gameState==='playing' && choosingUpgrade) drawUpgradeCards();
+        if (gameState==='paused') drawPauseScreen();
+        else if (gameState==='over') drawGameOver();
+        else if (gameState==='won') drawVictory();
+    }
+    function drawBackground() {
+        ctx.fillStyle='#26401f'; ctx.fillRect(0,0,canvas.width,canvas.height);   // mossy forest floor
+        ctx.fillStyle='rgba(0,0,0,0.10)';                                          // soft ground mottling
+        for (let i=0;i<7;i++) { let gx=(i*387)%canvas.width, gy=(i*251)%canvas.height; ctx.beginPath(); ctx.ellipse(gx, gy, 130, 70, i, 0, Math.PI*2); ctx.fill(); }
+        if (MODE.delta) {
+            // main stem down to the junction
+            ctx.fillStyle='#1a3c4e'; ctx.fillRect(riverLeft, 0, riverWidth, junctionY);
+            // fork channels + branches
+            for (let b of branches) {
+                let open = !b.blocked;
+                ctx.fillStyle = open ? '#1a3c4e' : '#1a3c4e';
+                ctx.beginPath();
+                ctx.moveTo(riverLeft, junctionY); ctx.lineTo(riverRight, junctionY);
+                ctx.lineTo(b.cx + b.w/2, b.topY); ctx.lineTo(b.cx - b.w/2, b.topY);
+                ctx.closePath(); ctx.fill();
+                if (b.blocked && b.blueprint) {
+                    // dammed: water above the branch dam, dry bed below it
+                    ctx.fillStyle='#1a3c4e'; ctx.fillRect(b.cx-b.w/2, b.topY, b.w, Math.max(0, b.blueprint.y - b.topY));
+                    ctx.fillStyle='#2e2213'; ctx.fillRect(b.cx-b.w/2, b.blueprint.y, b.w, b.botY - b.blueprint.y);
+                    ctx.fillStyle='rgba(64,120,140,0.35)';   // leftover puddles
+                    for (let i=0;i<5;i++) { ctx.beginPath(); ctx.ellipse(b.cx + Math.sin(i*3.7)*b.w*0.3, b.blueprint.y + 40 + i*((b.botY-b.blueprint.y-60)/5), 14, 5, 0, 0, Math.PI*2); ctx.fill(); }
+                } else {
+                    ctx.fillStyle='#1a3c4e'; ctx.fillRect(b.cx-b.w/2, b.topY, b.w, b.botY - b.topY);
+                    // flow lines — stronger when the OTHER branch is dammed (the river shifted here)
+                    let boosted = branches.some(o => o!==b && o.blocked);
+                    ctx.strokeStyle = `rgba(120,200,220,${boosted ? 0.35 : 0.14})`; ctx.lineWidth=2;
+                    for (let i=0;i<(boosted?4:2);i++) {
+                        let lx = b.cx - b.w/4 + i*(b.w/(boosted?6:3));
+                        ctx.beginPath();
+                        for (let yy=b.topY; yy<=b.botY; yy+=16) ctx.lineTo(lx + Math.sin(yy*0.05 - frameCount*0.12)*4, yy);
+                        ctx.stroke();
+                    }
+                }
+            }
+        } else {
+            ctx.fillStyle='#5c4a2e'; ctx.fillRect(riverLeft-5, 0, riverWidth+10, canvas.height);   // muddy banks
+            ctx.fillStyle='#1f5568'; ctx.fillRect(riverLeft, 0, riverWidth, canvas.height);
+            ctx.strokeStyle='rgba(140,210,230,0.13)'; ctx.lineWidth=2;                              // lazy current
+            for (let i=0;i<3;i++) {
+                let lx = riverLeft + riverWidth*(0.25+i*0.25);
+                ctx.beginPath();
+                for (let yy=0; yy<=canvas.height; yy+=16) ctx.lineTo(lx + Math.sin(yy*0.04 - frameCount*0.1 + i*2)*5, yy);
+                ctx.stroke();
+            }
+        }
+        // The reservoir: held-back water above the dam, brighter as the dam grows.
+        let resTop = dam.y - dam.h/2;
+        let fill = Math.min(1, dam.level / (MODE.floodTarget || 10));
+        ctx.fillStyle = `rgba(42,91,116,${0.5+0.5*fill})`; ctx.fillRect(riverLeft, 0, riverWidth, resTop);
+        ctx.strokeStyle = `rgba(120,200,220,${0.10+0.18*fill})`; ctx.lineWidth=2;
+        for (let i=0;i<4;i++) {
+            let ry = resTop * (0.25 + i*0.2);
+            ctx.beginPath();
+            for (let xx=riverLeft; xx<=riverRight; xx+=18) ctx.lineTo(xx, ry + Math.sin(xx*0.04 + frameCount*0.04 + i*2)*4);
+            ctx.stroke();
+        }
+    }
+    function drawChannels() {
+        for (let ch of channels) {
+            for (let i=0;i<ch.pts.length-1;i++) {
+                let a = ch.pts[i], b = ch.pts[i+1];
+                if (a.dug && b.dug) {
+                    ctx.strokeStyle = ch.filled ? '#1f5568' : '#3b2b18';
+                    ctx.lineWidth = 13; ctx.lineCap='round';
+                    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+                    if (ch.filled) {
+                        ctx.strokeStyle = 'rgba(140,210,230,0.35)'; ctx.lineWidth = 3;
+                        let off = Math.sin(frameCount*0.12 + i)*2;
+                        ctx.beginPath(); ctx.moveTo(a.x, a.y+off); ctx.lineTo(b.x, b.y+off); ctx.stroke();
+                    } else {
+                        ctx.strokeStyle = 'rgba(0,0,0,0.35)'; ctx.lineWidth = 4;
+                        ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+                    }
+                } else {
+                    ctx.setLineDash([5,5]); ctx.strokeStyle = 'rgba(201,168,106,0.6)'; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke(); ctx.setLineDash([]);
+                }
+            }
+            ctx.lineCap='butt';
+        }
+        // live dig-draw preview
+        if (digDraw.active) {
+            ctx.fillStyle='rgba(10,10,30,0.35)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            if (digDraw.pts.length) {
+                ctx.setLineDash([7,5]); ctx.strokeStyle='#8d6e63'; ctx.lineWidth=6;
+                ctx.beginPath();
+                for (let i=0;i<digDraw.pts.length;i++) { let p=digDraw.pts[i]; if (i===0) ctx.moveTo(p.x,p.y); else ctx.lineTo(p.x,p.y); }
+                ctx.lineTo(mouse.x, mouse.y);
+                ctx.stroke(); ctx.setLineDash([]);
+            }
+            ctx.fillStyle='#ffd54f'; ctx.font='bold 15px Courier New'; ctx.textAlign='center';
+            ctx.fillText('DRAW THE CHANNEL \u2014 release to dig · tap to cancel', canvas.width/2, 60);
+        }
+        // dam-pick highlight: the sites light up, choose one
+        if (pickingDam.active) {
+            ctx.fillStyle='rgba(10,10,30,0.35)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+            let pulse = 0.5 + Math.sin(frameCount*0.2)*0.4;
+            for (let b of branches) {
+                if (!b.blueprint || b.blocked) continue;
+                ctx.strokeStyle = `rgba(79,195,247,${pulse.toFixed(2)})`; ctx.lineWidth = 5;
+                ctx.strokeRect(b.cx-b.w/2-8, b.blueprint.y-24, b.w+16, 48);
+                ctx.fillStyle = `rgba(79,195,247,${(pulse*0.25).toFixed(2)})`;
+                ctx.fillRect(b.cx-b.w/2-8, b.blueprint.y-24, b.w+16, 48);
+            }
+            ctx.fillStyle='#4fc3f7'; ctx.font='bold 15px Courier New'; ctx.textAlign='center';
+            ctx.fillText('CHOOSE A DAM SITE \u2014 tap one · tap elsewhere to cancel', canvas.width/2, 60);
+        }
+    }
+    function drawBurstFX() {
+        for (let b of burstFX) {
+            let a = b.life/26;
+            ctx.strokeStyle=`rgba(79,195,247,${(0.9*a).toFixed(2)})`; ctx.lineWidth=5;
+            ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle=`rgba(79,195,247,${(0.25*a).toFixed(2)})`;
+            ctx.beginPath(); ctx.arc(b.x, b.y, b.r*0.8, 0, Math.PI*2); ctx.fill();
+        }
+    }
+    function drawDecor() {
+        for (let d of decor) {
+            let x=d.x, y=d.y, sd=d.seed;
+            if (d.type==='grass') {
+                ctx.strokeStyle='#38602c'; ctx.lineWidth=1.5;
+                for (let i=0;i<3;i++) { ctx.beginPath(); ctx.moveTo(x+i*3-3, y); ctx.lineTo(x+i*3-3+(i-1)*2, y-6-((sd*7+i)%4)); ctx.stroke(); }
+            } else if (d.type==='flower') {
+                let col = ['#f8bbd0','#fff59d','#e1f5fe'][Math.floor(sd)%3];
+                ctx.strokeStyle='#38602c'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(x,y); ctx.lineTo(x,y-6); ctx.stroke();
+                ctx.fillStyle=col;
+                for (let i=0;i<4;i++) { let a=i*Math.PI/2+sd; ctx.beginPath(); ctx.arc(x+Math.cos(a)*2.6, y-6+Math.sin(a)*2.6, 2, 0, Math.PI*2); ctx.fill(); }
+                ctx.fillStyle='#ffb300'; ctx.beginPath(); ctx.arc(x, y-6, 1.6, 0, Math.PI*2); ctx.fill();
+            } else if (d.type==='mushroom') {
+                ctx.fillStyle='#e0d6c3'; ctx.fillRect(x-1.5, y-5, 3, 5);
+                ctx.fillStyle='#c62828'; ctx.beginPath(); ctx.arc(x, y-5, 4.5, Math.PI, 0); ctx.fill();
+                ctx.fillStyle='#fff'; ctx.fillRect(x-2.5, y-7.5, 1.6, 1.6); ctx.fillRect(x+1, y-6.5, 1.4, 1.4);
+            } else if (d.type==='rock') {
+                ctx.fillStyle='#5a5f57'; ctx.beginPath(); ctx.ellipse(x, y, 6+sd%3, 4, sd, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle='#767c72'; ctx.beginPath(); ctx.ellipse(x-1.5, y-1.5, 3, 1.8, sd, 0, Math.PI*2); ctx.fill();
+            } else if (d.type==='fern') {
+                ctx.strokeStyle='#2f5d2a'; ctx.lineWidth=1.5;
+                for (let i=-2;i<=2;i++) { ctx.beginPath(); ctx.moveTo(x, y); ctx.quadraticCurveTo(x+i*4, y-5, x+i*6, y-3-Math.abs(i)); ctx.stroke(); }
+            } else if (d.type==='stump') {
+                ctx.fillStyle='#4a3220'; ctx.beginPath(); ctx.ellipse(x, y, 7, 5, 0, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle='#8d6e63'; ctx.beginPath(); ctx.ellipse(x, y-2, 6, 4, 0, 0, Math.PI*2); ctx.fill();
+                ctx.strokeStyle='#6b4a2b'; ctx.lineWidth=1; ctx.beginPath(); ctx.ellipse(x, y-2, 3.4, 2.2, 0, 0, Math.PI*2); ctx.stroke();
+            }
+        }
+    }
+    function drawFireflies() {
+        for (let ff of fireflies) {
+            let fx = ff.x + Math.sin(frameCount*0.01 + ff.ph)*30, fy = ff.y + Math.sin(frameCount*0.013 + ff.ph*2)*18;
+            let a = 0.25 + Math.sin(frameCount*0.06 + ff.ph)*0.25;
+            if (a <= 0.05) continue;
+            ctx.fillStyle = `rgba(212,255,120,${a.toFixed(2)})`;
+            ctx.beginPath(); ctx.arc(fx, fy, 1.8, 0, Math.PI*2); ctx.fill();
+        }
+    }
+    // Delta furniture: outposts, branch dams, blueprints
+    function drawDelta() {
+        if (!MODE.delta) return;
+        for (let b of branches) {
+            // outpost (or its ruins)
+            let o = b.outpost;
+            if (o.destroyed) {
+                for (let i=0;i<6;i++) {
+                    ctx.save(); ctx.translate(o.x + ((i*53)%120)-60, o.y + ((i*29)%26)-13); ctx.rotate((i%5)*0.4);
+                    ctx.fillStyle='#5d4037'; ctx.fillRect(-10,-6,20,12);
+                    ctx.strokeStyle='#3e2723'; ctx.lineWidth=1; ctx.strokeRect(-10,-6,20,12);
+                    ctx.restore();
+                }
+            } else {
+                ctx.fillStyle='#f9a825'; ctx.fillRect(o.x-52, o.y-22, 104, 44);          // trailer
+                ctx.fillStyle='#455a64'; ctx.fillRect(o.x-52, o.y-22, 104, 10);
+                ctx.fillStyle='#80d8ff'; for (let i=-1;i<=1;i++) ctx.fillRect(o.x+i*28-7, o.y-4, 14, 12);
+                ctx.strokeStyle='#78909c'; ctx.lineWidth=3;                              // fence stubs
+                ctx.beginPath(); ctx.moveTo(o.x-90, o.y+16); ctx.lineTo(o.x+90, o.y+16); ctx.stroke();
+                ctx.fillStyle='#fdd835'; ctx.fillRect(o.x-46, o.y-40, 92, 14);
+                ctx.fillStyle='#000'; ctx.font='bold 9px Courier New'; ctx.textAlign='center';
+                ctx.fillText('RIVERBEND LLC', o.x, o.y-30);
+            }
+            // branch dam / blueprint
+            if (b.blueprint) {
+                let bp = b.blueprint;
+                if (b.blocked) {
+                    for (let y2=0;y2<18;y2+=9) for (let x2=0;x2<b.w;x2+=20) {
+                        let off=(Math.floor(y2/9)%2===0)?0:10;
+                        ctx.fillStyle='#5d4037'; ctx.fillRect(b.cx-b.w/2+x2+off, bp.y-9+y2, 18, 8);
+                        ctx.strokeStyle='#3e2723'; ctx.lineWidth=1; ctx.strokeRect(b.cx-b.w/2+x2+off, bp.y-9+y2, 18, 8);
+                    }
+                } else {
+                    ctx.setLineDash([6,4]); ctx.strokeStyle='rgba(79,195,247,0.9)'; ctx.lineWidth=3;
+                    ctx.strokeRect(b.cx-b.w/2, bp.y-10, b.w, 20); ctx.setLineDash([]);
+                    ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(b.cx-46, bp.y-34, 92, 18);
+                    ctx.fillStyle='#4fc3f7'; ctx.font='bold 12px Courier New'; ctx.textAlign='center';
+                    ctx.fillText(`WOOD ${bp.have}/${bp.need}`, b.cx, bp.y-21);
+                }
+            }
+        }
+    }
+    function drawDragBox() {
+        let x1=Math.min(drag.sx,drag.x), y1=Math.min(drag.sy,drag.y), w2=Math.abs(drag.x-drag.sx), h2=Math.abs(drag.y-drag.sy);
+        ctx.fillStyle='rgba(79,195,247,0.10)'; ctx.fillRect(x1,y1,w2,h2);
+        ctx.setLineDash([6,4]); ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=2; ctx.strokeRect(x1,y1,w2,h2); ctx.setLineDash([]);
+        let n = workerPool.filter(w=>w.active && w.shape!=='berserker' && w.x>x1 && w.x<x1+w2 && w.y>y1 && w.y<y1+h2).length;
+        ctx.fillStyle='#fff'; ctx.font='bold 12px Courier New'; ctx.textAlign='left';
+        ctx.fillText(n ? `${n} undead` : (MODE.delta ? 'release over a branch to place a dam site' : 'drag over your undead to select them'), x1+4, y1-6);
+    }
+    function drawGroupMenu() {
+        ctx.fillStyle='rgba(10,10,30,0.45)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        let cx = groupMenu.x, cy = groupMenu.y;
+        for (let w of groupMenu.workers) { if (!w.active) continue; ctx.beginPath(); ctx.arc(w.x, w.y, 15, 0, Math.PI*2); ctx.strokeStyle='#ffd54f'; ctx.lineWidth=1.5; ctx.stroke(); }
+        const R = 70, btnR = 30;
+        let opts = commandOptions();
+        groupMenu.buttons = [];
+        ctx.textAlign='center';
+        for (let o of opts) {
+            let bx = cx + Math.cos(o.ang)*R, by = cy + Math.sin(o.ang)*R;
+            let hover = Math.hypot(mouse.x-bx, mouse.y-by) < btnR;
+            ctx.fillStyle = hover ? o.col : '#1b1b1b';
+            ctx.beginPath(); ctx.arc(bx, by, btnR, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle=o.col; ctx.lineWidth=3; ctx.stroke();
+            ctx.fillStyle = hover ? '#000' : '#fff'; ctx.font='bold 11px Courier New'; ctx.fillText(o.label, bx, by-1);
+            ctx.fillStyle = hover ? '#000' : o.col; ctx.font='10px Courier New'; ctx.fillText(o.sub, bx, by+12);
+            groupMenu.buttons.push({ x:bx, y:by, r:btnR, job:o.job });
+        }
+        ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='12px Courier New';
+        ctx.fillText(`${groupMenu.workers.filter(w=>w.active).length} undead selected · tap elsewhere to cancel`, cx, cy + 44);
+    }
+    function drawStructures() {
+        for (let s of structures) {
+            if (s.ruined) {
+                // Rubble: the mirror of the beaver's smashed dam in the intro.
+                for (let i=0;i<5;i++) {
+                    let rx = s.x + ((i*37)%Math.max(20,s.w)) - s.w/2, ry = s.y + ((i*23)%20) - 10;
+                    ctx.save(); ctx.translate(rx, ry); ctx.rotate((i%5)*0.35);
+                    ctx.fillStyle='#5d4037'; ctx.fillRect(-10,-6,20,12);
+                    ctx.strokeStyle='#3e2723'; ctx.lineWidth=1; ctx.strokeRect(-10,-6,20,12);
+                    ctx.restore();
+                }
+                continue;
+            }
+            if (s.type==='fence') {
+                ctx.strokeStyle='#78909c'; ctx.lineWidth=3;
+                ctx.beginPath(); ctx.moveTo(0, s.y); ctx.lineTo(canvas.width, s.y); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, s.y+8); ctx.lineTo(canvas.width, s.y+8); ctx.stroke();
+                for (let px=14; px<canvas.width; px+=46) { ctx.fillStyle='#546e7a'; ctx.fillRect(px-3, s.y-6, 6, 22); }
+            } else if (s.type==='trailer') {
+                ctx.fillStyle='#f9a825'; ctx.fillRect(s.x-s.w/2, s.y-s.h/2, s.w, s.h);
+                ctx.fillStyle='#455a64'; ctx.fillRect(s.x-s.w/2, s.y-s.h/2, s.w, 10);
+                ctx.fillStyle='#80d8ff'; for (let i=-1;i<=1;i++) ctx.fillRect(s.x+i*24-7, s.y-4, 14, 12);
+                ctx.fillStyle='#263238'; ctx.fillRect(s.x-s.w/2+8, s.y+s.h/2-4, 10, 8); ctx.fillRect(s.x+s.w/2-18, s.y+s.h/2-4, 10, 8);
+            } else if (s.type==='crane') {
+                ctx.strokeStyle='#fdd835'; ctx.lineWidth=5;
+                ctx.beginPath(); ctx.moveTo(s.x, s.y+s.h/2); ctx.lineTo(s.x, s.y-s.h/2); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(s.x, s.y-s.h/2); ctx.lineTo(s.x-70, s.y-s.h/2+16); ctx.stroke();
+                ctx.strokeStyle='#9e9e9e'; ctx.lineWidth=2;
+                ctx.beginPath(); ctx.moveTo(s.x-70, s.y-s.h/2+16); ctx.lineTo(s.x-70, s.y-s.h/2+52); ctx.stroke();
+                ctx.fillStyle='#616161'; ctx.fillRect(s.x-78, s.y-s.h/2+52, 16, 12);   // hook load
+                ctx.fillStyle='#fdd835'; ctx.fillRect(s.x-10, s.y+s.h/2-14, 20, 14);   // base
+            } else if (s.type==='lumber') {
+                for (let row=0; row<2; row++) for (let i=0; i<4; i++) {
+                    ctx.fillStyle = row ? '#8d6e63' : '#6d4c41';
+                    ctx.fillRect(s.x-s.w/2 + i*(s.w/4), s.y-6+row*10, s.w/4-3, 9);
+                }
+            }
+        }
+        // Base signpost
+        if (structures.length && !structures.every(s=>s.ruined)) {
+            ctx.fillStyle='#fdd835'; ctx.fillRect(canvas.width/2-95, canvas.height*0.80-30, 190, 20);
+            ctx.fillStyle='#000'; ctx.font='bold 12px Courier New'; ctx.textAlign='center';
+            ctx.fillText('RIVERBEND DEVELOPMENT LLC', canvas.width/2, canvas.height*0.80-16);
+        }
+    }
+    function drawFloodWave() {
+        if (!flood.active) return;
+        let top = dam.y + dam.h/2;
+        let g = ctx.createLinearGradient(0, top, 0, flood.y);
+        g.addColorStop(0, 'rgba(42,91,116,0.9)'); g.addColorStop(1, 'rgba(79,195,247,0.95)');
+        // fill every 12px row with that row's water segments (routes down open branches)
+        for (let yy = top; yy < flood.y; yy += 12) {
+            let segs = floodSegments(yy);
+            ctx.fillStyle = g;
+            for (let sg of segs) ctx.fillRect(sg.left, yy, sg.right-sg.left, Math.min(12, flood.y-yy));
+        }
+        // foam front on each segment
+        let front = floodSegments(flood.y);
+        ctx.strokeStyle='rgba(255,255,255,0.85)'; ctx.lineWidth=5;
+        for (let sg of front) {
+            ctx.beginPath();
+            for (let xx=sg.left; xx<=sg.right; xx+=16) ctx.lineTo(xx, flood.y + Math.sin(xx*0.08 + frameCount*0.3)*5);
+            ctx.stroke();
+        }
+    }
+    function drawTrees() {
+        for (let t of trees) {
+            if (!t.active) continue;
+            ctx.fillStyle='rgba(0,0,0,0.2)'; ctx.beginPath(); ctx.ellipse(t.x, t.y+24, 14, 5, 0, 0, Math.PI*2); ctx.fill();   // shadow
+            ctx.fillStyle='#4a3220'; ctx.fillRect(t.x-5, t.y, 10, 24);                                                          // trunk
+            ctx.fillStyle='#1d3a18'; ctx.beginPath(); ctx.arc(t.x+3, t.y-8, 17, 0, Math.PI*2); ctx.fill();                      // canopy: shade
+            ctx.fillStyle='#2c5423'; ctx.beginPath(); ctx.arc(t.x-3, t.y-14, 15, 0, Math.PI*2); ctx.fill();                     // canopy: mid
+            ctx.fillStyle='#3a6b2c'; ctx.beginPath(); ctx.arc(t.x-6, t.y-19, 9, 0, Math.PI*2); ctx.fill();                      // canopy: light
+            for (let i=0;i<3;i++) { ctx.fillStyle = i<t.hp ? '#fdd835' : '#424242'; ctx.fillRect(t.x-8+i*8, t.y-36, 6, 5); }
+        }
+    }
+    function drawDam() {
+        let baseX=dam.x-dam.w/2, baseY=dam.y-dam.h/2;
+        // stacked logs — a real beaver dam
+        for (let y=0; y<dam.h; y+=10) {
+            let ly = baseY + y, flash = dam.hitFlash>0;
+            ctx.fillStyle = flash ? '#e53935' : ((y/10)%2===0 ? '#6b4a2b' : '#5d3f22');
+            ctx.fillRect(baseX, ly, dam.w, 9);
+            ctx.fillStyle='rgba(0,0,0,0.25)'; ctx.fillRect(baseX, ly+7, dam.w, 2);
+            ctx.fillStyle = flash ? '#ff8a80' : '#8d6e63';                                            // log ends
+            ctx.beginPath(); ctx.arc(baseX+4, ly+4.5, 4.5, 0, Math.PI*2); ctx.arc(baseX+dam.w-4, ly+4.5, 4.5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle='#4a3220';
+            ctx.beginPath(); ctx.arc(baseX+4, ly+4.5, 2, 0, Math.PI*2); ctx.arc(baseX+dam.w-4, ly+4.5, 2, 0, Math.PI*2); ctx.fill();
+        }
+        ctx.strokeStyle='#5d3f22'; ctx.lineWidth=3;                                                    // crossed sticks poking out
+        for (let i=0;i<6;i++) { let sxx = baseX + (i+0.5)*dam.w/6; ctx.beginPath(); ctx.moveTo(sxx-8, baseY-4); ctx.lineTo(sxx+8, baseY+6); ctx.stroke(); }
+        if (floodReady()) {   // the dam glows when the reservoir is ready to release
+            ctx.strokeStyle=`rgba(79,195,247,${0.5+Math.sin(frameCount*0.15)*0.35})`; ctx.lineWidth=4;
+            ctx.strokeRect(baseX-3, baseY-3, dam.w+6, dam.h+6);
+        }
+        let pw=240, ph=55, px=dam.x-pw/2, py=baseY-ph-15;
+        ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillRect(px,py,pw,ph);
+        ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(px,py,pw,ph);
+        ctx.fillStyle='#fff'; ctx.font='bold 16px Courier New'; ctx.textAlign='center'; ctx.fillText(`DAM LEVEL ${dam.level}`, dam.x, py+18);
+        ctx.font='10px Courier New'; ctx.textAlign='left';
+        ctx.fillText('HP', px+10, py+30); ctx.fillStyle='#333'; ctx.fillRect(px+30,py+22,pw-40,10);
+        ctx.fillStyle='#e53935'; ctx.fillRect(px+30,py+22,(pw-40)*Math.max(0,dam.hp/dam.maxHp),10);
+        ctx.fillStyle='#fff'; ctx.fillText('XP', px+10, py+46); ctx.fillStyle='#333'; ctx.fillRect(px+30,py+38,pw-40,10);
+        ctx.fillStyle='#1e88e5'; ctx.fillRect(px+30,py+38,(pw-40)*(dam.xp/dam.xpToNext),10);
+    }
+    // ---- ONE shape dispatcher: shape is a costume, undead recolors white ----
+    function drawShape(shape, x, y, undead, angle, carryingLog, tint) {
+        const C = c => tint || c;
+        const logc = C('#8d6e63');
+        if (shape === 'fish') {
+            let body = C(undead ? '#ffffff' : '#ff8a80'), fin = C(undead ? '#e0e0e0' : '#ef5350');
+            ctx.save(); ctx.translate(x,y); ctx.rotate(angle||0);
+            ctx.fillStyle=fin; ctx.beginPath(); ctx.moveTo(-10,0); ctx.lineTo(-20,-7); ctx.lineTo(-20,7); ctx.closePath(); ctx.fill();
+            ctx.fillStyle=body; ctx.fillRect(-10,-7,20,14);
+            ctx.restore();
+            if (carryingLog) { ctx.fillStyle=logc; ctx.fillRect(x-7,y-13,14,7); }
+        } else if (shape === 'dev') {
+            let suit=C(undead?'#eeeeee':'#455a64'), head=C(undead?'#ffffff':'#d7ccc8'), hat=C(undead?'#cfcfcf':'#fdd835'), tie=C(undead?'#bdbdbd':'#c62828');
+            ctx.fillStyle=suit; ctx.fillRect(x-8,y-4,16,22);
+            ctx.fillStyle=tie;  ctx.fillRect(x-2,y-2,4,12);
+            ctx.fillStyle=head; ctx.fillRect(x-6,y-16,12,12);
+            ctx.fillStyle=hat;  ctx.beginPath(); ctx.moveTo(x,y-24); ctx.lineTo(x-9,y-14); ctx.lineTo(x+9,y-14); ctx.closePath(); ctx.fill();
+            if (carryingLog) { ctx.fillStyle=logc; ctx.fillRect(x+8,y-2,12,7); }
+        } else if (shape === 'bear') {
+            let fur=C(undead?'#f5f5f5':'#5d4037'), dark=C(undead?'#cfcfcf':'#3e2723');
+            ctx.fillStyle=fur;  ctx.fillRect(x-14,y-6,28,22);
+            ctx.fillStyle=fur;  ctx.fillRect(x-9,y-20,18,16);
+            ctx.fillStyle=dark; ctx.fillRect(x-9,y-24,6,6); ctx.fillRect(x+3,y-24,6,6);
+            ctx.fillStyle=dark; ctx.fillRect(x-3,y-12,6,5);
+            ctx.fillStyle=dark; ctx.fillRect(x-12,y+14,7,6); ctx.fillRect(x+5,y+14,7,6);
+            if (carryingLog) { ctx.fillStyle=logc; ctx.fillRect(x-7,y-30,14,7); }
+        } else if (shape === 'kayak') {
+            let hull=C(undead?'#fafafa':'#ff7043'), body=C(undead?'#cfcfcf':'#1565c0'), dark=C(undead?'#bdbdbd':'#37474f');
+            ctx.fillStyle=hull; ctx.beginPath(); ctx.moveTo(x,y-16); ctx.lineTo(x-7,y-4); ctx.lineTo(x-7,y+12); ctx.lineTo(x+7,y+12); ctx.lineTo(x+7,y-4); ctx.closePath(); ctx.fill();
+            ctx.fillStyle=body; ctx.fillRect(x-4,y-2,8,8);
+            ctx.strokeStyle=dark; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x-12,y+1); ctx.lineTo(x+12,y+1); ctx.stroke();
+            if (carryingLog) { ctx.fillStyle=logc; ctx.fillRect(x-7,y-22,14,7); }
+        } else if (shape === 'kayak2') {
+            let hull=C(undead?'#fafafa':'#ffb300'), body=C(undead?'#cfcfcf':'#1565c0'), dark=C(undead?'#bdbdbd':'#37474f');
+            ctx.fillStyle=hull; ctx.beginPath(); ctx.moveTo(x,y-22); ctx.lineTo(x-7,y-10); ctx.lineTo(x-7,y+16); ctx.lineTo(x+7,y+16); ctx.lineTo(x+7,y-10); ctx.closePath(); ctx.fill();
+            ctx.fillStyle=body; ctx.fillRect(x-4,y-8,8,8); ctx.fillRect(x-4,y+4,8,8);
+            ctx.strokeStyle=dark; ctx.lineWidth=2;
+            ctx.beginPath(); ctx.moveTo(x-12,y-5); ctx.lineTo(x+12,y-5); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(x-12,y+7); ctx.lineTo(x+12,y+7); ctx.stroke();
+            if (carryingLog) { ctx.fillStyle=logc; ctx.fillRect(x-7,y-28,14,7); }
+        } else if (shape === 'hunter') {
+            let vest=C(undead?'#eeeeee':'#e65100'), body=C(undead?'#dcdcdc':'#33691e'), head=C(undead?'#ffffff':'#d7ccc8'), cap=C(undead?'#cfcfcf':'#ff6d00'), gun=C(undead?'#bdbdbd':'#212121');
+            ctx.fillStyle=body; ctx.fillRect(x-7,y-2,14,20);
+            ctx.fillStyle=vest; ctx.fillRect(x-7,y-4,14,12);
+            ctx.fillStyle=head; ctx.fillRect(x-5,y-16,10,11);
+            ctx.fillStyle=cap;  ctx.fillRect(x-6,y-18,12,4);
+            ctx.fillStyle=gun;  ctx.fillRect(x+5,y-2,16,3);
+            if (carryingLog) { ctx.fillStyle=logc; ctx.fillRect(x-7,y-26,14,7); }
+        } else if (shape === 'drone') {
+            let frame=C(undead?'#eeeeee':'#37474f'), rotor=C(undead?'#cfcfcf':'#90a4ae'), eye=C(undead?'#bdbdbd':'#ffd600');
+            ctx.strokeStyle=rotor; ctx.lineWidth=2;
+            ctx.beginPath(); ctx.moveTo(x-13,y-9); ctx.lineTo(x+13,y+9); ctx.moveTo(x+13,y-9); ctx.lineTo(x-13,y+9); ctx.stroke();
+            ctx.fillStyle=rotor;
+            ctx.fillRect(x-17,y-12,8,3); ctx.fillRect(x+9,y-12,8,3); ctx.fillRect(x-17,y+9,8,3); ctx.fillRect(x+9,y+9,8,3);
+            ctx.fillStyle=frame; ctx.fillRect(x-7,y-6,14,12);
+            ctx.fillStyle=eye;   ctx.fillRect(x-3,y-2,6,4);
+            if (carryingLog) { ctx.fillStyle=logc; ctx.fillRect(x-7,y-18,14,7); }
+        } else if (shape === 'piranha') {
+            let body=C('#26a69a'), belly=C('#80cbc4'), jaw=C('#004d40'), eye=C('#ff1744');
+            ctx.save(); ctx.translate(x,y); ctx.rotate(angle||0);
+            ctx.fillStyle=body; ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(-20,-8); ctx.lineTo(-20,8); ctx.closePath(); ctx.fill();
+            ctx.fillStyle=body; ctx.beginPath(); ctx.ellipse(0,0,13,8,0,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle=belly; ctx.beginPath(); ctx.ellipse(0,4,10,4,0,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle=jaw; ctx.beginPath(); ctx.moveTo(13,-3); ctx.lineTo(13,5); ctx.lineTo(7,1); ctx.closePath(); ctx.fill();
+            ctx.fillStyle='#fff'; ctx.fillRect(9,-1,2,2); ctx.fillRect(11,1,2,2);
+            ctx.fillStyle=eye; ctx.beginPath(); ctx.arc(4,-3,2.2,0,Math.PI*2); ctx.fill();
+            ctx.restore();
+        } else if (shape === 'berserker') {
+            let body=C('#f5f5f5'), fin=C('#7b1fa2'), jaw=C('#9e9e9e'), eye=C('#e040fb');
+            ctx.save(); ctx.translate(x,y); ctx.rotate(angle||0);
+            ctx.fillStyle=fin; ctx.beginPath(); ctx.moveTo(-12,0); ctx.lineTo(-21,-9); ctx.lineTo(-21,9); ctx.closePath(); ctx.fill();
+            ctx.fillStyle=fin; ctx.beginPath(); ctx.moveTo(-2,-8); ctx.lineTo(2,-15); ctx.lineTo(6,-8); ctx.closePath(); ctx.fill();
+            ctx.fillStyle=body; ctx.beginPath(); ctx.ellipse(0,0,14,8,0,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle=jaw; ctx.beginPath(); ctx.moveTo(14,-4); ctx.lineTo(14,6); ctx.lineTo(7,1); ctx.closePath(); ctx.fill();
+            ctx.fillStyle='#fff'; ctx.fillRect(10,-2,2,3); ctx.fillRect(12,1,2,3);
+            ctx.fillStyle=eye; ctx.beginPath(); ctx.arc(5,-3,2.6,0,Math.PI*2); ctx.fill();
+            ctx.restore();
+        }
+    }
+    function counterPips(x, y, current, max, liveColor) {
+        if (max > 10) {   // giants: a bar instead of a mile of pips
+            let bw2=42; ctx.fillStyle='#424242'; ctx.fillRect(x-bw2/2, y, bw2, 4);
+            ctx.fillStyle=liveColor; ctx.fillRect(x-bw2/2, y, bw2*Math.max(0, Math.min(1, current/max)), 4);
+            return;
+        }
+        let total = Math.ceil(max), w = 6, gap = 2, startX = x - (total*(w+gap)-gap)/2;
+        for (let i=0;i<total;i++) { ctx.fillStyle = i < current ? liveColor : '#424242'; ctx.fillRect(startX + i*(w+gap), y, w, 4); }
+    }
+    function drawSalmon() {
+        for (let s of salmonPool) {
+            if (!s.active) continue;
+            let drawX = s.x + Math.sin(s.wiggleOffset)*20;
+            let angle = Math.atan2(Math.cos(s.wiggleOffset)*20*s.wiggleSpeed, -s.speed);
+            drawShape('fish', drawX, s.y, false, angle, false);
+        }
+    }
+    function drawWorkers() {
+        for (let w of workerPool) {
+            if (!w.active) continue;
+            let angle = 0;
+            if (w.shape === 'fish') {
+                if (w.state===STATE.DEFENDING) { let e=findNearestEnemy(w.x,w.y); if (e) angle=Math.atan2(e.y-w.y,e.x-w.x); }
+                else if (w.state===STATE.HAULING) { let dx2=Math.max(dam.x-dam.w/2+10, Math.min(dam.x+dam.w/2-10, w.depositX||dam.x)); angle=Math.atan2((dam.y+dam.h/2+14)-w.y, dx2-w.x); }
+                else if ((w.state===STATE.GATHERING||w.state===STATE.SWINGING)&&w.targetTree) angle=Math.atan2(w.targetTree.y-w.y, w.targetTree.x-w.x);
+            } else if (w.shape === 'berserker') {
+                let e=findNearestEnemy(w.x,w.y); if (e) angle=Math.atan2(e.y-w.y,e.x-w.x);
+            }
+            if (w.scale > 1) { ctx.save(); ctx.translate(w.x, w.y); ctx.scale(w.scale, w.scale); ctx.translate(-w.x, -w.y); }
+            drawShape(w.shape, w.x, w.y, true, angle, w.carryingLog, w.hitFlash>0 ? '#ff5252' : null);
+            if (w.scale > 1) ctx.restore();
+            if (frenzyTimer > 0) { ctx.beginPath(); ctx.arc(w.x, w.y, 17, 0, Math.PI*2); ctx.strokeStyle='rgba(255,23,68,0.85)'; ctx.lineWidth=2.5; ctx.stroke(); }
+            else if (w.state === STATE.DEFENDING) { ctx.beginPath(); ctx.arc(w.x, w.y, 16, 0, Math.PI*2); ctx.strokeStyle='#e53935'; ctx.lineWidth=2; ctx.stroke(); }
+            else if (w.state === STATE.BERSERK) { ctx.beginPath(); ctx.arc(w.x, w.y, 17, 0, Math.PI*2); ctx.strokeStyle='#ff6d00'; ctx.lineWidth=2.5; ctx.stroke(); }
+            if (w.maxCounters > 1) counterPips(w.x, w.y + 22, w.counters, w.maxCounters, '#80d8ff');
+        }
+    }
+    function drawEnemies() {
+        for (let e of enemyPool) {
+            if (!e.active) continue;
+            let k = KIND[e.kind];
+            let ang = 0;
+            if (k.huntsWorkers) { let prey = nearestWorker(e.x, e.y); ang = prey ? Math.atan2(prey.y-e.y, prey.x-e.x) : -Math.PI/2; }
+            if (e.scale > 1) { ctx.save(); ctx.translate(e.x, e.y); ctx.scale(e.scale, e.scale); ctx.translate(-e.x, -e.y); }
+            drawShape(k.shape, e.x, e.y, false, ang, false, e.hitFlash>0 ? '#ffffff' : null);
+            if (e.scale > 1) ctx.restore();
+            counterPips(e.x, e.y - 34*e.scale, e.counters, e.maxCounters, k.huntsWorkers ? '#ff5252' : '#76ff03');
+        }
+    }
+    function drawProjectiles() {
+        for (let p of projPool) {
+            if (!p.active) continue;
+            let col = p.kind==='friendly' ? '#76ff03' : (p.kind==='enemyDam' ? '#ce93d8' : '#ffab00');
+            let trail = p.kind==='friendly' ? 'rgba(118,255,3,0.35)' : (p.kind==='enemyDam' ? 'rgba(206,147,216,0.35)' : 'rgba(255,171,0,0.35)');
+            ctx.fillStyle=col; ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle=trail; ctx.beginPath(); ctx.arc(p.x-p.vx, p.y-p.vy, 3, 0, Math.PI*2); ctx.fill();
+        }
+    }
+    function drawEggs() {
+        for (let e of eggPool) {
+            if (!e.active) continue;
+            let prog = Math.max(0, Math.min(1, (e.y - e.y0) / Math.max(1, e.landY - e.y0)));
+            ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(e.x, e.landY, 8+prog*EGG_RADIUS*0.5, (8+prog*EGG_RADIUS*0.5)*0.4, 0, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle='rgba(229,57,53,0.5)'; ctx.lineWidth=2; ctx.beginPath(); ctx.arc(e.x, e.landY, EGG_RADIUS*prog, 0, Math.PI*2); ctx.stroke();
+            ctx.fillStyle='#fff8e1'; ctx.beginPath(); ctx.ellipse(e.x, e.y, 5, 7, 0, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle='#bcaaa4'; ctx.lineWidth=1; ctx.stroke();
+        }
+    }
+    function drawBirds() {
+        for (let b of birdPool) {
+            if (!b.active) continue;
+            let dir = b.vx>0 ? 1 : -1;
+            ctx.fillStyle='rgba(0,0,0,0.28)'; ctx.beginPath(); ctx.ellipse(b.x, b.y+BIRD_ALTITUDE, 15, 5, 0, 0, Math.PI*2); ctx.fill();
+            let flap = Math.sin(frameCount*0.25)*8;
+            ctx.strokeStyle='#b71c1c'; ctx.lineWidth=5; ctx.lineCap='round';
+            ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x-19, b.y-flap-6); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(b.x, b.y); ctx.lineTo(b.x+19, b.y-flap-6); ctx.stroke();
+            ctx.lineCap='butt';
+            ctx.fillStyle='#e53935'; ctx.beginPath(); ctx.ellipse(b.x, b.y, 10, 7, 0, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(b.x+dir*9, b.y-3, 5, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle='#ffb300'; ctx.beginPath(); ctx.moveTo(b.x+dir*13, b.y-3); ctx.lineTo(b.x+dir*23, b.y-1); ctx.lineTo(b.x+dir*13, b.y+1); ctx.closePath(); ctx.fill();
+            ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(b.x+dir*10, b.y-4, 1.5, 0, Math.PI*2); ctx.fill();
+        }
+    }
+    function drawExplosions() {
+        for (let ex of exploPool) {
+            if (!ex.active) continue;
+            let a = ex.life/EXPLO_LIFE;
+            ctx.fillStyle=`rgba(255,138,0,${0.35*a})`; ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle=`rgba(255,193,7,${0.85*a})`; ctx.lineWidth=3; ctx.beginPath(); ctx.arc(ex.x, ex.y, ex.r, 0, Math.PI*2); ctx.stroke();
+        }
+    }
+    function drawBoss() {
+        if (!boss.active) return;
+        let x=boss.x, y=boss.y, w=boss.w, h=boss.h, fl=boss.hitFlash>0;
+        let enr = boss.counters < boss.maxCounters*0.25;
+        ctx.fillStyle = fl ? '#ffffff' : '#37474f';
+        ctx.beginPath(); ctx.moveTo(x, y-h/2); ctx.lineTo(x-w/2, y-h/4); ctx.lineTo(x-w/2, y+h/2); ctx.lineTo(x+w/2, y+h/2); ctx.lineTo(x+w/2, y-h/4); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = fl ? '#ffffff' : '#546e7a'; ctx.fillRect(x-w*0.28, y-h*0.12, w*0.56, h*0.42);
+        ctx.fillStyle='#80d8ff'; for (let i=-1;i<=1;i++) ctx.fillRect(x+i*w*0.16-5, y-h*0.04, 10, 8);
+        ctx.fillStyle='#263238'; ctx.fillRect(x-7, y-h*0.02, 14, 20);
+        ctx.fillStyle='rgba(130,130,130,0.45)'; let sm=(frameCount%40); ctx.beginPath(); ctx.arc(x, y-h*0.02-10-sm*0.6, 6+(enr?4:0)+sm*0.12, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle='#212121'; ctx.fillRect(x-6, y-h*0.46, 12, 18);
+        ctx.fillStyle='#fdd835'; ctx.fillRect(x-w*0.3, y+h*0.34, w*0.6, 11);
+        ctx.fillStyle='#000'; ctx.font='bold 10px Courier New'; ctx.textAlign='center'; ctx.fillText('FORECLOSURE', x, y+h*0.34+9);
+        if (enr) { ctx.strokeStyle=`rgba(229,57,53,${0.45+Math.sin(frameCount*0.3)*0.2})`; ctx.lineWidth=3; ctx.strokeRect(x-w/2, y-h/2, w, h); }
+    }
+    function drawBossBar() {
+        if (!boss.active) return;
+        let bw=Math.min(560, canvas.width-80), bx=(canvas.width-bw)/2, by=MODE.winState?42:20;
+        ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(bx-6,by-6,bw+12,34);
+        ctx.fillStyle='#333'; ctx.fillRect(bx,by,bw,18);
+        let frac=Math.max(0,boss.counters/boss.maxCounters);
+        ctx.fillStyle = frac<0.25 ? '#ff8a80' : '#e53935'; ctx.fillRect(bx,by,bw*frac,18);
+        ctx.strokeStyle='#fff'; ctx.lineWidth=2; ctx.strokeRect(bx,by,bw,18);
+        ctx.fillStyle='#fff'; ctx.font='bold 13px Courier New'; ctx.textAlign='center'; ctx.fillText('S.S. FORECLOSURE', canvas.width/2, by+14);
+    }
+    function drawBeaver() {
+        if (currentAura > 0) {
+            let frz = frenzyTimer > 0;
+            ctx.beginPath(); ctx.arc(beaver.x, beaver.y, currentAura, 0, Math.PI*2);
+            ctx.strokeStyle = frz ? 'rgba(255,23,68,0.55)' : 'rgba(156,39,176,0.4)'; ctx.lineWidth=2; ctx.stroke();
+            ctx.fillStyle = frz ? `rgba(255,23,68,${0.07+Math.sin(frameCount*0.15)*0.03})` : `rgba(156,39,176,${0.05+Math.sin(frameCount*0.05)*0.02})`; ctx.fill();
+        }
+        if (frenzyTimer > 0) {   // the sigil the horde is tracing
+            let verts = pentagramVerts(frameCount*0.012);
+            ctx.strokeStyle='rgba(255,23,68,0.30)'; ctx.lineWidth=1.5;
+            ctx.beginPath();
+            for (let i2=0;i2<PENT_ORDER.length;i2++) { let v2=verts[PENT_ORDER[i2]]; if (i2===0) ctx.moveTo(beaver.x+v2.x, beaver.y+v2.y); else ctx.lineTo(beaver.x+v2.x, beaver.y+v2.y); }
+            ctx.stroke();
+            ctx.beginPath(); ctx.arc(beaver.x, beaver.y, 84, 0, Math.PI*2); ctx.stroke();
+        }
+        let stunned = beaver.stun > 0;
+        let flash = beaver.hitFlash > 0;
+        if (stunned) ctx.globalAlpha = (Math.floor(frameCount/6)%2===0) ? 0.4 : 0.8;
+        ctx.fillStyle = flash ? '#e53935' : '#3e2723'; ctx.fillRect(beaver.x-beaver.w/2-12, beaver.y-6, 14, 12);
+        ctx.fillStyle = flash ? '#e53935' : '#6d4c41'; ctx.fillRect(beaver.x-beaver.w/2, beaver.y-beaver.h/2, beaver.w, beaver.h);
+        ctx.fillStyle = flash ? '#e53935' : (stunned ? '#9e9e9e' : '#7b1fa2'); ctx.beginPath(); ctx.moveTo(beaver.x, beaver.y-beaver.h/2-16); ctx.lineTo(beaver.x-beaver.w/2-6, beaver.y-beaver.h/2+6); ctx.lineTo(beaver.x+beaver.w/2+6, beaver.y-beaver.h/2+6); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.fillRect(beaver.x-7, beaver.y-6, 5, 5); ctx.fillRect(beaver.x+2, beaver.y-6, 5, 5);
+        ctx.globalAlpha = 1;
+        let bw=44, bx=beaver.x-bw/2, by=beaver.y+beaver.h/2+8;
+        ctx.fillStyle='#333'; ctx.fillRect(bx,by,bw,5);
+        ctx.fillStyle = beaver.hp/beaver.maxHp < 0.3 ? '#e53935' : '#66bb6a'; ctx.fillRect(bx,by,bw*Math.max(0,beaver.hp/beaver.maxHp),5);
+        if (stunned) { ctx.fillStyle='#fff'; ctx.font='11px Courier New'; ctx.textAlign='center'; ctx.fillText('STUNNED', beaver.x, by+18); }
+    }
+    function drawFrenzyVignette() {
+        let a = 0.14 + Math.sin(frameCount*0.2)*0.05;
+        let g = ctx.createRadialGradient(canvas.width/2, canvas.height/2, canvas.height*0.35, canvas.width/2, canvas.height/2, canvas.height*0.75);
+        g.addColorStop(0, 'rgba(123,31,162,0)'); g.addColorStop(1, `rgba(123,31,162,${a})`);
+        ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
+    }
+    function drawSelectRing(x, y, color) { ctx.beginPath(); ctx.arc(x,y,18,0,Math.PI*2); ctx.strokeStyle=color; ctx.lineWidth=2.5; ctx.stroke(); }
+    function drawUI() {
+        if (gameState!=='playing' && gameState!=='paused') { frenzyBtn=null; speedBtn=null; return; }
+        let hovered = workerAt(mouse.x, mouse.y);
+        if (hovered) {
+            drawSelectRing(hovered.x, hovered.y, '#69f0ae');
+            ctx.fillStyle='rgba(0,0,0,0.9)'; ctx.fillRect(mouse.x+15, mouse.y-60, 245, 55);
+            ctx.strokeStyle='#aaa'; ctx.lineWidth=1; ctx.strokeRect(mouse.x+15, mouse.y-60, 245, 55);
+            ctx.fillStyle='#fff'; ctx.font='12px Courier New'; ctx.textAlign='left';
+            let label = hovered.shape==='fish' ? 'FISH (gathers wood)' : (hovered.shape==='berserker' ? 'BERSERKER (charges enemies)' : (hovered.shape.indexOf('kayak')===0 ? 'KAYAK ZOMBIE (fast)' : (hovered.shape==='hunter' ? 'HUNTER ZOMBIE (shoots)' : (hovered.shape==='drone' ? 'DRONE ZOMBIE (shoots)' : (hovered.shape==='bear' ? 'BEAR ZOMBIE' : 'DEV ZOMBIE')))));
+            ctx.fillText(`${label} | ${frenzyTimer>0 ? 'FRENZY!' : hovered.state}`, mouse.x+20, mouse.y-42);
+            ctx.fillText(`Counters: ${hovered.counters}/${hovered.maxCounters}`, mouse.x+20, mouse.y-26);
+        }
+        let workers = workerPool.filter(w=>w.active);
+        let fishN = workers.filter(w=>w.shape==='fish').length;
+        let berserkN = workers.filter(w=>w.shape==='berserker').length;
+        let zombieN = workers.length - fishN - berserkN;
+        let defendN = workers.filter(w=>w.state===STATE.DEFENDING).length;
+        let enemiesN = enemyPool.filter(e=>e.active).length;
+        ctx.fillStyle='#fff'; ctx.font='16px Courier New'; ctx.textAlign='left';
+        ctx.fillText(`Fish: ${fishN}  |  Zombies: ${zombieN}  |  Berserkers: ${berserkN}  |  Defending: ${defendN}`, 20, 30);
+        ctx.fillText(`Beaver HP: ${Math.max(0,Math.round(beaver.hp))}/${beaver.maxHp}   Aura: ${Math.round(currentAura)}px`, 20, 50);
+        ctx.fillStyle = enemiesN>0 ? '#ff7043' : '#9e9e9e';
+        ctx.fillText(dam.level>=2 ? `Enemies: ${enemiesN}` : `Enemies: locked (reach Dam Lvl 2)`, 20, 70);
+        // ---- Frenzy meter ----
+        let fw=170, fx=20, fy=82;
+        let full = frenzyCharge >= FRENZY_MAX && frenzyTimer<=0;
+        ctx.fillStyle='#333'; ctx.fillRect(fx,fy,fw,10);
+        ctx.fillStyle = frenzyTimer>0 ? '#ff1744' : (full ? `rgba(255,23,68,${0.7+Math.sin(frameCount*0.2)*0.3})` : '#7b1fa2');
+        ctx.fillRect(fx,fy,fw*(frenzyTimer>0 ? frenzyTimer/FRENZY_DURATION : frenzyCharge/FRENZY_MAX),10);
+        ctx.strokeStyle='#ce93d8'; ctx.lineWidth=1; ctx.strokeRect(fx,fy,fw,10);
+        ctx.fillStyle = full ? '#ffd54f' : '#ce93d8'; ctx.font='11px Courier New';
+        ctx.fillText(frenzyTimer>0 ? 'FRENZY!' : (full ? 'FRENZY READY — SPACE / tap button' : 'FRENZY'), fx+fw+8, fy+9);
+        // Water Burst meter (charges 3x faster; double-tap the ground)
+        let by3 = fy+15, bFull = burstCharge >= FRENZY_MAX;
+        ctx.fillStyle='#333'; ctx.fillRect(fx,by3,fw,10);
+        ctx.fillStyle = bFull ? `rgba(79,195,247,${0.7+Math.sin(frameCount*0.2)*0.3})` : '#2a6b8a';
+        ctx.fillRect(fx,by3,fw*(burstCharge/FRENZY_MAX),10);
+        ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=1; ctx.strokeRect(fx,by3,fw,10);
+        ctx.fillStyle = bFull ? '#ffd54f' : '#4fc3f7';
+        ctx.fillText(bFull ? 'BURST READY — double-tap the ground' : 'WATER BURST', fx+fw+8, by3+9);
+        // ---- Frenzy HUD button (touch) ----
+        let r=34, bx2=canvas.width-64, by2=canvas.height-64;
+        frenzyBtn = { x:bx2, y:by2, r:r };
+        ctx.globalAlpha = full ? 1 : 0.45;
+        ctx.beginPath(); ctx.arc(bx2,by2,r,0,Math.PI*2);
+        ctx.fillStyle = frenzyTimer>0 ? 'rgba(255,23,68,0.8)' : '#1b1b1b'; ctx.fill();
+        ctx.strokeStyle = full ? `rgba(255,23,68,${0.7+Math.sin(frameCount*0.2)*0.3})` : '#7b1fa2'; ctx.lineWidth=3; ctx.stroke();
+        ctx.fillStyle = full||frenzyTimer>0 ? '#fff' : '#9e9e9e'; ctx.font='bold 11px Courier New'; ctx.textAlign='center';
+        ctx.fillText('FRENZY', bx2, by2+4);
+        ctx.globalAlpha = 1;
+        // ---- Speed toggle (top-right, cycles 1x -> 1.5x -> 2x) ----
+        let sw2=64, sh2=28, sx2=canvas.width-sw2-16, sy2=14;
+        speedBtn = { x:sx2, y:sy2, w:sw2, h:sh2 };
+        ctx.fillStyle='#1b1b1b'; ctx.fillRect(sx2,sy2,sw2,sh2);
+        ctx.strokeStyle = speedIdx>0 ? '#ffd54f' : '#9e9e9e'; ctx.lineWidth=2; ctx.strokeRect(sx2,sy2,sw2,sh2);
+        ctx.fillStyle = speedIdx>0 ? '#ffd54f' : '#cfcfcf'; ctx.font='bold 14px Courier New'; ctx.textAlign='center';
+        ctx.fillText('\u25b6 '+SPEEDS[speedIdx]+'x', sx2+sw2/2, sy2+19);
+        ctx.fillStyle='rgba(255,255,255,0.55)'; ctx.font='12px Courier New'; ctx.textAlign='left';
+        ctx.fillText('Tap ground to move · tap a fish: job wheel · DRAG a box: group select' + (MODE.delta ? ' / place a branch dam' : '') + ' · SPACE frenzy · P pause', 20, canvas.height-20);
+    }
+    function drawObjective() {
+        if (!MODE.winState || (gameState!=='playing' && gameState!=='paused')) return;
+        let msg, col='#fff';
+        if (!MODE.floodTarget) {
+            if (MODE.surviveFrames) {
+                let left = Math.max(0, MODE.surviveFrames - runFrames);
+                let mm = Math.floor(left/1800), ss = Math.floor((left%1800)/30);
+                msg = `HOLD THE LODGE — ${mm}:${ss<10?'0':''}${ss} left`;
+            } else if (MODE.bossHunt) {
+                msg = `SINK THE FLEET — ${bossKills}/${MODE.bossHunt} trawlers sunk` + (boss.active ? ' · CONTACT!' : (dam.level<4 ? ` · reach dam Lv4 (now ${dam.level})` : ''));
+            }
+            ctx.font='bold 14px Courier New'; ctx.textAlign='center';
+            let tw2 = ctx.measureText(msg).width + 30;
+            ctx.fillStyle='rgba(0,0,0,0.75)'; ctx.fillRect(canvas.width/2-tw2/2, 8, tw2, 26);
+            ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=1.5; ctx.strokeRect(canvas.width/2-tw2/2, 8, tw2, 26);
+            ctx.fillStyle='#fff'; ctx.fillText(msg, canvas.width/2, 26);
+            return;
+        }
+        let camps = branches.filter(b=>!b.outpost.destroyed).length;
+        if (flood.active) { msg='THE RIVER REMEMBERS'; col='#4fc3f7'; }
+        else if (dam.level < MODE.floodTarget) msg=`OBJECTIVE: raise the dam to LEVEL ${MODE.floodTarget} (now ${dam.level}) · camps left: ${camps}`;
+        else if (openBranches().length === 1) { msg='ONE PATH LEFT — stand on the dam · press F or tap it'; col = (Math.floor(frameCount/20)%2===0) ? '#4fc3f7' : '#fff'; }
+        else msg='RESERVOIR FULL — drag a box on a branch to dam it, or release a weak split flood';
+        ctx.font='bold 14px Courier New'; ctx.textAlign='center';
+        let tw = ctx.measureText(msg).width + 30;
+        ctx.fillStyle='rgba(0,0,0,0.75)'; ctx.fillRect(canvas.width/2-tw/2, 8, tw, 26);
+        ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=1.5; ctx.strokeRect(canvas.width/2-tw/2, 8, tw, 26);
+        ctx.fillStyle=col; ctx.fillText(msg, canvas.width/2, 26);
+    }
+    function drawJobMenu() {
+        let w = jobMenu.worker; if (!w) return;
+        ctx.fillStyle='rgba(10,10,30,0.45)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        let cx = Math.max(95, Math.min(canvas.width-95, w.x));
+        let cy = Math.max(110, Math.min(canvas.height-70, w.y));
+        ctx.strokeStyle='rgba(255,255,255,0.4)'; ctx.setLineDash([4,4]); ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(w.x, w.y); ctx.stroke(); ctx.setLineDash([]);
+        ctx.beginPath(); ctx.arc(w.x, w.y, 20, 0, Math.PI*2); ctx.strokeStyle='#ffd54f'; ctx.lineWidth=2; ctx.stroke();
+        const R = 64, btnR = 30;
+        const opts = commandOptions();
+        jobMenu.buttons = [];
+        ctx.textAlign='center';
+        for (let o of opts) {
+            let bx = cx + Math.cos(o.ang)*R, by = cy + Math.sin(o.ang)*R;
+            let hover = Math.hypot(mouse.x-bx, mouse.y-by) < btnR;
+            ctx.fillStyle = hover ? o.col : '#1b1b1b';
+            ctx.beginPath(); ctx.arc(bx, by, btnR, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle=o.col; ctx.lineWidth=3; ctx.stroke();
+            ctx.fillStyle = hover ? '#000' : '#fff'; ctx.font='bold 12px Courier New';
+            ctx.fillText(o.label, bx, by-1);
+            ctx.fillStyle = hover ? '#000' : o.col; ctx.font='10px Courier New';
+            ctx.fillText(o.sub, bx, by+12);
+            jobMenu.buttons.push({ x:bx, y:by, r:btnR, job:o.job });
+        }
+        ctx.fillStyle='rgba(255,255,255,0.85)'; ctx.font='12px Courier New';
+        ctx.fillText('assign a job  ·  tap elsewhere to cancel', cx, cy + R + btnR + 16);
+    }
+    function wrapText(text, cx, cy, maxw, lh) {
+        let words = text.split(' '), line = '', yy = cy;
+        for (let n=0;n<words.length;n++) { let test = line + words[n] + ' '; if (ctx.measureText(test).width > maxw && line) { ctx.fillText(line.trim(), cx, yy); line = words[n] + ' '; yy += lh; } else line = test; }
+        ctx.fillText(line.trim(), cx, yy);
+    }
+    function drawUpgradeCards() {
+        ctx.fillStyle='rgba(0,0,0,0.74)'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle='#ce93d8'; ctx.font='bold 26px Courier New'; ctx.textAlign='center';
+        ctx.fillText('THE DAM GROWS — CHOOSE A BOON', canvas.width/2, canvas.height/2 - 130);
+        ctx.fillStyle='rgba(255,255,255,0.6)'; ctx.font='13px Courier New';
+        ctx.fillText('click a card  (or press 1 / 2 / 3)', canvas.width/2, canvas.height/2 - 104);
+        upgradeButtons = [];
+        let cw=250, ch=164, gap=26, total=cw*3+gap*2, sx=(canvas.width-total)/2, sy=canvas.height/2 - 70;
+        currentChoices.forEach((u,i) => {
+            let x=sx+i*(cw+gap), y=sy;
+            let hover = mouse.x>x && mouse.x<x+cw && mouse.y>y && mouse.y<y+ch;
+            let acc = u.isDam ? '#8d6e63' : '#ce93d8';
+            ctx.fillStyle = hover ? (u.isDam ? '#2b241d' : '#2a2333') : '#1b1b1b'; ctx.fillRect(x,y,cw,ch);
+            ctx.strokeStyle=acc; ctx.lineWidth=3; ctx.strokeRect(x,y,cw,ch);
+            ctx.fillStyle = u.isDam ? '#8d6e63' : '#7b1fa2'; ctx.font='bold 10px Courier New'; ctx.textAlign='center';
+            ctx.fillText(u.isDam ? `— DAM PERMIT №${dam.level} —` : '— BEAVER BOON —', x+cw/2, y+18);
+            ctx.fillStyle='#ffd54f'; ctx.font='bold 20px Courier New'; ctx.fillText(`${i+1}`, x+cw/2, y+44);
+            ctx.fillStyle='#fff'; ctx.font='bold 17px Courier New'; ctx.fillText(u.name, x+cw/2, y+80);
+            ctx.fillStyle='#bdbdbd'; ctx.font='13px Courier New'; wrapText(u.desc, x+cw/2, y+108, cw-26, 17);
+            upgradeButtons.push({ x, y, w:cw, h:ch, idx:i });
+        });
+    }
+
+    // ============================= SCENES =============================
+    function screenOverlay(c) { ctx.fillStyle=c; ctx.fillRect(0,0,canvas.width,canvas.height); }
+    function drawTreeAt(x, y, s) {
+        ctx.fillStyle='#2e1a10'; ctx.fillRect(x-6*s, y, 12*s, 24*s);
+        ctx.fillStyle='#0d3b13'; ctx.beginPath(); ctx.moveTo(x, y-26*s); ctx.lineTo(x-18*s, y+6*s); ctx.lineTo(x+18*s, y+6*s); ctx.closePath(); ctx.fill();
+    }
+    function drawBigFish(x, y, s, angle) {
+        ctx.save(); ctx.translate(x,y); ctx.rotate(angle||0); ctx.scale(s,s);
+        ctx.fillStyle='#dcdcdc'; ctx.beginPath(); ctx.moveTo(-10,0); ctx.lineTo(-20,-7); ctx.lineTo(-20,7); ctx.closePath(); ctx.fill();
+        ctx.fillStyle='#ffffff'; ctx.fillRect(-10,-7,20,14);
+        ctx.fillStyle='#9c27b0'; ctx.fillRect(2,-3,4,4);
+        ctx.restore();
+    }
+    function drawDemonBeaver(x, y, s) {
+        let g = ctx.createRadialGradient(x, y, 8, x, y, 95*s);
+        g.addColorStop(0, `rgba(156,39,176,${0.16+Math.sin(frameCount*0.06)*0.06})`); g.addColorStop(1, 'rgba(156,39,176,0)');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,95*s,0,Math.PI*2); ctx.fill();
+        ctx.fillStyle='#2e1a10'; ctx.fillRect(x-15*s-13*s, y-7*s, 15*s, 13*s);
+        ctx.fillStyle='#6d4c41'; ctx.fillRect(x-15*s, y-15*s, 30*s, 30*s);
+        ctx.fillStyle='#7b1fa2'; ctx.beginPath(); ctx.moveTo(x, y-31*s); ctx.lineTo(x-22*s, y-9*s); ctx.lineTo(x+22*s, y-9*s); ctx.closePath(); ctx.fill();
+        ctx.shadowColor='#ff1744'; ctx.shadowBlur=14*s;
+        ctx.fillStyle='#ff1744'; ctx.fillRect(x-8*s, y-7*s, 6*s, 6*s); ctx.fillRect(x+2*s, y-7*s, 6*s, 6*s);
+        ctx.shadowBlur=0;
+    }
+    function introBricks(x, y, w, h, col) {
+        col = col || '#5d4037';
+        for (let yy=0; yy<h; yy+=14) for (let xx=0; xx<w; xx+=24) {
+            let off=(Math.floor(yy/14)%2===0)?0:12;
+            ctx.fillStyle=col; ctx.fillRect(x+xx+off, y+yy, 22, 12);
+            ctx.strokeStyle='#3e2723'; ctx.lineWidth=1; ctx.strokeRect(x+xx+off, y+yy, 22, 12);
+        }
+    }
+    function introBeaver(x, y, s, mood) {
+        ctx.fillStyle='#3e2723'; ctx.fillRect(x-15*s-11*s, y-5*s, 11*s, 11*s);
+        ctx.fillStyle='#6d4c41'; ctx.fillRect(x-15*s, y-15*s, 30*s, 30*s);
+        ctx.fillStyle='#8d6e63'; ctx.fillRect(x-9*s, y-2*s, 18*s, 16*s);
+        ctx.fillStyle='#fff'; ctx.fillRect(x-8*s, y-10*s, 6*s, 6*s); ctx.fillRect(x+2*s, y-10*s, 6*s, 6*s);
+        ctx.fillStyle='#000'; ctx.fillRect(x-6*s, y-8*s, 3*s, 3*s); ctx.fillRect(x+4*s, y-8*s, 3*s, 3*s);
+        ctx.fillStyle='#fff'; ctx.fillRect(x-3*s, y+1*s, 6*s, 5*s);
+        ctx.strokeStyle='#2b1a12'; ctx.lineWidth=2*s; ctx.beginPath();
+        if (mood==='sad') ctx.arc(x, y+13*s, 5*s, Math.PI*1.15, Math.PI*1.85);
+        else ctx.arc(x, y+7*s, 5*s, 0.12*Math.PI, 0.88*Math.PI);
+        ctx.stroke();
+    }
+    // ---- Intro: a comic page. Panels are revealed one tap at a time.
+    //      HOME -> THEY CAME -> THEY TOOK EVERYTHING -> SO HE TOOK IT BACK ----
+    function panelRect(i) {
+        let W=canvas.width, H=canvas.height;
+        let pw=Math.min(W-70, 940), ph=H-90;
+        let px=(W-pw)/2, py=42;
+        let gut=14, headH=44;
+        let cw=(pw-gut*3)/2, chh=(ph-headH-gut*3)/2;
+        let col=i%2, row=Math.floor(i/2);
+        return { x: px+gut+col*(cw+gut), y: py+headH+gut+row*(chh+gut), w: cw, h: chh, px, py, pw, ph };
+    }
+    function comicCaption(x, y, txt) {
+        ctx.font='bold 12px Courier New';
+        let w2 = ctx.measureText(txt).width + 14;
+        ctx.fillStyle='#ffd54f'; ctx.fillRect(x, y, w2, 20);
+        ctx.strokeStyle='#000'; ctx.lineWidth=2; ctx.strokeRect(x, y, w2, 20);
+        ctx.fillStyle='#000'; ctx.textAlign='left'; ctx.fillText(txt, x+7, y+14);
+    }
+    function drawIntro() {
+        let t=frameCount;
+        // room backdrop
+        ctx.fillStyle='#0d0b10'; ctx.fillRect(0,0,canvas.width,canvas.height);
+        let pr0 = panelRect(0);
+        // the comic page
+        ctx.save();
+        ctx.shadowColor='rgba(0,0,0,0.8)'; ctx.shadowBlur=24;
+        ctx.fillStyle='#efe6d0'; ctx.fillRect(pr0.px, pr0.py, pr0.pw, pr0.ph);
+        ctx.restore();
+        // masthead
+        ctx.fillStyle='#000'; ctx.font='bold 22px Courier New'; ctx.textAlign='left';
+        ctx.fillText('BEAVER NECROMANCER', pr0.px+16, pr0.py+30);
+        ctx.fillStyle='#7b1fa2'; ctx.font='bold 13px Courier New'; ctx.textAlign='right';
+        ctx.fillText("ISSUE #1 · HE DOESN'T GIVE A DAM", pr0.px+pr0.pw-16, pr0.py+30);
+        // panels
+        for (let i=0;i<INTRO_PANELS;i++) {
+            let p = panelRect(i);
+            if (i > introPanel) {   // not yet revealed: blank newsprint
+                ctx.fillStyle='#e2d7bd'; ctx.fillRect(p.x, p.y, p.w, p.h);
+                ctx.strokeStyle='#c9bd9f'; ctx.lineWidth=2; ctx.strokeRect(p.x, p.y, p.w, p.h);
+                continue;
+            }
+            ctx.save();
+            ctx.beginPath(); ctx.rect(p.x, p.y, p.w, p.h); ctx.clip();
+            ctx.translate(p.x, p.y);
+            let sx2 = p.w/100, sy2 = p.h/70;   // each painter works in 100x70 local units
+            ctx.scale(sx2, sy2);
+            drawComicPanel(i, t);
+            ctx.restore();
+            ctx.strokeStyle='#000'; ctx.lineWidth=4; ctx.strokeRect(p.x, p.y, p.w, p.h);
+            let cap = ['HOME.', 'THEN THEY CAME.', 'THEY TOOK EVERYTHING.', "SO NOW HE'S TAKING IT BACK."][i];
+            comicCaption(p.x+6, p.y+6, cap);
+        }
+        // progress dots + skip chevron
+        let cx=canvas.width/2, dotsY=canvas.height-24, n=INTRO_PANELS, gap=22, startX=cx-((n-1)*gap)/2;
+        for (let i=0;i<n;i++){ ctx.beginPath(); ctx.arc(startX+i*gap, dotsY, i===introPanel?7:5, 0, Math.PI*2); ctx.fillStyle=i===introPanel?'#ffd54f':'rgba(255,255,255,0.35)'; ctx.fill(); }
+        let pa=0.5+Math.sin(t*0.12)*0.35; ctx.fillStyle='rgba(255,213,79,'+pa.toFixed(2)+')'; ctx.font='bold 16px Courier New'; ctx.textAlign='right';
+        ctx.fillText('PRESS ANY BUTTON TO SKIP \u00bb', canvas.width-24, canvas.height-16);
+        ctx.textAlign='left';
+    }
+    // Panel painters in 100x70 local coordinates
+    function drawComicPanel(i, t) {
+        if (i===0) {
+            // HOME: sunny river, proud little dam, happy beaver bobbing
+            ctx.fillStyle='#7ec8d8'; ctx.fillRect(0,0,100,34);                       // sky
+            ctx.fillStyle='#ffe082'; ctx.beginPath(); ctx.arc(84,10,8,0,Math.PI*2); ctx.fill();
+            ctx.fillStyle='#2a7a8c'; ctx.fillRect(0,34,100,36);                      // water
+            ctx.strokeStyle='rgba(255,255,255,0.5)'; ctx.lineWidth=1;
+            for (let j=0;j<3;j++){ ctx.beginPath(); for(let xx=0;xx<=100;xx+=8) ctx.lineTo(xx, 42+j*9+Math.sin(xx*0.3+t*0.05+j)*1.5); ctx.stroke(); }
+            for (let yy=0; yy<12; yy+=6) for (let xx=0; xx<44; xx+=10) {             // dam
+                ctx.fillStyle='#5d4037'; ctx.fillRect(28+xx+((yy/6)%2)*5, 26+yy, 9, 5);
+                ctx.strokeStyle='#3e2723'; ctx.lineWidth=0.7; ctx.strokeRect(28+xx+((yy/6)%2)*5, 26+yy, 9, 5);
+            }
+            let bob=Math.sin(t*0.06)*2;
+            introBeaver(50, 52+bob, 0.62, 'happy');
+        } else if (i===1) {
+            // THEY CAME: developer + bulldozer loom over the treeline
+            ctx.fillStyle='#9db86e'; ctx.fillRect(0,0,100,50);
+            ctx.fillStyle='#5b7842'; ctx.fillRect(0,50,100,20);
+            drawTreeAt(12, 40, 0.55); drawTreeAt(24, 46, 0.45);
+            ctx.fillStyle='#f9a825'; ctx.fillRect(56,26,34,18);                      // dozer body
+            ctx.fillStyle='#f9a825'; ctx.fillRect(74,12,16,15);                      // cab
+            ctx.fillStyle='#bbdefb'; ctx.fillRect(77,15,10,9);
+            ctx.fillStyle='#212121'; ctx.fillRect(54,44,38,8);                       // treads
+            ctx.fillStyle='#fbc02d'; ctx.fillRect(48,24,6,28);                       // blade
+            ctx.fillStyle='#455a64'; ctx.fillRect(30,32,10,20);                      // the suit
+            ctx.fillStyle='#d7ccc8'; ctx.fillRect(31,24,8,8);
+            ctx.fillStyle='#fdd835'; ctx.beginPath(); ctx.moveTo(35,18); ctx.lineTo(29,25); ctx.lineTo(41,25); ctx.closePath(); ctx.fill();
+            ctx.fillStyle='#c62828'; ctx.font='bold 10px Courier New'; ctx.textAlign='center';
+            ctx.fillText('SOLD', 35, 62);
+            ctx.strokeStyle='#c62828'; ctx.lineWidth=1; ctx.strokeRect(24,54,22,10);
+        } else if (i===2) {
+            // THEY TOOK EVERYTHING: night, rubble, rain, grieving beaver
+            ctx.fillStyle='#221a26'; ctx.fillRect(0,0,100,70);
+            ctx.strokeStyle='rgba(150,170,200,0.4)'; ctx.lineWidth=0.8;              // rain
+            for (let j=0;j<14;j++){ let rx=(j*13+t*0.8)%104-2, ry=(j*17+t*1.7)%70; ctx.beginPath(); ctx.moveTo(rx,ry); ctx.lineTo(rx-2,ry+6); ctx.stroke(); }
+            ctx.fillStyle='#171017'; ctx.fillRect(0,52,100,18);
+            for (let j=0;j<6;j++){                                                    // scattered dam bricks
+                ctx.save(); ctx.translate(30+((j*23)%48), 48+((j*11)%14)); ctx.rotate((j%5)*0.5);
+                ctx.fillStyle='#4a332b'; ctx.fillRect(-5,-3,10,6);
+                ctx.strokeStyle='#2c1c16'; ctx.lineWidth=0.7; ctx.strokeRect(-5,-3,10,6);
+                ctx.restore();
+            }
+            introBeaver(16, 52, 0.6, 'sad');
+            // the dam goes up in a comic blast
+            let bs = 1 + Math.sin(t*0.15)*0.08;
+            ctx.save(); ctx.translate(70,40); ctx.scale(bs,bs);
+            ctx.fillStyle='#ff9800'; ctx.beginPath();
+            for (let j2=0;j2<10;j2++){ let a2=j2*Math.PI/5, r2=j2%2===0?17:7; ctx.lineTo(Math.cos(a2)*r2, Math.sin(a2)*r2); }
+            ctx.closePath(); ctx.fill();
+            ctx.fillStyle='#ffeb3b'; ctx.beginPath();
+            for (let j2=0;j2<10;j2++){ let a2=j2*Math.PI/5+0.3, r2=j2%2===0?9:4; ctx.lineTo(Math.cos(a2)*r2, Math.sin(a2)*r2); }
+            ctx.closePath(); ctx.fill();
+            ctx.restore();
+            ctx.fillStyle='rgba(140,140,140,0.55)';
+            ctx.beginPath(); ctx.arc(58, 28 - (t*0.2)%8, 5, 0, Math.PI*2); ctx.fill();
+            ctx.beginPath(); ctx.arc(84, 25 - (t*0.25)%10, 4, 0, Math.PI*2); ctx.fill();
+        } else {
+            // SO HE TOOK IT BACK: the necromancer rises, skeletal fish orbit
+            ctx.fillStyle='#0a0512'; ctx.fillRect(0,0,100,70);
+            let gl = 0.5+Math.sin(t*0.1)*0.2;                                        // violet glow
+            ctx.fillStyle=`rgba(123,31,162,${0.25*gl})`; ctx.beginPath(); ctx.arc(50,38,34,0,Math.PI*2); ctx.fill();
+            ctx.strokeStyle=`rgba(206,147,216,${gl})`; ctx.lineWidth=1.5;            // lightning
+            ctx.beginPath(); ctx.moveTo(20,0); ctx.lineTo(28,14); ctx.lineTo(22,16); ctx.lineTo(32,30); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(82,2); ctx.lineTo(74,18); ctx.lineTo(80,20); ctx.lineTo(70,34); ctx.stroke();
+            for (let j=0;j<5;j++){ let a=t*0.03+j*(Math.PI*2/5); drawBigFish(50+Math.cos(a)*30, 42+Math.sin(a)*14, 0.5, a+Math.PI/2); }
+            // hooded beaver, red eyes
+            ctx.fillStyle='#2e1a10'; ctx.fillRect(38,40,7,6);
+            ctx.fillStyle='#6d4c41'; ctx.fillRect(43,32,15,15);
+            ctx.fillStyle='#7b1fa2'; ctx.beginPath(); ctx.moveTo(50.5,22); ctx.lineTo(39,34); ctx.lineTo(62,34); ctx.closePath(); ctx.fill();
+            ctx.fillStyle='#ff1744'; ctx.fillRect(45,36,3,3); ctx.fillRect(52,36,3,3);
+        }
+    }
+    function menuButton(x, y, w, h, label, sub, accent, disabled, action) {
+        let hover = !disabled && mouse.x>x && mouse.x<x+w && mouse.y>y && mouse.y<y+h;
+        ctx.globalAlpha = disabled ? 0.4 : 1;
+        ctx.fillStyle = hover ? '#2a2333' : '#141018'; ctx.fillRect(x,y,w,h);
+        ctx.strokeStyle = accent; ctx.lineWidth=3; ctx.strokeRect(x,y,w,h);
+        ctx.fillStyle = hover ? '#ffd54f' : '#fff'; ctx.font='bold 22px Courier New'; ctx.textAlign='center';
+        ctx.fillText(label, x+w/2, y+34);
+        ctx.fillStyle='#bdbdbd'; ctx.font='13px Courier New';
+        wrapText(sub, x+w/2, y+58, w-30, 17);
+        ctx.globalAlpha = 1;
+        menuButtons.push({ x, y, w, h, disabled, action });
+    }
+    function drawMenu() {
+        screenOverlay('#06040a');
+        let cx=canvas.width/2, cy=canvas.height/2;
+        // night forest backdrop
+        let g2=ctx.createLinearGradient(0,canvas.height*0.6,0,canvas.height);
+        g2.addColorStop(0,'rgba(20,36,16,0)'); g2.addColorStop(1,'rgba(24,42,18,0.85)');
+        ctx.fillStyle=g2; ctx.fillRect(0,canvas.height*0.6,canvas.width,canvas.height*0.4);
+        ctx.fillStyle='#0c1810';
+        for (let i=0;i<9;i++) {   // silhouette treeline
+            let tx=(i+0.5)*canvas.width/9 + Math.sin(i*7)*24, th=70+((i*53)%60);
+            ctx.beginPath(); ctx.moveTo(tx, canvas.height-th-40); ctx.lineTo(tx-34, canvas.height); ctx.lineTo(tx+34, canvas.height); ctx.closePath(); ctx.fill();
+        }
+        for (let i=0;i<10;i++) {   // fireflies
+            let fx=(i*131)%canvas.width + Math.sin(frameCount*0.01+i)*26, fy=canvas.height*0.55+((i*89)%(canvas.height*0.4)) + Math.sin(frameCount*0.014+i*2)*14;
+            let a=0.2+Math.sin(frameCount*0.05+i)*0.2; if (a>0.05) { ctx.fillStyle=`rgba(212,255,120,${a.toFixed(2)})`; ctx.beginPath(); ctx.arc(fx,fy,1.8,0,Math.PI*2); ctx.fill(); }
+        }
+        drawTreeAt(cx-235, cy+15, 1.7); drawTreeAt(cx+235, cy+15, 1.7);
+        drawTreeAt(cx-325, cy-30, 1.15); drawTreeAt(cx+325, cy-30, 1.15);
+        for (let i=0;i<5;i++){ let a=frameCount*0.011 + i*(Math.PI*2/5); let rr=115+Math.sin(frameCount*0.03+i)*16; drawBigFish(cx+Math.cos(a)*rr, cy-40+Math.sin(a)*rr*0.45, 1.15, a+Math.PI/2); }
+        drawDemonBeaver(cx, cy-40, 1.7);
+        ctx.textAlign='center';
+        ctx.shadowColor='#7b1fa2'; ctx.shadowBlur=20;
+        ctx.fillStyle='#ce93d8'; ctx.font='bold 54px Courier New'; ctx.fillText('BEAVER NECROMANCER', cx, cy-190);
+        ctx.shadowBlur=0;
+        ctx.fillStyle='#b0506b'; ctx.font='italic 16px Courier New'; ctx.fillText("He doesn't give a dam.", cx, cy-158);
+        menuButtons = [];
+        let bw=290, bh=88, gap=34;
+        menuButton(cx-bw-gap/2, cy+90, bw, bh, '1 · ENDLESS', MODES.endless.desc, '#7b1fa2', false, ()=>startMode(MODES.endless));
+        menuButton(cx+gap/2,   cy+90, bw, bh, '2 · MISSIONS', 'Finite scenarios with a win state. A random contract — browse with \u25c0 \u25b6.', '#4fc3f7', false, ()=>{ missionIdx = Math.floor(Math.random()*MISSION_LIST.length); gameState='missionSelect'; });
+        ctx.fillStyle='#8a8a8a'; ctx.font='13px Courier New'; ctx.fillText('tap a mode or press 1 / 2', cx, cy+212);
+    }
+    function drawMissionSelect() {
+        screenOverlay('#06040a');
+        let cx=canvas.width/2, cy=canvas.height/2;
+        ctx.textAlign='center';
+        ctx.fillStyle='#4fc3f7'; ctx.font='bold 36px Courier New'; ctx.fillText('MISSIONS', cx, cy-170);
+        ctx.fillStyle='#8a8a8a'; ctx.font='13px Courier New'; ctx.fillText(`mission ${missionIdx+1} of ${MISSION_LIST.length} · \u25c0 \u25b6 to browse · 1/Enter to accept · Esc back`, cx, cy-142);
+        menuButtons = [];
+        let m = MISSION_LIST[missionIdx];
+        let bw=430, bh=150;
+        menuButton(cx-bw/2, cy-84, bw, bh, m.title, m.desc, '#4fc3f7', false, ()=>{ resetGame(m); gameState='briefing'; });
+        // browse arrows
+        menuButton(cx-bw/2-86, cy-34, 60, 50, '\u25c0', '', '#ce93d8', false, ()=>{ missionIdx=(missionIdx+MISSION_LIST.length-1)%MISSION_LIST.length; });
+        menuButton(cx+bw/2+26,  cy-34, 60, 50, '\u25b6', '', '#ce93d8', false, ()=>{ missionIdx=(missionIdx+1)%MISSION_LIST.length; });
+        ctx.fillStyle='#66bb6a'; ctx.font='12px Courier New';
+        ctx.fillText('(PROTECT THE CRITTERS — coming soon)', cx, cy+112);
+        menuButton(cx-70, cy+130, 140, 44, '\u00ab BACK', '', '#9e9e9e', false, ()=>{ gameState='menu'; });
+    }
+    // Retro cartridge pause screen: fully opaque, framed, scanlines — nothing
+    // from the battlefield bleeds through the text.
+    // ---- Mission briefing: the beaver's face, the story, and the plan —
+    //      shown before the delta mission starts. ----
+    function drawBriefing() {
+        screenOverlay('#06040a');
+        let W=canvas.width, H=canvas.height;
+        let lx = W*0.27, cy=H/2;
+        drawDemonBeaver(lx, cy-90, 2.4);
+        ctx.textAlign='center';
+        ctx.shadowColor='#4fc3f7'; ctx.shadowBlur=16;
+        ctx.fillStyle='#4fc3f7'; ctx.font='bold 34px Courier New'; ctx.fillText(MODE.title, lx, cy+40);
+        ctx.shadowBlur=0;
+        ctx.fillStyle='#cfcfcf'; ctx.font='14px Courier New';
+        const STORIES = {
+            delta: ['The developers split your river to feed', 'two camps. They think the fork protects them.', 'They think water is a resource.', '', 'Show them it takes sides.'],
+            lodge: ['They filed the demolition permit for dawn.', 'Every developer, bear-wrangler and drone in', 'the county is coming tonight.', '', 'The lodge does not move. Neither do you.'],
+            hunt:  ['The S.S. FORECLOSURE was only the first.', 'The company bought a fleet. Three trawlers,', 'coming upriver one after another.', '', 'The river bottom has room for all of them.']
+        };
+        const story = STORIES[MODE.id] || STORIES.delta;
+        let sy2 = cy+72;
+        for (let l of story) { ctx.fillText(l, lx, sy2); sy2 += 20; }
+        // ---- the plan (delta gets a live mini-map) ----
+        if (!MODE.delta) {
+            ctx.textAlign='left'; ctx.font='14px Courier New';
+            let px3 = W*0.55, py3 = H*0.3;
+            const PLANS = {
+                lodge: [['1.','RAISE THE DAM — boons and permits every level.'],['2.','Waves never stop. Giants every other level.'],['3.','The trawler comes at level 8. It is not the end.'],['4.',`SURVIVE ${Math.round((MODE.surviveFrames||0)/1800)} MINUTES. That's the whole job.`]],
+                hunt:  [['1.','Grow the dam to LEVEL 4 — the first trawler hears of it.'],['2.','Sink it. The next one comes two levels later.'],['3.','Berserkers and Frenzy tear hulls fastest.'],['4.','SINK 3 TRAWLERS to win.']]
+            };
+            for (let [n2,l2] of (PLANS[MODE.id]||[])) {
+                ctx.fillStyle='#4fc3f7'; ctx.fillText(n2, px3, py3);
+                ctx.fillStyle='#cfcfcf'; ctx.fillText(l2, px3+30, py3);
+                py3 += 26;
+            }
+            ctx.textAlign='center';
+            if (Math.floor(frameCount/30)%2===0) { ctx.fillStyle='#ffd54f'; ctx.font='bold 17px Courier New'; ctx.fillText('TAP or PRESS ANY KEY to begin', W/2, H-34); }
+            return;
+        }
+        let mx = W*0.63, my = H*0.16, mw = W*0.30, mh = H*0.52;
+        ctx.fillStyle='rgba(20,26,34,0.9)'; ctx.fillRect(mx, my, mw, mh);
+        ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=2; ctx.strokeRect(mx, my, mw, mh);
+        // mini river: stem, fork, two branches, dam, camps
+        let mcx = mx+mw/2;
+        ctx.fillStyle='#1f5568';
+        ctx.fillRect(mcx-mw*0.09, my+8, mw*0.18, mh*0.34);                              // stem
+        ctx.beginPath();                                                                 // fork left (wide)
+        ctx.moveTo(mcx-mw*0.09, my+8+mh*0.34); ctx.lineTo(mcx+mw*0.09, my+8+mh*0.34);
+        ctx.lineTo(mx+mw*0.32, my+mh*0.62); ctx.lineTo(mx+mw*0.06, my+mh*0.62); ctx.closePath(); ctx.fill();
+        ctx.beginPath();                                                                 // fork right (narrow)
+        ctx.moveTo(mcx-mw*0.09, my+8+mh*0.34); ctx.lineTo(mcx+mw*0.09, my+8+mh*0.34);
+        ctx.lineTo(mx+mw*0.92, my+mh*0.62); ctx.lineTo(mx+mw*0.74, my+mh*0.62); ctx.closePath(); ctx.fill();
+        ctx.fillRect(mx+mw*0.06, my+mh*0.62, mw*0.26, mh*0.34);                          // wide branch
+        ctx.fillRect(mx+mw*0.74, my+mh*0.62, mw*0.18, mh*0.34);                          // narrow branch
+        ctx.fillStyle='#6b4a2b'; ctx.fillRect(mcx-mw*0.09, my+mh*0.16, mw*0.18, 9);      // main dam
+        ctx.fillStyle='#6b4a2b'; ctx.fillRect(mx+mw*0.74, my+mh*0.72, mw*0.18, 7);       // your branch dam
+        ctx.setLineDash([4,3]); ctx.strokeStyle='#4fc3f7'; ctx.lineWidth=1.5;            // flood arrow down the open branch
+        ctx.beginPath(); ctx.moveTo(mx+mw*0.19, my+mh*0.63); ctx.lineTo(mx+mw*0.19, my+mh*0.9); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle='#f9a825';                                                          // camps
+        ctx.fillRect(mx+mw*0.11, my+mh*0.88, mw*0.16, 10);
+        ctx.fillRect(mx+mw*0.75, my+mh*0.88, mw*0.16, 10);
+        ctx.fillStyle='#e53935'; ctx.font='bold 11px Courier New';
+        ctx.fillText('CAMP', mx+mw*0.19, my+mh*0.86); ctx.fillText('CAMP', mx+mw*0.83, my+mh*0.86);
+        // the plan
+        ctx.textAlign='left'; ctx.font='13px Courier New';
+        let px2 = mx+14, py2 = my+mh+26;
+        const plan = [
+            ['1.', `RAISE THE MAIN DAM to level ${MODES.flood.floodTarget} — your fish build it.`],
+            ['2.', 'DRAG A BOX over a branch: a dam site. Fish assigned'],
+            ['',   'to BUILD block that branch. Narrow = cheap, wide = slow.'],
+            ['3.', 'STAND ON THE DAM, PRESS F. The river takes the one'],
+            ['',   'open path — and erases the camp at the end of it.'],
+            ['4.', 'Each release drains 3 dam levels. Rebuild. Repeat.'],
+            ['',   'Flood BOTH camps to win.']
+        ];
+        for (let [n2,l2] of plan) {
+            ctx.fillStyle='#4fc3f7'; ctx.fillText(n2, px2, py2);
+            ctx.fillStyle='#cfcfcf'; ctx.fillText(l2, px2+26, py2);
+            py2 += 19;
+        }
+        ctx.textAlign='center';
+        if (Math.floor(frameCount/30)%2===0) { ctx.fillStyle='#ffd54f'; ctx.font='bold 17px Courier New'; ctx.fillText('TAP or PRESS ANY KEY to begin', W/2, H-34); }
+    }
+    function drawPauseScreen() {
+        screenOverlay('#050308');
+        let W=canvas.width, H=canvas.height, cx=W/2;
+        // scanlines
+        ctx.fillStyle='rgba(255,255,255,0.025)';
+        for (let yy=0; yy<H; yy+=4) ctx.fillRect(0, yy, W, 1);
+        // outer console frame
+        let fx=Math.max(30, W*0.14), fy=28, fw=W-fx*2, fh=H-56;
+        ctx.strokeStyle='#7b1fa2'; ctx.lineWidth=4; ctx.strokeRect(fx, fy, fw, fh);
+        ctx.strokeStyle='#ce93d8'; ctx.lineWidth=1.5; ctx.strokeRect(fx+7, fy+7, fw-14, fh-14);
+        // corner brackets
+        ctx.strokeStyle='#ffd54f'; ctx.lineWidth=3;
+        for (let [bx2,by2,dx2,dy2] of [[fx,fy,1,1],[fx+fw,fy,-1,1],[fx,fy+fh,1,-1],[fx+fw,fy+fh,-1,-1]]) {
+            ctx.beginPath(); ctx.moveTo(bx2+dx2*22, by2); ctx.lineTo(bx2, by2); ctx.lineTo(bx2, by2+dy2*22); ctx.stroke();
+        }
+        // the two mascots, back by popular demand (clear of the text)
+        drawDemonBeaver(fx + 70, fy + fh/2, 1.35);
+        let fg2=ctx.createRadialGradient(fx+fw-70, fy+fh/2, 6, fx+fw-70, fy+fh/2, 70);
+        fg2.addColorStop(0,'rgba(156,39,176,0.20)'); fg2.addColorStop(1,'rgba(156,39,176,0)');
+        ctx.fillStyle=fg2; ctx.beginPath(); ctx.arc(fx+fw-70, fy+fh/2, 70, 0, Math.PI*2); ctx.fill();
+        drawBigFish(fx+fw-70, fy+fh/2, 2.6, Math.sin(frameCount*0.03)*0.2);
+        // title cartridge label
+        let ty=fy+22;
+        ctx.fillStyle='#7b1fa2'; ctx.fillRect(cx-130, ty, 260, 48);
+        ctx.strokeStyle='#ce93d8'; ctx.lineWidth=2; ctx.strokeRect(cx-130, ty, 260, 48);
+        ctx.fillStyle='#fff'; ctx.font='bold 34px Courier New'; ctx.textAlign='center';
+        ctx.fillText('PAUSED', cx, ty+35);
+        // controls table
+        let y=ty+86;
+        ctx.fillStyle='#ffd54f'; ctx.font='bold 15px Courier New'; ctx.fillText('— HOW TO UN-LIVE —', cx, y); y+=28;
+        ctx.font='14px Courier New'; ctx.textAlign='left';
+        let lx = cx-252;
+        const lines = [
+            ['WASD / Arrows',   'move (your circle of influence)'],
+            ['Salmon in circle','rises as an undead fish + heals you'],
+            ['Your undead',     'gather wood and build the dam on their own'],
+            ['Tap an undead',   'slow-mo job wheel: GATHER / DEFEND'],
+            ['DRAG a box',      'select a group' + (MODE.delta ? ' · or place a branch dam' : '')],
+            ['Teal piranha',    'net it in your circle -> BERSERKER'],
+            ['FRENZY [SPACE]',  'when charged, the horde swarms to you'],
+            ['Speed [\u25b6]',      'top-right button: 1x / 1.5x / 2x'],
+            ['Dam breached',    'drop a level · breached at Lv1 = game over']
+        ];
+        for (let [k2,v2] of lines) {
+            ctx.fillStyle='#80d8ff'; ctx.fillText(k2, lx, y);
+            ctx.fillStyle='#cfcfcf'; ctx.fillText(v2, lx+180, y);
+            y+=24;
+        }
+        // resume / quit "buttons"
+        y = fy+fh-58;
+        resumeBtn = { x:cx-210, y:y, w:190, h:36 };
+        quitBtn   = { x:cx+20,  y:y, w:190, h:36 };
+        ctx.fillStyle='#0d2b12'; ctx.fillRect(resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h);
+        ctx.strokeStyle='#66bb6a'; ctx.lineWidth=2; ctx.strokeRect(resumeBtn.x, resumeBtn.y, resumeBtn.w, resumeBtn.h);
+        ctx.fillStyle='#66bb6a'; ctx.font='bold 15px Courier New'; ctx.textAlign='center';
+        ctx.fillText('[P] RESUME', resumeBtn.x+resumeBtn.w/2, resumeBtn.y+24);
+        ctx.fillStyle='#2b0d0d'; ctx.fillRect(quitBtn.x, quitBtn.y, quitBtn.w, quitBtn.h);
+        ctx.strokeStyle='#e53935'; ctx.lineWidth=2; ctx.strokeRect(quitBtn.x, quitBtn.y, quitBtn.w, quitBtn.h);
+        ctx.fillStyle='#e53935'; ctx.fillText('[Q] QUIT TO MENU', quitBtn.x+quitBtn.w/2, quitBtn.y+24);
+        // blinking insert-coin style prompt
+        if (Math.floor(frameCount/30)%2===0) { ctx.fillStyle='#8a8a8a'; ctx.font='12px Courier New'; ctx.fillText('· LICENSED BY NO ONE ·', cx, fy+fh-14); }
+    }
+    const ROSTER_ORDER = [['fish','Fish'],['dev','Developers'],['bear','Bears'],['kayak','Kayakers'],['kayak2','Double Kayaks'],['hunter','Hunters'],['drone','Drones'],['berserker','Berserkers']];
+    function drawRoster(cx, startY) {
+        let y = startY, any=false; ctx.font='16px Courier New';
+        for (let [k,label] of ROSTER_ORDER) { let n = raised[k]||0; if (n>0) { any=true; ctx.fillStyle='#cfcfcf'; ctx.fillText(`${label}   ${n}`, cx, y); y+=26; } }
+        if (!any) { ctx.fillStyle='#8a8a8a'; ctx.fillText('(none raised)', cx, y); y+=26; }
+        return y;
+    }
+    function drawGameOver() {
+        screenOverlay('rgba(40,6,6,0.92)');
+        let cx=canvas.width/2, cy=canvas.height/2;
+        ctx.textAlign='center';
+        ctx.fillStyle='#e53935'; ctx.font='bold 46px Courier New'; ctx.fillText('THE DAM HAS FALLEN', cx, cy-160);
+        ctx.fillStyle='#fff'; ctx.font='17px Courier New';
+        ctx.fillText(`Dam reached Level ${maxLevelReached}    ·    Survived ${Math.floor(runFrames/60)}s`, cx, cy-122);
+        ctx.fillStyle='#ce93d8'; ctx.font='bold 18px Courier New'; ctx.fillText('SKELETONS RAISED THIS RUN', cx, cy-82);
+        let y = drawRoster(cx, cy-52);
+        if (Math.floor(frameCount/30)%2===0) { ctx.fillStyle='#ffd54f'; ctx.font='bold 18px Courier New'; ctx.fillText('CLICK or PRESS ANY KEY — back to the riverbank', cx, y+30); }
+    }
+    function drawVictory() {
+        screenOverlay('rgba(6,22,40,0.93)');
+        let cx=canvas.width/2, cy=canvas.height/2;
+        ctx.textAlign='center';
+        ctx.shadowColor='#4fc3f7'; ctx.shadowBlur=18;
+        ctx.fillStyle='#4fc3f7'; ctx.font='bold 46px Courier New'; ctx.fillText(MODE.id==='lodge' ? 'THE LODGE STANDS' : (MODE.id==='hunt' ? 'THE FLEET IS SUNK' : 'THE FOREST IS RECLAIMED'), cx, cy-170);
+        ctx.shadowBlur=0;
+        ctx.fillStyle='#b0d8e8'; ctx.font='italic 15px Courier New'; ctx.fillText('The river runs where the beaver says it runs. The rubble is theirs to keep.', cx, cy-138);
+        ctx.fillStyle='#fff'; ctx.font='17px Courier New';
+        ctx.fillText(`Dam reached Level ${maxLevelReached}    ·    ${Math.floor(runFrames/60)}s    ·    Drowned by the flood: ${flood.raised}`, cx, cy-100);
+        ctx.fillStyle='#ce93d8'; ctx.font='bold 18px Courier New'; ctx.fillText('SKELETONS RAISED THIS RUN', cx, cy-60);
+        let y = drawRoster(cx, cy-30);
+        if (Math.floor(frameCount/30)%2===0) { ctx.fillStyle='#ffd54f'; ctx.font='bold 18px Courier New'; ctx.fillText('TAP or PRESS ANY KEY — return to the riverbank', cx, y+30); }
+    }
+
+    // =========================== DEV TOOLKIT ==========================
+    // A real DOM panel (not canvas) so sliders/dropdowns just work.
+    function buildDevUI() {
+        const btn = document.createElement('div');
+        btn.textContent = '\ud83d\udee0';
+        btn.style.cssText = 'position:fixed;right:10px;bottom:132px;width:38px;height:38px;line-height:38px;text-align:center;background:#1b1b1b;border:2px solid #7b1fa2;color:#ce93d8;font-size:18px;cursor:pointer;z-index:30;border-radius:6px;';
+        document.body.appendChild(btn);
+        const panel = document.createElement('div');
+        panel.style.cssText = 'position:fixed;right:8px;top:8px;bottom:8px;width:330px;overflow-y:auto;background:rgba(10,8,14,0.96);border:2px solid #7b1fa2;color:#eee;font:12px "Courier New",monospace;padding:10px;z-index:31;display:none;border-radius:6px;';
+        document.body.appendChild(panel);
+        btn.addEventListener('click', () => { panel.style.display = panel.style.display==='none' ? 'block' : 'none'; refresh(); });
+
+        const num = (id, val, w2) => `<input type="number" id="${id}" value="${val}" style="width:${w2||58}px;background:#111;color:#80d8ff;border:1px solid #555;font:12px Courier New;">`;
+        const H = [];
+        H.push('<div style="color:#ce93d8;font-weight:bold;font-size:14px;margin-bottom:6px;">\ud83d\udee0 NECRO-DEV CONSOLE <span id="dv_x" style="float:right;color:#e53935;cursor:pointer;font-size:16px;padding:0 6px;border:1px solid #e53935;border-radius:4px;">\u2715</span><span id="dv_fps" style="float:right;color:#8a8a8a;margin-right:8px;"></span></div>');
+        H.push('<div style="border-top:1px solid #444;margin:6px 0;padding-top:6px;color:#ffd54f;">RUN</div>');
+        H.push('<div>Dam level: <button id="dv_lvldn">\u2212</button> <span id="dv_lvl" style="color:#80d8ff;">?</span> <button id="dv_lvlup">+</button>  <button id="dv_xp">+10 XP</button></div>');
+        H.push('<div style="margin-top:4px;">Boon: <select id="dv_boon" style="max-width:170px;"></select> <button id="dv_apply">apply</button></div>');
+        H.push('<div style="margin-top:4px;"><label><input type="checkbox" id="dv_god"> Beaver god mode</label>  <label><input type="checkbox" id="dv_damgod"> Dam invincible</label></div>');
+        H.push('<div style="margin-top:4px;"><button id="dv_fish">+10 fish</button> <button id="dv_frz">Fill frenzy</button> <button id="dv_burst">Fill burst</button> <button id="dv_kill">Kill enemies</button></div>');
+        H.push('<div style="margin-top:4px;"><button id="dv_giant">Spawn giant</button> <button id="dv_win">Win mission</button> <label style="margin-left:6px;"><input type="checkbox" id="dv_music" checked> Music</label></div>');
+        H.push('<div style="border-top:1px solid #444;margin:8px 0;padding-top:6px;color:#ffd54f;">BEAVER & WAVES <span style="color:#8a8a8a;">(type any number)</span></div>');
+        H.push(`<div>Necrotic field \u00d7 ${num('dv_aura',1)}  Wave size +${num('dv_wave',0,44)}</div>`);
+        H.push(`<div style="margin-top:3px;">Wave interval \u00d7 ${num('dv_spawn',1)}  Salmon every ${num('dv_sal',60,50)} ticks</div>`);
+        H.push('<div style="border-top:1px solid #444;margin:8px 0;padding-top:6px;color:#ffd54f;">ENEMY EDITOR</div>');
+        H.push('<div>Enemy: <select id="dv_kind" style="max-width:180px;"></select></div>');
+        H.push('<div id="dv_kindbox" style="margin-top:6px;padding:6px;border:1px solid #444;border-radius:4px;"></div>');
+        panel.innerHTML = H.join('');
+        const $ = id => panel.querySelector('#'+id);
+        $('dv_x').addEventListener('click', () => { panel.style.display='none'; });
+        const setLvl = n => { dam.level=Math.max(1,n); dam.h=30+15*(dam.level-1); dam.xp=0; dam.xpToNext=Math.floor(10*Math.pow(1.8,dam.level-1)); maxLevelReached=Math.max(maxLevelReached,dam.level); refresh(); };
+        function refresh() { $('dv_lvl').textContent = dam.level; }
+        $('dv_lvldn').addEventListener('click', ()=>setLvl(dam.level-1));
+        $('dv_lvlup').addEventListener('click', ()=>setLvl(dam.level+1));
+        $('dv_xp').addEventListener('click', ()=>{ dam.xp += 10; });
+        const allBoons = UPGRADES.concat(DAM_UPGRADES);
+        $('dv_boon').innerHTML = allBoons.map((u,i)=>`<option value="${i}">${u.isDam?'[DAM] ':''}${u.name}</option>`).join('');
+        $('dv_apply').addEventListener('click', ()=>{ allBoons[+$('dv_boon').value].apply(); SFX.level(); });
+        $('dv_god').addEventListener('change', e=>{ godMode = e.target.checked; });
+        $('dv_damgod').addEventListener('change', e=>{ damGod = e.target.checked; });
+        $('dv_music').addEventListener('change', e=>{ MUSIC.on = e.target.checked; });
+        $('dv_fish').addEventListener('click', ()=>{ for(let i=0;i<10;i++) spawnWorker('fish', beaver.x+(Math.random()-0.5)*80, beaver.y+(Math.random()-0.5)*80, UP.fishCounters, FISH_SPEED*UP.workerSpeedMult); });
+        $('dv_frz').addEventListener('click', ()=>{ frenzyCharge = FRENZY_MAX; });
+        $('dv_burst').addEventListener('click', ()=>{ burstCharge = FRENZY_MAX; });
+        $('dv_kill').addEventListener('click', ()=>{ for (let e of enemyPool) e.active=false; boss.active=false; });
+        $('dv_giant').addEventListener('click', ()=>{ spawnGiant(); });
+        $('dv_win').addEventListener('click', ()=>{ if (MODE.delta) { branches.forEach(b=>b.outpost.destroyed=true); } winGame(); });
+        const bindNum = (id, fn) => $(id).addEventListener('input', e=>{ let v=parseFloat(e.target.value); if (!isNaN(v)) fn(v); });
+        bindNum('dv_aura', v=>{ devAuraMult = Math.max(0, v); });
+        bindNum('dv_wave', v=>{ devWaveBonus = Math.max(0, Math.round(v)); });
+        bindNum('dv_spawn', v=>{ devSpawnScale = Math.max(0.05, v); });
+        bindNum('dv_sal', v=>{ UP.salmonEvery = Math.max(3, Math.round(v)); });
+        // ---- enemy editor: pick a kind, edit its numbers exactly ----
+        $('dv_kind').innerHTML = Object.keys(KIND).map(k=>`<option value="${k}">${k}</option>`).join('');
+        function renderKindBox() {
+            const k = KIND[$('dv_kind').value] ? $('dv_kind').value : 'developer', K = KIND[k];
+            $('dv_kindbox').innerHTML =
+                `<div style="color:#80d8ff;margin-bottom:4px;">${k}</div>` +
+                `<div>health ${num('dv_e_hp', K.counters)}  strength ${num('dv_e_str', K.damDamage)}</div>` +
+                `<div style="margin-top:3px;">touch dmg ${num('dv_e_tch', K.touchDmg||0)}  speed ${num('dv_e_spd', K.speed)}</div>` +
+                `<div style="margin-top:3px;">skeleton durability ${num('dv_e_dur', K.zombieDur||K.counters)}</div>` +
+                `<div style="margin-top:6px;color:#ffd54f;">exact spawn rates (per minute):</div>` +
+                `<div style="margin-top:3px;">normal ${num('dv_e_rate', devRates[k]||0)}  giant ${num('dv_e_grate', devRates['giant_'+k]||0)}</div>` +
+                `<div style="margin-top:3px;">wave weight ${num('dv_e_wgt', K.weight)}</div>`;
+            const b = (id, fn) => panel.querySelector('#'+id).addEventListener('input', e=>{ let v=parseFloat(e.target.value); if (!isNaN(v)) fn(v); });
+            b('dv_e_hp',  v=>{ K.counters = Math.max(1, v); });
+            b('dv_e_str', v=>{ K.damDamage = Math.max(0, v); });
+            b('dv_e_tch', v=>{ K.touchDmg = Math.max(0, v); });
+            b('dv_e_spd', v=>{ K.speed = Math.max(0.05, v); });
+            b('dv_e_dur', v=>{ K.zombieDur = Math.max(1, v); });
+            b('dv_e_rate', v=>{ devRates[k] = Math.max(0, v); });
+            b('dv_e_grate', v=>{ devRates['giant_'+k] = Math.max(0, v); });
+            b('dv_e_wgt', v=>{ K.weight = Math.max(0, Math.round(v)); });
+        }
+        $('dv_kind').addEventListener('change', renderKindBox);
+        renderKindBox();
+        setInterval(()=>{ if (panel.style.display!=='none') $('dv_fps').textContent = __fps + ' fps'; }, 1000);
+        setInterval(refresh, 800);
+    }
+    let __fps = 0, __fpsCount = 0, __fpsLast = 0;
+
+    // ============================== LOOP ==============================
+    // Base pace is the classic half-speed (one world tick per two frames);
+    // the speed toggle scales that by 1x / 1.5x / 2x via an accumulator.
+    let __acc = 0;
+    function gameLoop() {
+        __acc += 0.5 * SPEEDS[speedIdx];
+        while (__acc >= 1) { update(); __acc -= 1; }
+        render();
+        __fpsCount++;
+        let now = Date.now();
+        if (now - __fpsLast >= 1000) { __fps = __fpsCount; __fpsCount = 0; __fpsLast = now; }
+        requestAnimationFrame(gameLoop);
+    }
+    resize();
+    buildDevUI();
+    gameLoop();
+    </script>
+</body>
+</html>
