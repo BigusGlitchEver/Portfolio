@@ -9,11 +9,15 @@ const GAME_TITLES = ['Coin Flipper', 'Beaver Necromancer', 'Musical Mayhem', 'Mo
 function FeedbackForm() {
   const [game, setGame] = useState(GAME_TITLES[0]);
   const [thoughts, setThoughts] = useState('');
+  const [email, setEmail] = useState('');
+  const [canContact, setCanContact] = useState(false);
 
   const subject = `Prototype feedback — ${game}`;
   const body =
     `Which one did you play?\n${game}\n\n` +
     `Any thoughts — what'd you like, what didn't you?\n${thoughts || '(fill in here)'}\n\n` +
+    `Their email: ${email || '(not given)'}\n` +
+    `OK to email about future updates: ${canContact ? 'Yes' : 'No'}\n\n` +
     `Thanks for playing!!`;
   const mailtoHref = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
@@ -47,6 +51,27 @@ function FeedbackForm() {
         placeholder="Type your thoughts here..."
         className="w-full bg-[#1b2838] border border-[#2a475e] rounded px-3 py-2 text-sm text-white placeholder-[#5d7a99] mb-4"
       />
+
+      <label className="block text-xs uppercase tracking-wide text-[#66c0f4] mb-1">
+        Your email (optional)
+      </label>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="you@example.com"
+        className="w-full bg-[#1b2838] border border-[#2a475e] rounded px-3 py-2 text-sm text-white placeholder-[#5d7a99] mb-3"
+      />
+
+      <label className="flex items-start gap-2 text-xs sm:text-sm text-[#acb2b8] mb-4 cursor-pointer">
+        <input
+          type="checkbox"
+          checked={canContact}
+          onChange={(e) => setCanContact(e.target.checked)}
+          className="mt-0.5"
+        />
+        <span>OK to email me about future updates on any of these games</span>
+      </label>
 
       <a
         href={mailtoHref}
