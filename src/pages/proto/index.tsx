@@ -1,6 +1,7 @@
 import React from 'react';
 import Head from 'next/head';
 import { Poppins, JetBrains_Mono } from "next/font/google";
+import ProtoCarousel, { CarouselItem } from '@/components/ProtoCarousel';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -20,6 +21,7 @@ type Game = {
   tags: string[];
   blurb: string;
   howToPlay: string[];
+  media: CarouselItem[];
 };
 
 const games: Game[] = [
@@ -29,36 +31,47 @@ const games: Game[] = [
     tags: ['Balatro-inside', 'Cookie Clicker-outside', 'Tiddlywinks'],
     blurb: "Collect and flip to win! Conquer your neighborhood by beating out the competition in a high-scoring, combo-rich game of flipping.",
     howToPlay: [
-      "Touch a coin with your striker — where you touch it decides the shot. A middle touch is a short hop, an edge touch is a long drive. One click and it's airborne.",
+      "Click a coin with your striker to make a shot. A middle touch is a short hop, an edge touch is a long drive. One click and it's airborne.",
       "Land on the marked scoring zones — bare table pays nothing and wears your coin's value down (High → Med → Low).",
       "Use A / D to switch which coin under the striker flips, and right-click to aim a pocket trick (call a zone, tack a coin down). Esc puts an aimed trick back in your pocket.",
       "Beat each kid's meter to conquer their turf, then work your way across the whole neighborhood map.",
+    ],
+    media: [
+      { type: 'video', src: '/proto/media/coin-flipper/demo.mp4' },
     ],
   },
   {
     slug: 'beaver-necromancer',
     title: 'Beaver Necromancer',
-    tags: ['Necromancy', 'Colony sim', 'Dam building'],
-    blurb: "Protect the forest by sacrificing the few, and be the best necromantic beaver you can be! Create your horde, build your dam, defeat the damn industrial developers. Level up and utilize your surroundings in order to defeat your enemies, but when that's not enough you can always resort to Demonic rituals.",
+    tags: ['Necromancer Sim', 'Beaver Sim', 'Vampire Survivor'],
+    blurb: "Create your horde, build your dam, defeat the damn industrial developers! Level up and utilize your surroundings in order to defeat your enemies, but when that's not enough you can always resort to Demonic Rituals.",
     howToPlay: [
-      "Move with WASD / Arrow keys — your circle of influence follows you. Any salmon caught inside it rises as an undead fish and heals you.",
+      "Move with WASD / Arrow keys.",
+      "Your circle of influence follows you. Any salmon caught inside it rises as an undead fish and heals you.",
       "Your undead gather wood and build the dam automatically. Tap an undead to open a slow-mo job wheel and set it to GATHER or DEFEND.",
-      "Drag a box to select a group of your undead, or drag over a branch to mark a dam site (narrow = cheap, wide = slow to build).",
+      "Drag a box to select a group of your undead, or drag over a stream to mark a dam site (narrow = cheap, wide = slow to build).",
       "Stand on the dam and press F to release the river down the one open path, wiping out the industrial camp at the end of it. Rebuild and repeat until every camp is flooded.",
-      "Net a teal piranha in your circle to turn it into a Berserker, and hit SPACE once Frenzy is charged to call the whole horde to your side. When things get desperate, demonic rituals are on the table.",
+      "Hit SPACE once Frenzy is charged to call the whole horde to your side. When things get desperate, demonic rituals are on the table.",
+    ],
+    media: [
+      { type: 'video', src: '/proto/media/beaver-necromancer/demo.mp4' },
     ],
   },
   {
     slug: 'music-mayhem',
     title: 'Musical Mayhem',
     tags: ['Band manager', 'Rhythm', 'Roguelite runs'],
-    blurb: "You are the manager and hiring force behind your band. Create your musical sound, develop your musicians, collect gear, and get paid. Sometimes you go to the audience, and sometimes the audience comes to you!",
+    blurb: "You are the manager and hiring force behind your band. Create your musical sound, develop your musicians, collect gear, and get paid. Sometimes you go to the audience, and sometimes the audience comes to you! But you always hit them with all you've got.",
     howToPlay: [
       "Pick a performer (each has a specialty) and a starting genre — matching your performer's element gives a +15% bonus.",
       "Move with WASD. Play your five band slots with Space, J, K, L, and ; — timing a press on the beat's strike gives a PERFECT.",
-      "Between gigs, hold auditions and hit the gear shop to build out your line-up, then head to the Green Room to spend your earnings on permanent upgrades and gear.",
-      "Backstage, drag a slot to rearrange your line-up, or tick Auto to let a slot play itself. Esc pauses, M mutes.",
-      "Play well enough and the crowd pays up — rack up cash across gigs to grow your band into a touring act.",
+      "Leveling up allows you to hire band members and buy gear to build out your line-up.",
+      "In between runs, go to the Green Room to spend your earnings on permanent upgrades and gear.",
+      "Backstage (the Pause screen), drag a slot to rearrange your line-up, or tick Auto to let a slot play itself. Esc pauses, M mutes.",
+      "Practice Mode can be found within the Pause/Backstage menu.",
+    ],
+    media: [
+      { type: 'video', src: '/proto/media/music-mayhem/demo.mp4' },
     ],
   },
 ];
@@ -101,6 +114,10 @@ export default function ProtoIndex() {
                 </a>
               </div>
 
+              <div className="mb-4">
+                <ProtoCarousel items={game.media} />
+              </div>
+
               <div className="flex flex-wrap gap-2 mb-4">
                 {game.tags.map((tag) => (
                   <span key={tag} className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">
@@ -122,6 +139,19 @@ export default function ProtoIndex() {
             </section>
           ))}
         </div>
+
+        <footer className="mt-16 sm:mt-20 pt-8 border-t border-[#2a475e] flex items-center gap-4">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/proto/media/author.jpg"
+            alt="Samuel Shmoo Bigus"
+            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border border-[#2a475e]"
+          />
+          <div>
+            <div className="text-sm sm:text-base text-white">Samuel Shmoo Bigus</div>
+            <div className="text-xs sm:text-sm text-[#66c0f4]">the person behind these prototypes</div>
+          </div>
+        </footer>
       </main>
     </div>
   );
