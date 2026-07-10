@@ -1,7 +1,65 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Head from 'next/head';
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import ProtoCarousel, { CarouselItem } from '@/components/ProtoCarousel';
+
+const FEEDBACK_EMAIL = 'shmoogames@yahoo.com';
+const GAME_TITLES = ['Coin Flipper', 'Beaver Necromancer', 'Musical Mayhem', 'More than one'];
+
+function FeedbackForm() {
+  const [game, setGame] = useState(GAME_TITLES[0]);
+  const [thoughts, setThoughts] = useState('');
+
+  const subject = `Prototype feedback — ${game}`;
+  const body =
+    `Which one did you play?\n${game}\n\n` +
+    `Any thoughts — what'd you like, what didn't you?\n${thoughts || '(fill in here)'}\n\n` +
+    `Thanks for playing!!`;
+  const mailtoHref = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+  return (
+    <div className="max-w-md mx-auto text-left bg-[#16202d] border border-[#2a475e] rounded-lg p-5 sm:p-6">
+      <h3 className="text-base sm:text-lg text-white mb-1">Got feedback?</h3>
+      <p className="text-xs sm:text-sm text-[#acb2b8] mb-4">
+        Let me know which one you played and what you thought — good or bad, I want to hear it.
+      </p>
+
+      <label className="block text-xs uppercase tracking-wide text-[#66c0f4] mb-1">
+        Which one did you play?
+      </label>
+      <select
+        value={game}
+        onChange={(e) => setGame(e.target.value)}
+        className="w-full bg-[#1b2838] border border-[#2a475e] rounded px-3 py-2 text-sm text-white mb-4"
+      >
+        {GAME_TITLES.map((g) => (
+          <option key={g} value={g}>{g}</option>
+        ))}
+      </select>
+
+      <label className="block text-xs uppercase tracking-wide text-[#66c0f4] mb-1">
+        What&apos;d you like? What didn&apos;t you?
+      </label>
+      <textarea
+        value={thoughts}
+        onChange={(e) => setThoughts(e.target.value)}
+        rows={4}
+        placeholder="Type your thoughts here..."
+        className="w-full bg-[#1b2838] border border-[#2a475e] rounded px-3 py-2 text-sm text-white placeholder-[#5d7a99] mb-4"
+      />
+
+      <a
+        href={mailtoHref}
+        className="inline-block px-4 py-2 bg-[#4C6B22] hover:bg-[#6AA621] text-white text-sm font-medium rounded transition-colors"
+      >
+        Send Feedback
+      </a>
+      <p className="text-xs text-[#5d7a99] mt-3">
+        Opens your email app, addressed to {FEEDBACK_EMAIL}. Or just email me directly.
+      </p>
+    </div>
+  );
+}
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -38,6 +96,9 @@ const games: Game[] = [
     ],
     media: [
       { type: 'video', src: '/proto/media/coin-flipper/demo.mp4' },
+      { type: 'image', src: '/proto/media/coin-flipper/shot-hopscotch.png', alt: 'Coin Flipper — Hopscotch Court match' },
+      { type: 'image', src: '/proto/media/coin-flipper/shot-psst-new-kid.png', alt: 'Coin Flipper — Tutorial Tommy dialog' },
+      { type: 'image', src: '/proto/media/coin-flipper/shot-neighborhood.png', alt: 'Coin Flipper — the neighborhood map' },
     ],
   },
   {
@@ -55,6 +116,11 @@ const games: Game[] = [
     ],
     media: [
       { type: 'video', src: '/proto/media/beaver-necromancer/demo.mp4' },
+      { type: 'image', src: '/proto/media/beaver-necromancer/shot-title.png', alt: 'Beaver Necromancer — title screen' },
+      { type: 'image', src: '/proto/media/beaver-necromancer/shot-boon.png', alt: 'Beaver Necromancer — choose a boon' },
+      { type: 'image', src: '/proto/media/beaver-necromancer/shot-objective.png', alt: 'Beaver Necromancer — early objective, Dam Level 1' },
+      { type: 'image', src: '/proto/media/beaver-necromancer/shot-dam7.png', alt: 'Beaver Necromancer — the horde swarms at Dam Level 7' },
+      { type: 'image', src: '/proto/media/beaver-necromancer/shot-dam9.png', alt: 'Beaver Necromancer — defending Dam Level 9' },
     ],
   },
   {
@@ -72,6 +138,12 @@ const games: Game[] = [
     ],
     media: [
       { type: 'video', src: '/proto/media/music-mayhem/demo.mp4' },
+      { type: 'image', src: '/proto/media/music-mayhem/shot-title.png', alt: 'Musical Mayhem — pick your performer and style' },
+      { type: 'image', src: '/proto/media/music-mayhem/shot-audition.png', alt: 'Musical Mayhem — audition and gear shop' },
+      { type: 'image', src: '/proto/media/music-mayhem/shot-nice-hire.png', alt: 'Musical Mayhem — practice prompt after a new hire' },
+      { type: 'image', src: '/proto/media/music-mayhem/shot-topdown-blue.png', alt: 'Musical Mayhem — on stage gameplay' },
+      { type: 'image', src: '/proto/media/music-mayhem/shot-topdown-green.png', alt: 'Musical Mayhem — on stage gameplay, later set' },
+      { type: 'image', src: '/proto/media/music-mayhem/shot-crowd.png', alt: 'Musical Mayhem — The Opening Act, crowd approval' },
     ],
   },
 ];
@@ -140,17 +212,12 @@ export default function ProtoIndex() {
           ))}
         </div>
 
-        <footer className="mt-16 sm:mt-20 pt-8 border-t border-[#2a475e] flex items-center gap-4">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/proto/media/author.jpg"
-            alt="Samuel Shmoo Bigus"
-            className="w-14 h-14 sm:w-16 sm:h-16 rounded-full object-cover border border-[#2a475e]"
-          />
-          <div>
-            <div className="text-sm sm:text-base text-white">Samuel Shmoo Bigus</div>
-            <div className="text-xs sm:text-sm text-[#66c0f4]">the person behind these prototypes</div>
-          </div>
+        <footer className="mt-16 sm:mt-20 pt-10 border-t border-[#2a475e] text-center">
+          <h2 className="text-2xl sm:text-3xl font-light text-white mb-2">Thanks for playing!!</h2>
+          <p className="text-sm sm:text-base text-[#acb2b8] mb-1">Samuel Shmoo Bigus</p>
+          <p className="text-sm sm:text-base text-[#66c0f4] mb-10">Shmoo Games</p>
+
+          <FeedbackForm />
         </footer>
       </main>
     </div>
