@@ -65,8 +65,8 @@ export default function CowboyLifeSimulatorProject() {
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-light mb-3 sm:mb-4">Cowboy Life Simulator</h1>
-          <div className="text-lg sm:text-xl text-[#66c0f4] mb-2">Producer Intern</div>
-          <div className="text-sm sm:text-base text-[#acb2b8] mb-4 sm:mb-6">Odd Qubit, published by RockGame S.A. | Team of 15</div>
+          <div className="text-lg sm:text-xl text-[#66c0f4] mb-2">Producer</div>
+          <div className="text-sm sm:text-base text-[#acb2b8] mb-4 sm:mb-6">Odd Qubit, published by RockGame S.A. | Team of 17</div>
           <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
             <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Production</span>
             <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Milestone Planning</span>
@@ -81,12 +81,12 @@ export default function CowboyLifeSimulatorProject() {
           <h2 className="text-xl sm:text-2xl text-white mb-4">My Role & Contributions</h2>
           <div className="space-y-4">
             <p className="text-sm sm:text-base">
-              As a Producer Intern on Cowboy Life Simulator, a Very Positive rated Wild West ranching sim with over 1,000 Steam reviews, I lead production planning for a 15 person cross discipline team. My focus is keeping a live, growing title on schedule while supporting the people who build it.
+              As a Producer on Cowboy Life Simulator, a Very Positive rated Wild West ranching sim with over 1,000 Steam reviews, I lead production planning for a 17 person cross discipline team. My focus is keeping a live, growing title on schedule while supporting the people who build it.
             </p>
             <ul className="list-disc pl-4 sm:pl-5 space-y-2 text-sm sm:text-base">
               <li>Lead the distribution of work across the team, planning tasks up to 4 months in advance to meet publisher milestones</li>
               <li>Consistently met every milestone the team was given throughout the production cycle</li>
-              <li>Coordinate a 15 person team across disciplines, keeping production focused and cohesive</li>
+              <li>Coordinate a 17 person team across disciplines, keeping production focused and cohesive</li>
               <li>Onboard new interns and employees and help them ramp up quickly</li>
               <li>Scout and recruit voice acting talent to bring the game cast to life</li>
               <li>Mentored directly by the studio CEO as part of my production development</li>
@@ -115,7 +115,7 @@ export default function CowboyLifeSimulatorProject() {
           <h2 className="text-xl sm:text-2xl text-white mb-4">Team & Talent</h2>
           <div className="space-y-4">
             <p className="text-sm sm:text-base">
-              Supporting a 15 person team meant investing in both onboarding and casting:
+              Supporting a 17 person team meant investing in both onboarding and casting:
             </p>
             <ul className="list-disc pl-4 sm:pl-5 space-y-2 text-sm sm:text-base">
               <li>Onboarded new interns and employees with clear expectations and support</li>

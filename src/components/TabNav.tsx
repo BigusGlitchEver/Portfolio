@@ -84,12 +84,14 @@ const TabNav: React.FC<TabNavProps> = ({ onCVClick }) => {
                 CV
               </button>
             ) : (
-              <Link
-                href="/cv"
+              <a
+                href="/ShmooCV.pdf"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-white/90 hover:text-white transition-colors text-sm sm:text-base"
               >
                 CV
-              </Link>
+              </a>
             )}
           </div>
         </nav>

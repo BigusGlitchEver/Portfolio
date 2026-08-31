@@ -47,12 +47,14 @@ const ProjectNav = () => {
             >
               Email
             </a>
-            <Link 
-              href="/cv"
+            <a
+              href="/ShmooCV.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
               className="text-white/90 hover:text-white transition-colors"
             >
               CV
-            </Link>
+            </a>
           </div>
         </nav>
       </div>

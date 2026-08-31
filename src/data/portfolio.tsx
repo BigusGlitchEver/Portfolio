@@ -28,7 +28,7 @@ export const producerHeadliners: Headliner[] = [
     title: 'Cowboy Life Simulator',
     studio: 'Odd Qubit',
     description:
-      'Producer on a Very Positive rated Wild West ranching sim, leading milestone planning for a 15 person team.',
+      'Producer on a Very Positive rated Wild West ranching sim, leading milestone planning for a 17 person team.',
     image: COWBOY_ART,
     imageStyle: 'cover',
     projectLink: '/cowboylifesim',
@@ -36,7 +36,7 @@ export const producerHeadliners: Headliner[] = [
     storeLabel: 'View on Steam',
     highlights: [
       'Lead work distribution planning, scheduling tasks up to 4 months ahead to hit publisher milestones, with every milestone met on time',
-      'Coordinate a 15 person cross discipline team and onboard new interns and employees',
+      'Coordinate a 17 person cross discipline team and onboard new interns and employees',
       'Scout and recruit voice acting talent for the game cast',
       'Support live production of a Very Positive rated title with 90 percent of over 1,000 Steam reviews',
     ],
@@ -101,7 +101,7 @@ export const gamesSection = {
   projects: [
     {
       title: 'Cowboy Life Simulator',
-      description: 'Wild West ranching sim, Very Positive on Steam. Producer for a 15 person team.',
+      description: 'Wild West ranching sim, Very Positive on Steam. Producer for a 17 person team.',
       image: COWBOY_ART,
       imageStyle: 'cover',
       link: '/cowboylifesim',
@@ -110,7 +110,7 @@ export const gamesSection = {
         { label: 'View on Steam', url: 'https://store.steampowered.com/app/1151380/Cowboy_Life_Simulator/' },
       ],
       highlights: [
-        'Lead milestone planning up to 4 months ahead for a 15 person team',
+        'Lead milestone planning up to 4 months ahead for a 17 person team',
         'Scout voice talent and onboard new interns and employees',
       ],
     },
