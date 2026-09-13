@@ -15,7 +15,15 @@ const jetBrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600", "700"],
 });
 
-const LOGO_ART = 'https://www.abyssalguardians.com/assets/abyssal-guardians-logo.svg';
+const GALLERY = [
+  { src: '/AbyssalGuardiansKeyArt.png', alt: 'Abyssal Guardians key art' },
+  { src: '/AbyssalGuardians-Revive.jpg', alt: 'Reviving a downed teammate' },
+  { src: '/AbyssalGuardians-Reload.jpg', alt: 'Reloading a scavenged weapon' },
+  { src: '/AbyssalGuardians-RunningFromMimic.jpg', alt: 'Running from a mimic enemy' },
+  { src: '/AbyssalGuardians-HRWithChicken.jpg', alt: 'Squadmate holding a rubber chicken weapon' },
+  { src: '/AbyssalGuardians-HuggingTeddy.jpg', alt: 'Face to face with a teddy bear enemy' },
+  { src: '/AbyssalGuardians-TheChicken.jpg', alt: 'The rubber chicken weapon in first person' },
+];
 
 export default function AbyssalGuardiansProject() {
   return (
@@ -58,19 +66,24 @@ export default function AbyssalGuardiansProject() {
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-20">
         {/* Hero Section */}
         <header className="mb-8 sm:mb-16">
-          <div className="aspect-video w-full mb-6 sm:mb-8 relative bg-[#10161d] rounded overflow-hidden flex items-center justify-center p-8 sm:p-16">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO_ART} alt="Abyssal Guardians" className="max-h-full max-w-full object-contain" />
+          <div className="aspect-video w-full mb-6 sm:mb-8 relative bg-[#10161d] rounded overflow-hidden">
+            <Image
+              src="/AbyssalGuardiansCover.png"
+              alt="Abyssal Guardians"
+              fill
+              className="object-cover"
+              priority
+            />
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-light mb-3 sm:mb-4">Abyssal Guardians</h1>
           <div className="text-lg sm:text-xl text-[#66c0f4] mb-2">Producer</div>
-          <div className="text-sm sm:text-base text-[#acb2b8] mb-4 sm:mb-6">Smoothie Studio | Team of 5</div>
+          <div className="text-sm sm:text-base text-[#acb2b8] mb-4 sm:mb-6">Smoothie Studio | Team of 7</div>
           <div className="flex flex-wrap gap-2 mb-6 sm:mb-8">
             <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Production</span>
             <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Scheduling</span>
             <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Outsourcing</span>
-            <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Onboarding</span>
+            <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Team Scaling</span>
             <span className="px-2 py-1 sm:px-3 sm:py-1 bg-[#67c1f533] rounded text-xs sm:text-sm text-[#66c0f4]">Co-op Shooter</span>
           </div>
           <p className="text-sm sm:text-base text-[#acb2b8]">
@@ -83,12 +96,12 @@ export default function AbyssalGuardiansProject() {
           <h2 className="text-xl sm:text-2xl text-white mb-4">My Role & Contributions</h2>
           <div className="space-y-4">
             <p className="text-sm sm:text-base">
-              As Producer on Abyssal Guardians, I came into a 5 person team and rebuilt how work is organized and scheduled, then put staffing and onboarding in place to scale the project toward its public reveal.
+              As Producer on Abyssal Guardians, I came into a 5 person founding team and rebuilt how work is organized and scheduled, then put staffing and onboarding in place to grow the team to 7 and scale the project toward its public reveal.
             </p>
             <ul className="list-disc pl-4 sm:pl-5 space-y-2 text-sm sm:text-base">
               <li>Restructured the organization of tasks and scheduling around a 2 week cycle</li>
-              <li>Manage outsourcing and freelance staffing to bring the best value to the project</li>
-              <li>Onboard new interns and employees as the team grows</li>
+              <li>Grew the founding team from five to seven, onboarding all new hires</li>
+              <li>Manage a rotating roster of freelance artists and audio contractors, including sourcing an audio designer who has been an outstanding fit</li>
               <li>Supporting the public reveal and the start of the marketing push for the game</li>
             </ul>
           </div>
@@ -104,7 +117,7 @@ export default function AbyssalGuardiansProject() {
             <ul className="list-disc pl-4 sm:pl-5 space-y-2 text-sm sm:text-base">
               <li>Restructured task organization so priorities are visible and actionable</li>
               <li>Moved the team onto a 2 week scheduling cycle for steady, predictable progress</li>
-              <li>Balanced scope and timeline to keep a 5 person team focused on what matters</li>
+              <li>Balanced scope and timeline to keep the team focused as it grew from five to seven</li>
             </ul>
           </div>
         </section>
@@ -120,6 +133,35 @@ export default function AbyssalGuardiansProject() {
               <li>Manage outsourcing and freelance relationships to maximize value for the studio</li>
               <li>Onboard new interns and employees and integrate them into the workflow</li>
             </ul>
+          </div>
+        </section>
+
+        {/* Gallery */}
+        <section className="mb-8 sm:mb-12 text-[#acb2b8]">
+          <h2 className="text-xl sm:text-2xl text-white mb-4">Screenshots</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4">
+            {GALLERY.map((shot) => (
+              <div key={shot.src} className="aspect-video relative bg-[#10161d] rounded overflow-hidden">
+                <Image src={shot.src} alt={shot.alt} fill className="object-cover" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Reveal Montage */}
+        <section className="mb-8 sm:mb-12 text-[#acb2b8]">
+          <h2 className="text-xl sm:text-2xl text-white mb-4">Reveal Montage</h2>
+          <p className="text-sm sm:text-base mb-4">
+            A short montage cut for the game&apos;s public reveal and wishlist push.
+          </p>
+          <div className="aspect-video w-full relative bg-black rounded overflow-hidden">
+            {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+            <video
+              src="/AbyssalGuardiansMontage.mp4"
+              controls
+              playsInline
+              className="w-full h-full object-contain"
+            />
           </div>
         </section>
 

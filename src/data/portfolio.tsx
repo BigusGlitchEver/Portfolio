@@ -7,8 +7,7 @@ import { Gamepad2, Zap, Users, Globe, Brush } from 'lucide-react';
 // These can later be replaced with local files in /public for stability.
 export const COWBOY_ART =
   'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1151380/1d5a4da08989c4c3aadd687597b2bd38602e61f9/header.jpg';
-export const ABYSSAL_ART =
-  'https://www.abyssalguardians.com/assets/abyssal-guardians-logo.svg';
+export const ABYSSAL_ART = '/AbyssalGuardiansCover.png';
 
 export interface Headliner {
   title: string;
@@ -47,14 +46,14 @@ export const producerHeadliners: Headliner[] = [
     description:
       'Producer on a 1 to 4 player co op survival shooter set on humanity’s last oil rig, currently in public reveal.',
     image: ABYSSAL_ART,
-    imageStyle: 'contain',
+    imageStyle: 'cover',
     projectLink: '/abyssalguardians',
     storeUrl: 'https://abyssalguardians.com',
     storeLabel: 'Visit Site',
     highlights: [
-      'Restructured task organization and scheduling into a 2 week sprint cycle for a 5 person team',
+      'Restructured task organization and scheduling into a 2 week sprint cycle',
+      'Grew the founding team from 5 to 7, onboarding all new hires',
       'Manage outsourcing and freelance staffing to bring the best value to the project',
-      'Onboard new interns and employees',
       'Supporting the public reveal and marketing kickoff of the co op survival shooter',
     ],
   },
@@ -116,15 +115,15 @@ export const gamesSection = {
     },
     {
       title: 'Abyssal Guardians',
-      description: 'A 1 to 4 player co op survival shooter on humanity’s last oil rig. Producer for a 5 person team.',
+      description: 'A 1 to 4 player co op survival shooter on humanity’s last oil rig. Producer for a team grown from 5 to 7.',
       image: ABYSSAL_ART,
-      imageStyle: 'contain',
+      imageStyle: 'cover',
       link: '/abyssalguardians',
       categories: ['Production', 'Scheduling', 'Outsourcing', 'Co-op Shooter'],
       buttons: [{ label: 'Visit Site', url: 'https://abyssalguardians.com' }],
       highlights: [
         'Restructured scheduling into a 2 week sprint cycle',
-        'Manage outsourcing and freelance staffing',
+        'Grew the founding team from 5 to 7',
       ],
     },
     {
