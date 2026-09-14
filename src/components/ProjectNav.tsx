@@ -1,49 +1,45 @@
 // ProjectNav.tsx
+// Shared nav for every individual project page (Cowboy, Abyssal Guardians,
+// Whimpact, Poly Plaza, Wastemancer, Necromeowcy). Wraps onto a second line
+// instead of overflowing on narrow screens.
 import React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 
 const ProjectNav = () => {
   return (
-    <header className="fixed top-0 left-0 right-0 bg-gray-900/90 backdrop-blur-sm z-50">
-      <div className="max-w-7xl mx-auto px-4 py-4">
-        <nav className="grid grid-cols-3 items-center">
-          {/* Left: Logo and Back Link */}
-          <div className="flex items-center gap-3">
-            <Link href="/" className="group flex items-center gap-3">
-              <div className="h-8 w-8 overflow-hidden rounded-full bg-gray-800">
-                <Image 
-                  src="/logo.png"
-                  alt="Logo"
-                  width={32}
-                  height={32}
-                  priority
-                  className="rounded-full"
-                  style={{ width: "auto", height: "auto" }}
-                />
-              </div>
-              <span className="text-white/90 group-hover:text-white transition-colors">
-                Back to Portfolio
-              </span>
-            </Link>
-          </div>
+    <header className="fixed w-full top-0 z-50 bg-[#171a21]">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
+        <nav className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <Link
+            href="/"
+            className="flex items-center gap-2 text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
+          >
+            <Image
+              src="/logo.png"
+              alt="Portfolio Logo"
+              width={32}
+              height={32}
+              priority
+              style={{ width: 'auto', height: 'auto' }}
+            />
+            <span className="text-base sm:text-xl font-medium">Back to Portfolio</span>
+          </Link>
 
-          {/* Center: Empty space */}
-          <div />
+          <div className="hidden md:block text-2xl font-light text-white">Samuel Shmoo Bigus</div>
 
-          {/* Right: Navigation Links */}
-          <div className="flex items-center justify-end gap-6">
-            <a 
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 sm:gap-x-8">
+            <a
               href="https://www.linkedin.com/in/shmoogames"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
             >
               LinkedIn
             </a>
-            <a 
+            <a
               href="mailto:shmoogames@yahoo.com"
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
             >
               Email
             </a>
@@ -51,7 +47,7 @@ const ProjectNav = () => {
               href="/ShmooCV.pdf"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/90 hover:text-white transition-colors"
+              className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
             >
               CV
             </a>

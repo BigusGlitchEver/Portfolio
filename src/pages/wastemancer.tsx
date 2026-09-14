@@ -2,6 +2,7 @@ import React from 'react';
 import Image from "next/image";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import Footer from '@/components/Footer';
+import ProjectNav from '@/components/ProjectNav';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -18,40 +19,7 @@ const jetBrainsMono = JetBrains_Mono({
 export default function WastemancerProject() {
   return (
     <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen bg-[#1b2838] text-gray-100`}>
-      {/* Navigation */}
-      <nav className="fixed w-full top-0 z-50 bg-[#171a21]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex justify-between items-center">
-            <a href="/" className="flex items-center gap-2 text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors">
-              <Image src="/logo.png" alt="Portfolio Logo" width={32} height={32} style={{ width: "auto", height: "auto" }} />
-              <span className="text-base sm:text-xl font-medium">Back to Portfolio</span>
-            </a>
-            <div className="hidden md:block text-2xl font-light text-white">Samuel Shmoo Bigus</div>
-            <div className="flex gap-4 sm:gap-8">
-              <a 
-                href="https://www.linkedin.com/in/shmoogames" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
-              >
-                LinkedIn
-              </a>
-              <a 
-                href="mailto:samuelshmoobigus@yahoo.com" 
-                className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
-              >
-                Email
-              </a>
-              <a 
-                href="/ShmooCV.pdf" 
-                className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
-              >
-                CV
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <ProjectNav />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-20">
         {/* Hero Section */}
@@ -168,7 +136,7 @@ export default function WastemancerProject() {
               href="https://shmoogames.itch.io/wastemancer"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-3 py-2 sm:px-4 sm:py-2 bg-[#4C6B22] hover:bg-[#6AA621] text-[#FFFFFF] text-sm sm:text-base transition-colors"
+              className="inline-block px-4 py-2 sm:px-5 sm:py-2.5 rounded bg-[#66c0f4] hover:bg-[#7dd3ff] text-[#171a21] font-medium text-sm sm:text-base transition-colors"
             >
               View Game on itch.io
             </a>

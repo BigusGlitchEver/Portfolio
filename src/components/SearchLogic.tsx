@@ -339,7 +339,7 @@ const SearchLogic = ({ sections, activeCategory, hideSearchUI = false, hideSearc
           <div key={sectionIndex} className="space-y-16">
             <div className="space-y-4">
               <div className="text-center">
-                <h2 className="text-6xl font-light hover:text-blue-400 transition-colors mb-6">{section.title}</h2>
+                <h2 className="text-4xl sm:text-6xl font-light hover:text-blue-400 transition-colors mb-6">{section.title}</h2>
                 <div className="text-blue-400 w-16 h-16 mx-auto">
                   {section.icon}
                 </div>

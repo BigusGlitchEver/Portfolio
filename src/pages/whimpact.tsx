@@ -2,6 +2,7 @@ import React from 'react';
 import Image from "next/image";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import Footer from '@/components/Footer';
+import ProjectNav from '@/components/ProjectNav';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -19,21 +20,7 @@ export default function WhimpactProject() {
   return (
     <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen bg-[#1b2838] text-gray-100`}>
 
-      {/* Navigation */}
-      <nav className="fixed w-full top-0 z-50 bg-[#171a21]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex justify-between items-center">
-          <a href="/" className="flex items-center gap-2 text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors">
-            <Image src="/logo.png" alt="Portfolio Logo" width={32} height={32} />
-            <span className="text-base sm:text-xl font-medium">Back to Portfolio</span>
-          </a>
-          <div className="hidden md:block text-2xl font-light text-white">Samuel Shmoo Bigus</div>
-          <div className="flex gap-4 sm:gap-8 text-[#dcdedf] text-sm sm:text-base">
-            <a href="https://www.linkedin.com/in/shmoogames" target="_blank" rel="noopener noreferrer" className="hover:text-[#66c0f4] hover:underline">LinkedIn</a>
-            <a href="mailto:samuelshmoobigus@yahoo.com" className="hover:text-[#66c0f4] hover:underline">Email</a>
-            <a href="/ShmooCV.pdf" className="hover:text-[#66c0f4] hover:underline">CV</a>
-          </div>
-        </div>
-      </nav>
+      <ProjectNav />
 
       <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-20">
 
@@ -110,7 +97,7 @@ export default function WhimpactProject() {
               href="https://store.steampowered.com/app/3131260/Whimpact/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-3 py-2 sm:px-4 sm:py-2 bg-[#4C6B22] hover:bg-[#6AA621] text-[#FFFFFF] text-sm sm:text-base transition-colors"
+              className="inline-block px-4 py-2 sm:px-5 sm:py-2.5 rounded bg-[#66c0f4] hover:bg-[#7dd3ff] text-[#171a21] font-medium text-sm sm:text-base transition-colors"
             >
               Visit Steam Store
             </a>

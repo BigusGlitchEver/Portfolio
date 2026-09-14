@@ -1,7 +1,7 @@
 import React from 'react';
-import Image from "next/image";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import Footer from '@/components/Footer';
+import ProjectNav from '@/components/ProjectNav';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -21,40 +21,7 @@ const HEADER_ART =
 export default function CowboyLifeSimulatorProject() {
   return (
     <div className={`${poppins.variable} ${jetBrainsMono.variable} min-h-screen bg-[#1b2838] text-gray-100`}>
-      {/* Navigation */}
-      <nav className="fixed w-full top-0 z-50 bg-[#171a21]">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4">
-          <div className="flex justify-between items-center">
-            <a href="/" className="flex items-center gap-2 text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors">
-              <Image src="/logo.png" alt="Portfolio Logo" width={32} height={32} style={{ width: "auto", height: "auto" }} />
-              <span className="text-base sm:text-xl font-medium">Back to Portfolio</span>
-            </a>
-            <div className="hidden md:block text-2xl font-light text-white">Samuel Shmoo Bigus</div>
-            <div className="flex gap-4 sm:gap-8">
-              <a
-                href="https://www.linkedin.com/in/shmoogames"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
-              >
-                LinkedIn
-              </a>
-              <a
-                href="mailto:shmoogames@yahoo.com"
-                className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
-              >
-                Email
-              </a>
-              <a
-                href="/ShmooCV.pdf"
-                className="text-sm sm:text-base text-[#dcdedf] hover:text-[#66c0f4] hover:underline transition-colors"
-              >
-                CV
-              </a>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <ProjectNav />
 
       <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-24 sm:pt-32 pb-20">
         {/* Hero Section */}
@@ -81,7 +48,7 @@ export default function CowboyLifeSimulatorProject() {
           <h2 className="text-xl sm:text-2xl text-white mb-4">My Role & Contributions</h2>
           <div className="space-y-4">
             <p className="text-sm sm:text-base">
-              As a Producer on Cowboy Life Simulator, a Very Positive rated Wild West ranching sim with over 1,000 Steam reviews, I lead production planning for a 17 person cross discipline team. My focus is keeping a live, growing title on schedule while supporting the people who build it.
+              As a Producer on Cowboy Life Simulator, a Very Positive rated Wild West ranching sim with 1,151 positive Steam reviews, I lead production planning for a 17 person cross discipline team. My focus is keeping a live, growing title on schedule while supporting the people who build it.
             </p>
             <ul className="list-disc pl-4 sm:pl-5 space-y-2 text-sm sm:text-base">
               <li>Lead the distribution of work across the team, planning tasks up to 4 months in advance to meet publisher milestones</li>
@@ -133,7 +100,7 @@ export default function CowboyLifeSimulatorProject() {
               Cowboy Life Simulator is in Early Access and continues to grow with its community:
             </p>
             <ul className="list-disc pl-4 sm:pl-5 space-y-2 text-sm sm:text-base">
-              <li>Support live production of a title holding a Very Positive rating with 90 percent of over 1,000 reviews</li>
+              <li>Support live production of a title holding a Very Positive rating, with 1,151 positive reviews out of 1,293 total (89% positive)</li>
               <li>Help prioritize the roadmap so new content lands at a steady, sustainable pace</li>
               <li>Keep the production process aligned with player feedback and studio goals</li>
             </ul>
@@ -147,7 +114,7 @@ export default function CowboyLifeSimulatorProject() {
               href="https://store.steampowered.com/app/1151380/Cowboy_Life_Simulator/"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-block px-3 py-2 sm:px-4 sm:py-2 bg-[#4C6B22] hover:bg-[#6AA621] text-[#FFFFFF] text-sm sm:text-base transition-colors"
+              className="inline-block px-4 py-2 sm:px-5 sm:py-2.5 rounded bg-[#66c0f4] hover:bg-[#7dd3ff] text-[#171a21] font-medium text-sm sm:text-base transition-colors"
             >
               View Game on Steam
             </a>

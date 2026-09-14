@@ -8,7 +8,7 @@ import BackgroundCurve from '@/components/backgroundcurve';
 import CVOptionsModal from '@/components/CVOptionsModal';
 import { Gamepad2 } from 'lucide-react';
 import Link from 'next/link';
-import { producerHeadliners, gamesSection } from '@/data/portfolio';
+import { producerHeadliners, gamesSection, producerStats } from '@/data/portfolio';
 
 const poppins = Poppins({
   variable: "--font-poppins",
@@ -61,6 +61,19 @@ export default function LandingPage() {
               <div className="w-64">
                 <Portrait />
               </div>
+            </div>
+
+            {/* Career stats */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-16">
+              {producerStats.map((stat) => (
+                <div
+                  key={stat.label}
+                  className="bg-gray-900/80 backdrop-blur-sm rounded-xl p-4 sm:p-6 border border-blue-400/30 text-center"
+                >
+                  <div className="text-3xl sm:text-4xl font-semibold text-blue-400 mb-1">{stat.value}</div>
+                  <div className="text-xs sm:text-sm text-gray-300">{stat.label}</div>
+                </div>
+              ))}
             </div>
 
             {/* Headliner production credits */}

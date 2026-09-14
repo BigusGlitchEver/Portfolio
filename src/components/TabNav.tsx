@@ -61,7 +61,7 @@ const TabNav: React.FC<TabNavProps> = ({ onCVClick }) => {
           </div>
 
           {/* Right: External links + CV */}
-          <div className="flex items-center gap-5">
+          <div className="flex flex-wrap items-center gap-x-5 gap-y-1">
             <a
               href="https://www.linkedin.com/in/shmoogames"
               target="_blank"

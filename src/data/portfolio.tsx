@@ -9,6 +9,16 @@ export const COWBOY_ART =
   'https://shared.fastly.steamstatic.com/store_item_assets/steam/apps/1151380/1d5a4da08989c4c3aadd687597b2bd38602e61f9/header.jpg';
 export const ABYSSAL_ART = '/AbyssalGuardiansCover.png';
 
+// Homepage stat block. Every figure here is pulled directly from the
+// project data below, nothing added that isn't already stated elsewhere
+// on the site.
+export const producerStats = [
+  { value: '6', label: 'Games Produced' },
+  { value: '17', label: 'Largest Team Led' },
+  { value: '3', label: 'Countries Collaborated Across' },
+  { value: '1,151', label: 'Positive Steam Reviews' },
+];
+
 export interface Headliner {
   title: string;
   studio: string;
@@ -37,7 +47,7 @@ export const producerHeadliners: Headliner[] = [
       'Lead work distribution planning, scheduling tasks up to 4 months ahead to hit publisher milestones, with every milestone met on time',
       'Coordinate a 17 person cross discipline team and onboard new interns and employees',
       'Scout and recruit voice acting talent for the game cast',
-      'Support live production of a Very Positive rated title with 90 percent of over 1,000 Steam reviews',
+      'Support live production of a Very Positive rated title with 1,151 positive Steam reviews (89% positive)',
     ],
   },
   {
@@ -100,7 +110,7 @@ export const gamesSection = {
   projects: [
     {
       title: 'Cowboy Life Simulator',
-      description: 'Wild West ranching sim, Very Positive on Steam. Producer for a 17 person team.',
+      description: 'Wild West ranching sim, Very Positive on Steam with 1,151 positive reviews. Producer for a 17 person team.',
       image: COWBOY_ART,
       imageStyle: 'cover',
       link: '/cowboylifesim',
